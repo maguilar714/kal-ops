@@ -1,0 +1,2639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>KAL Operations · v2</title>
+<template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
+    <rect x="80" y="92" width="120" height="16" rx="3" fill="#f5f5f7"/>
+    <rect x="60" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="335" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="610" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="885" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="80" y="210" width="80" height="10" rx="2" fill="#9a9485"/>
+    <rect x="80" y="240" width="140" height="34" rx="3" fill="#1d1d1f"/>
+    <rect x="60" y="380" width="1080" height="360" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="80" y="410" width="200" height="14" rx="3" fill="#9a9485"/>
+    <rect x="80" y="450" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="490" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="530" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="570" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="610" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="650" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="690" width="1040" height="1" fill="#e5e2da"/>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Live mode — data pulled from CasePeer API -->
+<style>
+  /* ============================================================
+     KAL Operations · v2
+     Swiss/Apple — denser, alive, scan-first
+     ============================================================ */
+  :root{
+    /* Surfaces */
+    --bg:           #f5f5f7;
+    --surface:      #ffffff;
+    --surface-2:    #fafafa;
+    --surface-3:    #f0f0f2;
+    --surface-glass:rgba(255,255,255,0.78);
+
+    /* Lines */
+    --line:         #e5e5e7;
+    --line-strong:  #d2d2d7;
+
+    /* Text */
+    --ink:          #1d1d1f;
+    --ink-2:        #424245;
+    --ink-3:        #6e6e73;
+    --ink-4:        #8e8e93;
+
+    /* Status */
+    --blue:         #0071e3;
+    --blue-soft:    #e8f1fc;
+    --indigo:       #5e5ce6;
+    --indigo-soft:  #ecebfb;
+    --amber:        #b25e09;
+    --amber-bg:     #fff4e0;
+    --amber-mark:   #f5a524;
+    --green:        #0a7d3b;
+    --green-bg:     #e6f5ec;
+    --green-mark:   #34c759;
+    --red:          #b3261e;
+    --red-bg:       #fdecea;
+    --red-mark:     #d70015;
+    --purple:       #5b3aa8;
+    --purple-bg:    #efeaf9;
+    --purple-mark:  #7e5bd1;
+    --neutral-mark: #a1a1a6;
+
+    /* Tab accent (changes per tab) */
+    --accent:       #0071e3;
+
+    /* Type */
+    --ui: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --num: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Density (toggleable) */
+    --row-pad-y: 11px;
+    --kpi-pad:   16px 18px 18px;
+    --section-gap: 24px;
+  }
+  body[data-density="cozy"]{
+    --row-pad-y: 14px;
+    --kpi-pad:   20px 22px 22px;
+    --section-gap: 30px;
+    font-size: 14.5px;
+  }
+  body[data-density="comfy"]{
+    --row-pad-y: 11px;
+    --kpi-pad:   16px 18px 18px;
+    --section-gap: 24px;
+    font-size: 14px;
+  }
+  body[data-density="compact"]{
+    --row-pad-y: 6px;
+    --kpi-pad:   10px 12px 12px;
+    --section-gap: 14px;
+    font-size: 12.5px;
+  }
+  body[data-density="compact"] .kpi{ min-height: 96px; }
+  body[data-density="compact"] .kpi .value{ font-size: 26px; }
+  body[data-density="compact"] .kpi .spark{ height: 22px; }
+  body[data-density="compact"] table.t{ font-size: 12px; }
+  body[data-density="compact"] table.t th{ padding: 7px 12px; }
+  body[data-density="compact"] table.t td{ padding: 6px 12px; }
+  body[data-density="compact"] .briefing{ padding: 10px 14px; }
+  body[data-density="compact"] .pipeline-card{ padding: 16px 18px 14px; }
+  body[data-density="compact"] .pipebar{ height: 48px; }
+
+  /* ==================  Accent intensity  ==================
+     "subtle"   = current minimal Swiss palette
+     "balanced" = stronger row tints + colored KPI accents
+     "vivid"    = colored card surfaces + gradient pipeline + stronger row stripes
+  */
+  body[data-accent="balanced"] .kpi{ border-color: color-mix(in oklab, var(--accent) 18%, var(--line)); }
+  body[data-accent="balanced"] .kpi .label{ color: color-mix(in oklab, var(--accent) 55%, var(--ink-3)); }
+  body[data-accent="balanced"] .pipeline-card{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 5%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 22%, var(--line));
+  }
+  body[data-accent="balanced"] .briefing{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, #fff), #fff);
+  }
+  body[data-accent="balanced"] tr.row-alert td{ background: #fde8e6; }
+  body[data-accent="balanced"] tr.row-warn td { background: #fff2dc; }
+  body[data-accent="balanced"] tr.row-good td { background: #e3f5ea; }
+  body[data-accent="balanced"] tr.row-exec td { background: #e0ecfb; }
+  body[data-accent="balanced"] .accent-rule{ width: 44px; height: 3px; }
+
+  body[data-accent="vivid"] .kpi{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 8%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 30%, var(--line));
+  }
+  body[data-accent="vivid"] .kpi .label{ color: color-mix(in oklab, var(--accent) 70%, var(--ink-3)); }
+  body[data-accent="vivid"] .kpi .value{ color: color-mix(in oklab, var(--accent) 30%, var(--ink)); }
+  body[data-accent="vivid"] .pipeline-card{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+  }
+  body[data-accent="vivid"] .briefing{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 12%, #fff), #fff);
+    border-left-width: 4px;
+  }
+  body[data-accent="vivid"] .panel{
+    border-color: color-mix(in oklab, var(--accent) 22%, var(--line));
+  }
+  body[data-accent="vivid"] tr.row-alert td{ background: #fbd9d5; }
+  body[data-accent="vivid"] tr.row-warn td { background: #ffe6bd; }
+  body[data-accent="vivid"] tr.row-good td { background: #d0eedb; }
+  body[data-accent="vivid"] tr.row-exec td { background: #cfe0f8; }
+  body[data-accent="vivid"] .pipeseg{ filter: saturate(1.15); }
+  body[data-accent="vivid"] .accent-rule{ width: 56px; height: 3px; }
+  body[data-accent="vivid"] .topbar-wrap{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 8%, rgba(255,255,255,0.85)), rgba(255,255,255,0.78));
+  }
+
+  /* Hide alert dots if turned off */
+  body[data-alert-dots="off"] .tab .alert-dot{ display:none !important; }
+  /* Hide sparklines if turned off */
+  body[data-sparklines="off"] .spark{ display:none; }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{line-height:1.45}
+  button{font-family:inherit}
+
+  /* ---------- Sticky frosted topbar ---------- */
+  .topbar-wrap{
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface-glass);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar{
+    max-width: 1440px; margin: 0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 32px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{
+    width:28px;height:28px;border-radius:7px;
+    background:#1d1d1f;color:#fff;
+    display:grid;place-items:center;
+    font-weight:700;font-size:12px;
+  }
+  .brand-title{font-weight:600;font-size:15px;letter-spacing:-0.01em}
+  .brand-sub{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+
+  .topbar-tabs{
+    display:inline-flex;
+    background: rgba(0,0,0,0.05);
+    border-radius:10px;padding:3px;gap:2px;
+  }
+  .tab{
+    border:0;background:transparent;padding:7px 13px;
+    font-size:13px;font-weight:500;color:var(--ink-2);
+    border-radius:7px;cursor:pointer;letter-spacing:-0.005em;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .tab .alert-dot{width:6px;height:6px;border-radius:50%;background:var(--red-mark);display:none}
+  .tab[data-alerts="1"] .alert-dot{display:inline-block}
+  .tab:hover{color:var(--ink)}
+  .tab.active{
+    background:#fff;color:var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 0.5px rgba(0,0,0,.04);
+  }
+
+  .meta{display:flex;align-items:center;gap:14px;color:var(--ink-3);font-size:12px}
+  .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--green-mark);display:inline-block;margin-right:6px}
+  .meta .user{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:500}
+  .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#d6d6da,#a8a8ad);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600}
+  .density{
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:7px;padding:2px;gap:1px;
+  }
+  .density button{
+    border:0;background:transparent;padding:4px 8px;
+    font-size:11px;font-weight:500;color:var(--ink-3);
+    border-radius:5px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
+  }
+  .density button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+  /* ---------- App body ---------- */
+  .app{max-width:1440px;margin:0 auto;padding:20px 32px 64px}
+
+  /* Tab accent rule (under each section title) */
+  .accent-rule{
+    height:2px;width:36px;background:var(--accent);
+    border-radius:2px;margin-bottom:8px;
+  }
+
+  /* ---------- Today briefing ---------- */
+  .briefing{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius:12px;
+    padding:14px 18px 14px 18px;
+    margin-bottom:18px;
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    gap:18px;
+    align-items:center;
+  }
+  .briefing .head{
+    font-size:10.5px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+    color:var(--ink-3);
+    display:flex;align-items:center;gap:8px;
+    border-right:1px solid var(--line);
+    padding-right:18px;
+  }
+  .briefing .head .pulse{
+    width:8px;height:8px;border-radius:50%;background:var(--red-mark);
+    box-shadow:0 0 0 0 rgba(215,0,21,0.5);
+    animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(215,0,21,0.5)}
+    70%{box-shadow:0 0 0 8px rgba(215,0,21,0)}
+    100%{box-shadow:0 0 0 0 rgba(215,0,21,0)}
+  }
+  .briefing .items{
+    display:flex;gap:24px;flex-wrap:wrap;
+  }
+  .briefing .item{
+    font-size:13px;color:var(--ink-2);line-height:1.4;
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .briefing .item .marker{
+    font-family:var(--num);font-size:13px;font-weight:600;
+    padding:1px 6px;border-radius:4px;
+  }
+  .briefing .item.red .marker{background:var(--red-bg);color:var(--red)}
+  .briefing .item.amber .marker{background:var(--amber-bg);color:var(--amber)}
+  .briefing .item.blue .marker{background:var(--blue-soft);color:var(--blue)}
+  .briefing .stamp{
+    font-size:11px;color:var(--ink-4);text-align:right;
+  }
+  .briefing .stamp b{display:block;color:var(--ink-2);font-weight:600;font-size:12px}
+
+  /* ---------- Section header ---------- */
+  .section-title{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    margin: var(--section-gap) 0 10px;
+  }
+  .section-title .left{display:flex;flex-direction:column}
+  .section-title h2{
+    margin:0;font-size:13px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-3);
+  }
+  .section-title .hint{font-size:12px;color:var(--ink-4)}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{
+    position:relative;background:var(--surface);
+    border:1px solid var(--line);border-radius:10px;
+    padding: var(--kpi-pad);min-height:124px;
+    display:flex;flex-direction:column;
+    transition: border-color .15s, transform .15s;
+  }
+  .kpi:hover{border-color:var(--line-strong)}
+  .kpi .label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-3)}
+  .kpi .row-v{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+    margin-top:6px;
+  }
+  .kpi .value{
+    font-family:var(--num);font-size:32px;font-weight:600;
+    line-height:1.0;letter-spacing:-0.02em;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .kpi .delta{
+    font-size:11px;font-weight:600;color:var(--ink-3);
+    display:inline-flex;align-items:center;gap:3px;
+    font-family:var(--num);font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .kpi .delta.up{color:var(--green)}
+  .kpi .delta.down{color:var(--red)}
+  .kpi .delta.flat{color:var(--ink-4)}
+  .kpi .spark{height:28px;margin-top:8px}
+  .kpi .sub{margin-top:8px;font-size:12px;color:var(--ink-3);line-height:1.35}
+  .kpi .accent{
+    position:absolute;top:14px;right:16px;
+    font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+    padding:3px 7px;border-radius:999px;background:var(--surface-3);color:var(--ink-3);
+  }
+  .kpi.alert{background:#fff7f6;border-color:#f5c8c4}
+  .kpi.alert .value{color:var(--red)}
+  .kpi.alert .accent{background:var(--red-bg);color:var(--red)}
+  .kpi.warn{background:#fff9ee;border-color:#f1ddb1}
+  .kpi.warn .value{color:#9a4d05}
+  .kpi.warn .accent{background:#fbe7c2;color:#8a4604}
+  .kpi.good .accent{background:var(--green-bg);color:var(--green)}
+
+  .kpi[data-tip]{cursor:default}
+  .kpi[data-tip]:hover::after{
+    content:attr(data-tip);
+    position:absolute;left:12px;right:12px;top:calc(100% + 6px);z-index:30;
+    background:#1d1d1f;color:#f5f5f7;
+    font-size:11.5px;line-height:1.45;
+    padding:9px 11px;border-radius:8px;
+    box-shadow:0 6px 20px rgba(0,0,0,.18);
+    white-space:pre-line;pointer-events:none;
+  }
+  .kpi[data-tip]:hover::before{
+    content:"";position:absolute;top:100%;left:24px;
+    border:6px solid transparent;border-bottom-color:#1d1d1f;
+    margin-top:-6px;z-index:31;
+  }
+
+  /* ---------- Pipeline (centerpiece) ---------- */
+  .pipeline-card{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:22px 24px 18px;
+  }
+  .pipeline-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+  .pipeline-head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em}
+  .pipeline-head .total{font-family:var(--num);font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .pipeline-head .total b{color:var(--ink);font-weight:600}
+
+  /* Annotated stage labels above bar */
+  .pipe-labels{
+    display:flex;gap:3px;margin-bottom:6px;height:34px;
+  }
+  .pipe-lab{
+    display:flex;flex-direction:column;justify-content:flex-end;
+    overflow:hidden;
+    font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.05em;
+    color:var(--ink-3);line-height:1.15;
+    padding: 0 4px 4px;
+    text-align:left;
+    min-width:0;
+  }
+  .pipe-lab.bottleneck{color:var(--amber)}
+  .pipe-lab.alert{color:var(--red)}
+  .pipe-lab .arrow{color:var(--ink-4);font-weight:400;margin-left:2px}
+
+  .pipebar{
+    display:flex;gap:3px;height:62px;
+    border-radius:8px;overflow:hidden;
+    position:relative;
+  }
+  .pipeseg{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;overflow:hidden;min-width:18px;
+    transition: filter .15s;
+  }
+  .pipeseg:hover{filter:brightness(1.05)}
+  .pipeseg .pcount{
+    font-family:var(--num);font-weight:600;font-size:16px;
+    font-variant-numeric:tabular-nums;letter-spacing:-0.01em;
+  }
+  /* tiny segment fallback — show count above the bar */
+  .pipeseg.tiny .pcount{display:none}
+  .pipeseg.tiny::after{
+    content: attr(data-count);
+    position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-family:var(--num);font-weight:600;font-size:12px;
+    color:var(--ink-3);
+  }
+  .pipeseg.s-pending{background:#c7c7cc;color:#1d1d1f}
+  .pipeseg.s-prepped{background:#aeaeb2;color:#1d1d1f}
+  .pipeseg.s-3p{background:#0071e3}
+  .pipeseg.s-uim{background:#5e5ce6}
+  .pipeseg.s-neg{background:#f5a524;color:#1d1d1f}
+  .pipeseg.s-settled{background:#34c759;color:#0a4a22}
+  .pipeseg.s-lien{background:#d70015}
+  .pipeseg.s-disb{background:#7e5bd1}
+
+  /* axis under bar — proportional ticks aligned to segment edges */
+  .pipe-axis{
+    display:flex;gap:3px;height:14px;margin-top:6px;
+  }
+  .pipe-tick{
+    border-left:1px solid var(--line-strong);
+    height:6px;
+    position:relative;
+  }
+
+  /* ---------- Demand area chart ---------- */
+  .area-card{padding:18px 20px 14px}
+  .area-head{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+  }
+  .area-head h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-0.01em}
+  .area-head .legend{font-size:11.5px;color:var(--ink-3);display:flex;gap:14px;align-items:center}
+  .area-head .legend .pip{
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .area-head .legend .pip i{
+    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:1px;
+  }
+  .area-head .legend .pip.recent i{background:var(--amber-mark)}
+  .area-svg{width:100%;height:170px;display:block}
+
+  /* ---------- Tables ---------- */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .panel-head{
+    padding:13px 18px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+  }
+  .panel-head h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-0.01em}
+  .panel-head .meta-r{font-size:12px;color:var(--ink-3)}
+
+  /* filter chips */
+  .chips{display:inline-flex;gap:4px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--line);background:var(--surface);
+    padding:4px 10px;border-radius:999px;
+    font-size:11.5px;font-weight:500;color:var(--ink-3);
+    cursor:pointer;letter-spacing:-0.005em;
+  }
+  .chip:hover{color:var(--ink);border-color:var(--line-strong)}
+  .chip.on{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+
+  table.t{width:100%;border-collapse:collapse;font-size:13px}
+  table.t th{
+    text-align:left;
+    font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-3);
+    padding:10px 16px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface-2);white-space:nowrap;
+    position:sticky;top:0;
+  }
+  table.t td{
+    padding: var(--row-pad-y) 16px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  table.t tbody tr:last-child td{border-bottom:0}
+  table.t tbody tr:hover{background:var(--surface-3)}
+  td.num,th.num{text-align:right;font-family:var(--num);font-variant-numeric:tabular-nums}
+  th.num{width:1%;white-space:nowrap}
+  td.num{white-space:nowrap}
+  /* When a numeric cell contains a bar-in-cell, the column needs to be wide
+     enough for the bar — give the th a matching min-width so header text
+     right-aligns above the number, not above the column's narrow edge. */
+  th.num.has-bar{min-width:170px}
+  .bic{width:100%}
+  td.name{font-weight:500;color:var(--ink)}
+
+  tr.row-alert td{background:#fff5f4}
+  tr.row-alert td:first-child{box-shadow:inset 3px 0 0 var(--red-mark)}
+  tr.row-good td{background:#f1faf3}
+  tr.row-good td:first-child{box-shadow:inset 3px 0 0 var(--green-mark)}
+  tr.row-warn td{background:#fffaf0}
+  tr.row-warn td:first-child{box-shadow:inset 3px 0 0 var(--amber-mark)}
+  tr.row-exec td{background:#eff5fd}
+  tr.row-exec td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+
+  /* bar-in-cell */
+  .bic{
+    position:relative;
+    display:inline-block;min-width:160px;
+    padding:0;
+  }
+  .bic .barfill{
+    position:absolute;left:0;top:50%;transform:translateY(-50%);
+    height:18px;border-radius:3px;
+    background: var(--accent);
+    opacity:0.14;z-index:0;
+  }
+  .bic .barlbl{
+    position:relative;z-index:1;
+    display:block;text-align:right;padding:1px 8px;
+    font-family:var(--num);font-variant-numeric:tabular-nums;
+  }
+  .bic.amber .barfill{background:var(--amber-mark)}
+  .bic.green .barfill{background:var(--green-mark)}
+  .bic.blue .barfill{background:var(--blue)}
+
+  /* badges / flags */
+  .flag{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 8px;font-size:11px;font-weight:600;
+    border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;
+    white-space:nowrap;
+  }
+  .flag.red{background:var(--red-bg);color:var(--red)}
+  .flag.amber{background:var(--amber-bg);color:var(--amber)}
+  .flag.green{background:var(--green-bg);color:var(--green)}
+  .flag.blue{background:var(--blue-soft);color:var(--blue)}
+  .flag.gray{background:var(--surface-3);color:var(--ink-3)}
+  .flag.purple{background:var(--purple-bg);color:var(--purple)}
+
+  .badge-exec{
+    display:inline-block;margin-left:8px;
+    padding:2px 6px;font-size:9.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.08em;
+    background:var(--blue);color:#fff;border-radius:4px;vertical-align:2px;
+  }
+  .owner{color:var(--ink-3);font-size:12.5px}
+
+  /* spark svg */
+  .spark svg{display:block;width:100%;height:100%;overflow:visible}
+
+  /* stat-pill + blip */
+  .stat-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-2);
+  }
+  .stat-pill .blip{width:8px;height:8px;border-radius:50%;background:var(--neutral-mark)}
+  .stat-pill.red .blip{background:var(--red-mark)}
+  .stat-pill.amber .blip{background:var(--amber-mark)}
+  .stat-pill.green .blip{background:var(--green-mark)}
+  .stat-pill.blue .blip{background:var(--blue)}
+
+  /* CM toggle */
+  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:9px;padding:3px;gap:2px}
+  .seg button{
+    border:0;background:transparent;padding:6px 14px;
+    font-size:12.5px;font-weight:500;color:var(--ink-2);
+    border-radius:6px;cursor:pointer;
+  }
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06), 0 0 0 0.5px rgba(0,0,0,.04)}
+
+  .note{
+    font-size:12.5px;color:var(--ink-3);
+    background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.5;
+  }
+  .note b{color:var(--ink-2);font-weight:600}
+
+  /* case 2-line cell — fixed line-height to keep rows aligned */
+  .case-cell{line-height:1.25}
+  .case-cell .case-name{font-weight:500;color:var(--ink)}
+  .case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
+
+  /* flag stack column — vertical so column edge stays clean */
+  td.flagcol{white-space:normal}
+  td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+
+  .page{display:none}
+  .page.active{display:block}
+
+  .foot{
+    margin-top:32px;padding-top:14px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-4);
+  }
+  .foot kbd{
+    font-family:var(--num);font-size:10.5px;
+    border:1px solid var(--line);border-radius:4px;
+    padding:1px 5px;background:var(--surface);color:var(--ink-3);
+  }
+
+  /* responsive */
+  @media (max-width:1100px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .briefing{grid-template-columns:1fr;gap:10px}
+    .briefing .head{border-right:0;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:8px}
+    .briefing .stamp{text-align:left}
+  }
+  @media (max-width:720px){
+    .topbar,.app{padding-left:16px;padding-right:16px}
+    .kpi-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body data-density="comfy" data-accent="balanced" data-alert-dots="on" data-sparklines="on" data-briefing="on" data-bg="snow">
+
+<!-- =================== STICKY TOPBAR =================== -->
+<div class="topbar-wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <div>
+        <div class="brand-title">KAL Operations</div>
+        <div class="brand-sub">Live · CasePeer sync</div>
+      </div>
+    </div>
+
+    <nav class="topbar-tabs" role="tablist">
+      <button class="tab active" data-tab="pipeline">Pipeline</button>
+      <button class="tab" data-tab="settlements" data-alerts="1"><span>Settlements</span><span class="alert-dot"></span></button>
+      <button class="tab" data-tab="cm">CM Performance</button>
+      <button class="tab" data-tab="lien" data-alerts="1"><span>Lien Operations</span><span class="alert-dot"></span></button>
+      <button class="tab" data-tab="dq">Data Quality</button>
+    </nav>
+
+    <div class="meta">
+      <div><span class="dot"></span><span id="live-timestamp"></span></div>
+      <div class="user"><div class="avatar">M</div>Moises</div>
+    </div>
+  </header>
+</div>
+
+<div class="app">
+
+  <!-- ===========================================================
+       TAB 1 — PIPELINE
+       =========================================================== -->
+  <section class="page active" data-page="pipeline" style="--accent:#0071e3">
+
+    <!-- TODAY BRIEFING -->
+    <div class="briefing">
+      <div class="head"><span class="pulse"></span>Today · 3 to look at</div>
+      <div class="items">
+        <div class="item red"><span class="marker">65</span><span>expired demands need adjuster follow-up — Mark &amp; Hernan.</span></div>
+        <div class="item amber"><span class="marker">84</span><span>active negotiations — bottleneck stage, +6 vs last week.</span></div>
+        <div class="item red"><span class="marker">141d</span><span>Bianca's avg lien-negotiation time — 10 inactive 14d+.</span></div>
+      </div>
+      <div class="stamp" id="pipe-stamp"><b>Loading...</b></div>
+    </div>
+
+    <div class="pipeline-card">
+      <div class="pipeline-head">
+        <h2>Case Pipeline</h2>
+        <div class="total"><b>275</b> open cases · 8 stages</div>
+      </div>
+
+      <!-- Labels above bar (proportional, aligned 1:1 with segments) -->
+      <div class="pipe-labels">
+        <div class="pipe-lab" style="flex:24">Pending<br>Demand</div>
+        <div class="pipe-lab" style="flex:1"></div>
+        <div class="pipe-lab" style="flex:54">Demanded<br>3P</div>
+        <div class="pipe-lab" style="flex:14">UIM<br>Demanded</div>
+        <div class="pipe-lab bottleneck" style="flex:84">Settlement Neg.<span class="arrow"> ◀ bottleneck</span></div>
+        <div class="pipe-lab" style="flex:19">Settled</div>
+        <div class="pipe-lab alert" style="flex:42">Lien Neg.</div>
+        <div class="pipe-lab" style="flex:37">Disbursement</div>
+      </div>
+
+      <!-- Bar (flex weights = counts) -->
+      <div class="pipebar" id="pipebar">
+        <div class="pipeseg s-pending" style="flex:24"><span class="pcount">24</span></div>
+        <div class="pipeseg s-prepped tiny" data-count="1" style="flex:1"><span class="pcount">1</span></div>
+        <div class="pipeseg s-3p"      style="flex:54"><span class="pcount">54</span></div>
+        <div class="pipeseg s-uim"     style="flex:14"><span class="pcount">14</span></div>
+        <div class="pipeseg s-neg"     style="flex:84"><span class="pcount">84</span></div>
+        <div class="pipeseg s-settled" style="flex:19"><span class="pcount">19</span></div>
+        <div class="pipeseg s-lien"    style="flex:42"><span class="pcount">42</span></div>
+        <div class="pipeseg s-disb"    style="flex:37"><span class="pcount">37</span></div>
+      </div>
+
+      <!-- Tick axis — same flex weights so ticks align with segment edges -->
+      <div class="pipe-axis">
+        <div class="pipe-tick" style="flex:24"></div>
+        <div class="pipe-tick" style="flex:1"></div>
+        <div class="pipe-tick" style="flex:54"></div>
+        <div class="pipe-tick" style="flex:14"></div>
+        <div class="pipe-tick" style="flex:84"></div>
+        <div class="pipe-tick" style="flex:19"></div>
+        <div class="pipe-tick" style="flex:42"></div>
+        <div class="pipe-tick" style="flex:37"></div>
+      </div>
+    </div>
+
+    <!-- KPI cards w/ sparklines + deltas -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Where attention goes</h2>
+      </div>
+      <div class="hint">Hover any card · 14-day trend shown</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="Demands sent, awaiting carrier offer.&#10;Source: CasePeer · Stage = Demanded (3P) + UIM Demanded.">
+        <div class="label">Awaiting Adjuster</div>
+        <div class="row-v">
+          <div class="value">68</div>
+          <div class="delta up">▲ 3 wk</div>
+        </div>
+        <div class="spark" data-spark="62,64,63,65,66,64,65,67,66,68,67,68,68,68" data-color="ink-3"></div>
+        <div class="sub">54 third-party · 14 UIM</div>
+      </div>
+
+      <div class="kpi warn" data-tip="Active settlement negotiations.&#10;Source: CasePeer · Stage = Settlement Negotiations.&#10;Mark + Hernan handle this stage.">
+        <div class="accent">Bottleneck</div>
+        <div class="label">Active Negotiations</div>
+        <div class="row-v">
+          <div class="value">84</div>
+          <div class="delta down">▲ 6 wk</div>
+        </div>
+        <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
+        <div class="sub">Mark &amp; Hernan</div>
+      </div>
+
+      <div class="kpi" data-tip="Cases settled, awaiting lien resolution.&#10;Source: CasePeer · Stage = Lien Negotiations.">
+        <div class="label">Awaiting Liens</div>
+        <div class="row-v">
+          <div class="value">42</div>
+          <div class="delta flat">— 0 wk</div>
+        </div>
+        <div class="spark" data-spark="40,41,42,42,41,42,43,42,42,41,42,42,42,42" data-color="ink-3"></div>
+        <div class="sub">Bianca's team</div>
+      </div>
+
+      <div class="kpi" data-tip="Liens resolved, payout pending.&#10;Source: CasePeer · Stage = Disbursement.">
+        <div class="label">Disbursement</div>
+        <div class="row-v">
+          <div class="value">37</div>
+          <div class="delta up">▲ 2 wk</div>
+        </div>
+        <div class="spark" data-spark="33,34,34,35,35,36,35,36,36,37,37,37,37,37" data-color="purple"></div>
+        <div class="sub">Final payout pending</div>
+      </div>
+    </div>
+
+    <!-- Demand area chart -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Demand volume · 14 months</h2>
+      </div>
+      <div class="hint">Jan 2025 – Feb 2026</div>
+    </div>
+    <div class="panel area-card">
+      <div class="area-head">
+        <h3>Monthly demands sent</h3>
+        <div class="legend">
+          <span class="pip"><i></i>history</span>
+          <span class="pip recent"><i></i>2026 YTD</span>
+        </div>
+      </div>
+      <svg class="area-svg" id="vol-area" viewBox="0 0 800 170" preserveAspectRatio="none"></svg>
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+       TAB 2 — SETTLEMENTS
+       =========================================================== -->
+  <section class="page" data-page="settlements" style="--accent:#0071e3">
+
+    <div class="briefing">
+      <div class="head"><span class="pulse"></span>Settlements · 1 to act on</div>
+      <div class="items">
+        <div class="item red"><span class="marker">65</span><span>demands past 30-day window with no carrier offer.</span></div>
+        <div class="item amber"><span class="marker">2-person</span><span>team carrying 84 active negotiations.</span></div>
+        <div class="item blue"><span class="marker">19</span><span>settled — ready for handoff to lien team.</span></div>
+      </div>
+      <div class="stamp"><b>Settlement health</b>updated live</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="Total demands sent in 2026 to date.">
+        <div class="label">Demands Sent · 2026 YTD</div>
+        <div class="row-v">
+          <div class="value">44</div>
+          <div class="delta down">▼ pace</div>
+        </div>
+        <div class="spark" data-spark="29,15" data-color="ink-3" data-bars="1"></div>
+        <div class="sub">Jan: 29 · Feb: 15</div>
+      </div>
+
+      <div class="kpi alert" data-tip="30-day window closed, no offer received.&#10;Mark &amp; Hernan own follow-up.">
+        <div class="accent">Action</div>
+        <div class="label">Expired · No Response</div>
+        <div class="row-v">
+          <div class="value">65</div>
+          <div class="delta down">▲ 4 wk</div>
+        </div>
+        <div class="spark" data-spark="55,57,58,60,61,61,62,63,63,64,64,65,65,65" data-color="red"></div>
+        <div class="sub">Needs adjuster follow-up</div>
+      </div>
+
+      <div class="kpi" data-tip="Still inside 30-day response window.">
+        <div class="label">Pending Response</div>
+        <div class="row-v">
+          <div class="value">4</div>
+          <div class="delta flat">— 0 wk</div>
+        </div>
+        <div class="spark" data-spark="6,5,5,4,4,5,5,4,4,5,4,4,4,4" data-color="ink-3"></div>
+        <div class="sub">Monitor only</div>
+      </div>
+
+      <div class="kpi warn" data-tip="Offer received, in negotiation.">
+        <div class="accent">Active</div>
+        <div class="label">Active Negotiations</div>
+        <div class="row-v">
+          <div class="value">84</div>
+          <div class="delta down">▲ 6 wk</div>
+        </div>
+        <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
+        <div class="sub">Mark &amp; Hernan</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Demand pipeline · action required</h2>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>By status</h3>
+        <div class="chips" data-filter="settle">
+          <button class="chip on" data-f="all">All owners</button>
+          <button class="chip" data-f="mark">Mark</button>
+          <button class="chip" data-f="hernan">Hernan</button>
+          <button class="chip" data-f="bianca">Bianca</button>
+        </div>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th class="num">Count</th>
+            <th>Meaning</th>
+            <th>Owner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-alert">
+            <td><span class="stat-pill red"><span class="blip"></span>Expired · no offer</span></td>
+            <td class="num">65</td>
+            <td>30-day window closed, no carrier response.</td>
+            <td class="owner">Mark · Hernan</td>
+          </tr>
+          <tr>
+            <td><span class="stat-pill"><span class="blip"></span>Pending · in window</span></td>
+            <td class="num">4</td>
+            <td>Inside response window — monitor only.</td>
+            <td class="owner">—</td>
+          </tr>
+          <tr class="row-warn">
+            <td><span class="stat-pill amber"><span class="blip"></span>Negotiating</span></td>
+            <td class="num">84</td>
+            <td>Offer received, active negotiation.</td>
+            <td class="owner">Mark · Hernan</td>
+          </tr>
+          <tr class="row-good">
+            <td><span class="stat-pill green"><span class="blip"></span>Settled · move to liens</span></td>
+            <td class="num">19</td>
+            <td>Deal done — handoff to lien team.</td>
+            <td class="owner">Bianca</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Top insurance carriers · 2026 YTD</h2>
+      </div>
+      <div class="hint">Sorted by demand volume · bar shows volume share</div>
+    </div>
+    <div class="panel">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Carrier</th>
+            <th class="num has-bar">Demands</th>
+            <th class="num">Pops</th>
+            <th class="num">Pop Rate</th>
+            <th class="num has-bar">Avg Offer</th>
+          </tr>
+        </thead>
+        <tbody id="carriers"></tbody>
+      </table>
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+       TAB 3 — CM PERFORMANCE
+       =========================================================== -->
+  <section class="page" data-page="cm" style="--accent:#0071e3">
+
+    <div class="briefing">
+      <div class="head"><span class="pulse"></span>CM Performance</div>
+      <div class="items">
+        <div class="item blue"><span class="marker">$2.69M</span><span>settlement revenue YTD across 111 deposits.</span></div>
+        <div class="item amber"><span class="marker">Kausar</span><span>$803K — Exec Team cases, not comparable to standard CMs.</span></div>
+      </div>
+      <div class="stamp"><b>Through May 6, 2026</b>est. fees ~$897K</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-top:4px">
+      <div class="seg" id="cm-seg">
+        <button class="on" data-period="2026">2026 YTD</button>
+        <button data-period="2025">2025</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--ink-3);max-width:640px">
+        <b style="color:var(--ink-2)">Settlement Revenue</b> = checks deposited.
+        <b style="color:var(--ink-2)">Est. Fees</b> = revenue ÷ 3.
+        <b style="color:var(--ink-2)">Pop Rate</b> = pops ÷ analyzable demands.
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:18px">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2 id="cm-title">CM output · 2026 YTD</h2>
+      </div>
+      <div class="hint">Sorted by settlement revenue ↓</div>
+    </div>
+
+    <!-- 2026 -->
+    <div class="panel" id="cm-2026">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case Manager</th>
+            <th class="num">Demands</th>
+            <th class="num">Pops</th>
+            <th class="num">Pop Rate</th>
+            <th class="num has-bar">Settlement Revenue</th>
+            <th class="num">Est. Fees (33%)</th>
+          </tr>
+        </thead>
+        <tbody id="cm-2026-body"></tbody>
+      </table>
+    </div>
+    <div class="note" id="cm-2026-note">
+      <b>2026 YTD totals.</b> $2,692,210 settlement revenue · 111 check deposits · est. fees ~$897,403.
+    </div>
+
+    <!-- 2025 -->
+    <div class="panel" id="cm-2025" style="display:none">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case Manager</th>
+            <th class="num">Demands</th>
+            <th class="num">Pops</th>
+            <th class="num">Pop Rate</th>
+            <th class="num has-bar">Settlement Revenue</th>
+            <th class="num">Est. Fees (33%)</th>
+          </tr>
+        </thead>
+        <tbody id="cm-2025-body"></tbody>
+      </table>
+    </div>
+    <div class="note" id="cm-2025-note" style="display:none">
+      <b>2025 totals.</b> $10,219,971 settlement revenue · 367 check deposits · est. fees ~$3,406,657.
+      Junior, Ulises &amp; Ashley appear because they were CMs on cases that settled before role changes.
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+       TAB 4 — LIEN OPERATIONS
+       =========================================================== -->
+  <section class="page" data-page="lien" style="--accent:#0071e3">
+
+    <div class="briefing" id="lien-briefing">
+      <div class="head"><span class="pulse"></span>Lien Ops · loading live data</div>
+      <div class="items" id="lien-briefing-items">
+        <div class="item blue"><span class="marker">…</span><span>Fetching from CasePeer.</span></div>
+      </div>
+      <div class="stamp"><b id="lien-stamp-title">Lien team status</b><span id="lien-stamp-meta">connecting…</span></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="Open lien records.&#10;Source: CasePeer · Lien table where Status = Open.">
+        <div class="label">Active Liens</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-active">—</div>
+          <div class="delta flat" id="lien-kpi-active-delta">live</div>
+        </div>
+        <div class="sub" id="lien-kpi-active-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Count of records in lien-negotiations-overview.">
+        <div class="label">Cases in Lien Neg.</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-cases">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-cases-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Count of records in disbursement-overview.">
+        <div class="label">Cases in Disbursement</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-disb">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-disb-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Sum of settlement_total across unique cases with settled value.">
+        <div class="label">Settled Value · Lien Cases</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-settled">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-settled-sub">loading…</div>
+      </div>
+    </div>
+
+    <!-- Sub-tab toggle -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Lien drill-down</h2>
+      </div>
+      <div class="chips" id="lien-subtabs">
+        <button class="chip on" data-sub="cases">Cases</button>
+        <button class="chip" data-sub="negotiators">Negotiators</button>
+        <button class="chip" data-sub="disb">Disbursement</button>
+      </div>
+    </div>
+
+    <!-- Filter / threshold bar -->
+    <div class="panel" id="lien-filter-bar" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Negotiator</span>
+        <select id="lien-f-neg" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Flag</span>
+        <select id="lien-f-flag" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+          <option value="">All</option>
+          <option value="Stuck">Stuck</option>
+          <option value="No Activity">No Activity</option>
+          <option value="High Lien Load">High Lien Load</option>
+          <option value="flagged">Any Flag</option>
+          <option value="clean">No Flags</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Search</span>
+        <input id="lien-f-search" type="text" placeholder="Case name…" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:200px;" />
+      </div>
+      <div style="flex:1"></div>
+      <details id="lien-thresh-disclosure" style="font-size:12px;">
+        <summary style="cursor:pointer;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;">Thresholds</summary>
+        <div style="display:flex;gap:14px;margin-top:8px;align-items:center;">
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Stuck&nbsp;&gt; <input id="lien-th-stuck" type="number" value="45" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Inactive&nbsp;&ge; <input id="lien-th-inactive" type="number" value="14" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">High Load&nbsp;&gt; <input id="lien-th-load" type="number" value="5" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> liens</label>
+        </div>
+      </details>
+    </div>
+
+    <!-- Cases pane -->
+    <div class="panel" id="lien-pane-cases" style="margin-top:12px;">
+      <div class="panel-head">
+        <h3 id="lien-cases-count">Cases · loading…</h3>
+      </div>
+      <table class="t" id="lien-cases-table">
+        <thead>
+          <tr>
+            <th style="width:32px"></th>
+            <th data-sort="caseName">Case</th>
+            <th data-sort="negotiator">Negotiator</th>
+            <th class="num has-bar" data-sort="lienCount">Liens</th>
+            <th class="num" data-sort="maxDays">Oldest Lien</th>
+            <th class="num" data-sort="daysSinceTouch">Days Since Activity</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody id="lien-cases-body">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Negotiators pane -->
+    <div class="panel" id="lien-pane-negotiators" style="margin-top:12px;display:none;">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Negotiator</th>
+            <th class="num has-bar">Liens</th>
+            <th class="num">Cases</th>
+            <th class="num">Avg Days</th>
+            <th class="num">Inactive</th>
+            <th class="num">Flagged Cases</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lien-neg-body">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Disbursement pane -->
+    <div class="panel" id="lien-pane-disb" style="margin-top:12px;display:none;">
+      <div class="panel-head">
+        <h3 id="lien-disb-count">Cases pending payout · loading…</h3>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Negotiator</th>
+            <th class="num">Days in Disb.</th>
+            <th class="num">Last Touched</th>
+            <th class="num">Pending Since</th>
+          </tr>
+        </thead>
+        <tbody id="disb-body">
+          <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+       TAB 5 — DATA QUALITY
+       =========================================================== -->
+  <section class="page" data-page="dq" style="--accent:#0071e3">
+
+    <div class="briefing">
+      <div class="head"><span class="pulse"></span>Data Quality</div>
+      <div class="items">
+        <div class="item red"><span class="marker">9</span><span>demands missing policy limit — blocks pop-rate calc.</span></div>
+        <div class="item amber"><span class="marker">76</span><span>liens with $0 / empty bill amount.</span></div>
+        <div class="item blue"><span class="marker">2 CMs</span><span>at 100% policy-limit completeness this year.</span></div>
+      </div>
+      <div class="stamp"><b>Compliance view</b>2026 YTD</div>
+    </div>
+
+    <div class="section-title">
+      <div class="left"><div class="accent-rule"></div><h2>Demand data completeness · 2026 YTD</h2></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="All demands sent in 2026 YTD.&#10;Baseline.">
+        <div class="label">Total Demands · 2026</div>
+        <div class="row-v"><div class="value">44</div></div>
+        <div class="sub">Baseline</div>
+      </div>
+      <div class="kpi" data-tip="Demands missing Demand Amount field.&#10;Often expected for policy-limit demands.">
+        <div class="accent">Expected</div>
+        <div class="label">Missing Demand Amount</div>
+        <div class="row-v"><div class="value">11</div><div class="delta flat">25%</div></div>
+        <div class="sub">Often expected</div>
+      </div>
+      <div class="kpi alert" data-tip="Missing Policy Limit field.&#10;#1 data-entry priority — limits pop-rate calc.">
+        <div class="accent">Priority</div>
+        <div class="label">Missing Policy Limit</div>
+        <div class="row-v"><div class="value">9</div><div class="delta down">20%</div></div>
+        <div class="sub">Fix first</div>
+      </div>
+      <div class="kpi" data-tip="No Offer field populated.&#10;Includes pending + expired.">
+        <div class="label">Missing Offer</div>
+        <div class="row-v"><div class="value">69</div><div class="delta flat">incl. expired</div></div>
+        <div class="sub">Pending + expired</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="left"><div class="accent-rule"></div><h2>Lien data quality · current open</h2></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="All open lien records.">
+        <div class="label">Total Lien Records</div>
+        <div class="row-v"><div class="value">285</div></div>
+        <div class="sub">All open liens</div>
+      </div>
+      <div class="kpi warn" data-tip="No payee assigned.">
+        <div class="accent">Fix</div>
+        <div class="label">Blank Payee</div>
+        <div class="row-v"><div class="value">14</div><div class="delta flat">5%</div></div>
+        <div class="sub">Cannot route</div>
+      </div>
+      <div class="kpi alert" data-tip="$0 or empty Bill amount.&#10;Skews exposure reporting.">
+        <div class="accent">Fix</div>
+        <div class="label">Zero / Empty Bill</div>
+        <div class="row-v"><div class="value">76</div><div class="delta down">27%</div></div>
+        <div class="sub">Skews exposure</div>
+      </div>
+      <div class="kpi" data-tip="'TBD', 'temp' placeholders in key fields.">
+        <div class="label">Placeholder Entries</div>
+        <div class="row-v"><div class="value">6</div><div class="delta flat">2%</div></div>
+        <div class="sub">Replace with real values</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="left"><div class="accent-rule"></div><h2>Completeness by case manager · 2026 YTD</h2></div>
+    </div>
+    <div class="panel">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case Manager</th>
+            <th class="num">Demands · 2026</th>
+            <th class="num">Has Policy Limit</th>
+            <th class="num has-bar" style="min-width:180px">% Complete</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-good"><td class="name">Lucy Estrada</td><td class="num">8</td><td class="num">8</td><td class="num"><span class="bic green"><span class="barfill" style="width:100%"></span><span class="barlbl">100%</span></span></td><td><span class="flag green">Complete</span></td></tr>
+          <tr class="row-good"><td class="name">Icela Parra</td><td class="num">8</td><td class="num">8</td><td class="num"><span class="bic green"><span class="barfill" style="width:100%"></span><span class="barlbl">100%</span></span></td><td><span class="flag green">Complete</span></td></tr>
+          <tr><td class="name">Erick Romero</td><td class="num">6</td><td class="num">5</td><td class="num"><span class="bic green"><span class="barfill" style="width:83%"></span><span class="barlbl">83%</span></span></td><td><span class="flag gray">1 missing</span></td></tr>
+          <tr class="row-warn"><td class="name">Jose Duarte</td><td class="num">4</td><td class="num">2</td><td class="num"><span class="bic amber"><span class="barfill" style="width:50%"></span><span class="barlbl">50%</span></span></td><td><span class="flag amber">2 missing</span></td></tr>
+          <tr class="row-alert"><td class="name">Rashel Prieto</td><td class="num">4</td><td class="num">1</td><td class="num"><span class="bic amber"><span class="barfill" style="width:25%"></span><span class="barlbl">25%</span></span></td><td><span class="flag red">3 missing</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <footer class="foot">
+    <div>KAL Operations · v2 · live data</div>
+    <div>Tabs <kbd>1</kbd>–<kbd>5</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
+  </footer>
+</div>
+
+<!-- =================== TWEAKS PANEL =================== -->
+<style>
+  #twk{
+    position:fixed; right:18px; bottom:18px; z-index:9999;
+    width:300px; max-height:calc(100vh - 36px);
+    display:none; flex-direction:column;
+    background:rgba(255,255,255,0.86);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border:1px solid rgba(0,0,0,0.08);
+    border-radius:14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.04);
+    font:13px/1.4 var(--ui); color:var(--ink);
+    overflow:hidden;
+  }
+  #twk.open{display:flex}
+  #twk .twk-hd{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 10px 11px 14px; cursor:move; user-select:none;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+  }
+  #twk .twk-hd b{font-size:13px;font-weight:600;letter-spacing:-0.005em}
+  #twk .twk-x{
+    appearance:none;border:0;background:transparent;color:var(--ink-3);
+    width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;
+  }
+  #twk .twk-x:hover{background:rgba(0,0,0,0.06);color:var(--ink)}
+  #twk .twk-body{
+    padding:10px 14px 14px;
+    display:flex;flex-direction:column;gap:14px;
+    overflow-y:auto;
+  }
+  #twk .twk-sect{
+    font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+    color:var(--ink-4); margin-top:4px;
+  }
+  #twk .twk-sect:first-child{margin-top:0}
+  #twk .twk-row{display:flex;flex-direction:column;gap:6px}
+  #twk .twk-lbl{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12px;color:var(--ink-2);font-weight:500;
+  }
+  #twk .twk-lbl .twk-hint{font-size:11px;color:var(--ink-4);font-weight:400}
+  #twk .twk-seg{
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:8px;padding:2px;gap:1px;
+  }
+  #twk .twk-seg button{
+    flex:1;border:0;background:transparent;padding:6px 10px;
+    font:inherit;font-size:11.5px;font-weight:500;color:var(--ink-3);
+    border-radius:6px;cursor:pointer;
+  }
+  #twk .twk-seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  #twk .twk-swatches{display:flex;gap:8px;flex-wrap:wrap}
+  #twk .twk-sw{
+    width:36px;height:36px;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+    position:relative;
+  }
+  #twk .twk-sw.on{border-color:var(--ink)}
+  #twk .twk-sw .twk-sw-name{
+    position:absolute;left:42px;top:50%;transform:translateY(-50%);
+    font-size:12px;color:var(--ink-2);white-space:nowrap;
+  }
+  #twk .twk-swatches.named{flex-direction:column;gap:6px}
+  #twk .twk-toggle{
+    width:36px;height:22px;border-radius:999px;background:rgba(0,0,0,0.18);
+    position:relative;cursor:pointer;transition:background .15s;
+    border:0; padding:0;
+  }
+  #twk .twk-toggle.on{background:var(--green-mark)}
+  #twk .twk-toggle::after{
+    content:""; position:absolute;top:2px;left:2px;
+    width:18px;height:18px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 2px rgba(0,0,0,.2); transition:transform .15s;
+  }
+  #twk .twk-toggle.on::after{transform:translateX(14px)}
+  #twk .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between}
+  #twk .twk-reset{
+    margin-top:4px;
+    appearance:none;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:500;
+    padding:7px 10px;border-radius:8px;cursor:pointer;
+  }
+  #twk .twk-reset:hover{background:var(--surface-3);color:var(--ink)}
+
+  /* ---- Live tweak effects ---- */
+  body[data-bg="snow"]      { background:#f5f5f7; }
+  body[data-bg="warm"]      { background:#f7f5f1; }
+  body[data-bg="cool"]      { background:#eef2f7; }
+  body[data-bg="ink"]       { background:#1d1d1f; color:#f5f5f7; }
+  body[data-bg="ink"] .topbar-wrap{ background:rgba(29,29,31,0.78); }
+
+  body[data-alert-dots="off"] .tab .alert-dot{ display:none !important; }
+  body[data-sparklines="off"] .kpi .spark{ display:none; }
+  body[data-briefing="off"] .briefing{ display:none; }
+</style>
+
+<div id="twk" role="dialog" aria-label="Tweaks">
+  <div class="twk-hd">
+    <b>Tweaks</b>
+    <button class="twk-x" id="twk-close" aria-label="Close">×</button>
+  </div>
+  <div class="twk-body">
+
+    <div class="twk-sect">Color</div>
+
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Background</span></div>
+      <div class="twk-swatches" id="twk-bg">
+        <div class="twk-sw" data-v="snow" style="background:#f5f5f7" title="Snow (default)"></div>
+        <div class="twk-sw" data-v="warm" style="background:#f7f5f1" title="Warm paper"></div>
+        <div class="twk-sw" data-v="cool" style="background:#eef2f7" title="Cool slate"></div>
+        <div class="twk-sw" data-v="ink"  style="background:#1d1d1f" title="Ink (dark)"></div>
+      </div>
+    </div>
+
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Color intensity</span><span class="twk-hint">how much accent</span></div>
+      <div class="twk-seg" id="twk-accent">
+        <button data-v="quiet">Quiet</button>
+        <button data-v="balanced">Balanced</button>
+        <button data-v="vivid">Vivid</button>
+      </div>
+    </div>
+
+    <div class="twk-sect">Density</div>
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Row height</span><span class="twk-hint">cell padding + font</span></div>
+      <div class="twk-seg" id="twk-density">
+        <button data-v="cozy">Cozy</button>
+        <button data-v="comfy">Comfy</button>
+        <button data-v="compact">Compact</button>
+      </div>
+    </div>
+
+    <div class="twk-sect">Display</div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Today briefing</span></div>
+      <button class="twk-toggle" id="twk-briefing" aria-label="Toggle briefing"></button>
+    </div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Sparklines</span></div>
+      <button class="twk-toggle" id="twk-sparks" aria-label="Toggle sparklines"></button>
+    </div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Tab alert dots</span></div>
+      <button class="twk-toggle" id="twk-dots" aria-label="Toggle alert dots"></button>
+    </div>
+
+    <button class="twk-reset" id="twk-reset">Reset to defaults</button>
+  </div>
+</div>
+
+
+<script>
+/* =========================================================
+   Live timestamp — runs immediately on load
+   ========================================================= */
+(function(){
+  var now = new Date();
+  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var h = now.getHours(), m = now.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  var h12 = h % 12 || 12;
+  var mStr = m < 10 ? '0'+m : String(m);
+  var timeStr = h12+':'+mStr+' '+ampm+' PT · '+days[now.getDay()]+' '+months[now.getMonth()]+' '+now.getDate();
+  var stampTime = h12+':'+mStr+' '+ampm+' PT';
+  var metaEl = document.getElementById('live-timestamp');
+  if(metaEl) metaEl.textContent = timeStr;
+  var metaEl2 = document.querySelector('.meta > div:first-child');
+  if(!metaEl && metaEl2) metaEl2.innerHTML = '<span class="dot"></span>'+timeStr;
+  var pipeStamp = document.getElementById('pipe-stamp');
+  if(pipeStamp) pipeStamp.innerHTML = '<b>'+days[now.getDay()]+' brief</b> updated '+stampTime;
+})();
+
+/* =========================================================
+   Tabs + density + period toggle
+   ========================================================= */
+const tabs  = document.querySelectorAll('.tab');
+const pages = document.querySelectorAll('.page');
+function activate(name){
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  pages.forEach(p => p.classList.toggle('active', p.dataset.page === name));
+  // update accent var on root for KPI bars
+  const active = document.querySelector('.page.active');
+  if(active){
+    const a = getComputedStyle(active).getPropertyValue('--accent').trim();
+    document.documentElement.style.setProperty('--accent', a);
+  }
+}
+tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
+activate('pipeline');
+
+const order = ['pipeline','settlements','cm','lien','dq'];
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=5) activate(order[n-1]);
+  if(e.key.toLowerCase() === 'y') document.querySelector('#cm-seg button:not(.on)')?.click();
+});
+
+/* =========================================================
+   Tweaks panel — host protocol + state
+   ========================================================= */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "bg": "snow",
+  "accent": "vivid",
+  "density": "comfy",
+  "briefing": true,
+  "sparklines": true,
+  "alertDots": true
+}/*EDITMODE-END*/;
+
+const twk = { ...TWEAK_DEFAULTS };
+const twkPanel = document.getElementById('twk');
+
+function applyTweaks(){
+  document.body.dataset.bg         = twk.bg;
+  document.body.dataset.accent     = twk.accent;
+  document.body.dataset.density    = twk.density;
+  document.body.dataset.briefing   = twk.briefing   ? 'on' : 'off';
+  document.body.dataset.sparklines = twk.sparklines ? 'on' : 'off';
+  document.body.dataset.alertDots  = twk.alertDots  ? 'on' : 'off';
+
+  // sync UI state
+  document.querySelectorAll('#twk-bg .twk-sw').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.bg));
+  document.querySelectorAll('#twk-accent button').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.accent));
+  document.querySelectorAll('#twk-density button').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.density));
+  document.getElementById('twk-briefing').classList.toggle('on', twk.briefing);
+  document.getElementById('twk-sparks').classList.toggle('on', twk.sparklines);
+  document.getElementById('twk-dots').classList.toggle('on', twk.alertDots);
+}
+
+function setTweak(patch){
+  Object.assign(twk, patch);
+  applyTweaks();
+  try{
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits: patch}, '*');
+  }catch(_){}
+}
+
+// Wire controls
+document.querySelectorAll('#twk-bg .twk-sw').forEach(el =>
+  el.addEventListener('click', () => setTweak({bg: el.dataset.v})));
+document.querySelectorAll('#twk-accent button').forEach(el =>
+  el.addEventListener('click', () => setTweak({accent: el.dataset.v})));
+document.querySelectorAll('#twk-density button').forEach(el =>
+  el.addEventListener('click', () => setTweak({density: el.dataset.v})));
+document.getElementById('twk-briefing').addEventListener('click', () =>
+  setTweak({briefing: !twk.briefing}));
+document.getElementById('twk-sparks').addEventListener('click', () =>
+  setTweak({sparklines: !twk.sparklines}));
+document.getElementById('twk-dots').addEventListener('click', () =>
+  setTweak({alertDots: !twk.alertDots}));
+document.getElementById('twk-reset').addEventListener('click', () =>
+  setTweak({...TWEAK_DEFAULTS}));
+
+// Drag header
+(function(){
+  const hd = twkPanel.querySelector('.twk-hd');
+  let drag = null;
+  hd.addEventListener('mousedown', e => {
+    if(e.target.closest('.twk-x')) return;
+    const r = twkPanel.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if(!drag) return;
+    twkPanel.style.left = (e.clientX - drag.dx) + 'px';
+    twkPanel.style.top  = (e.clientY - drag.dy) + 'px';
+    twkPanel.style.right = 'auto';
+    twkPanel.style.bottom = 'auto';
+  });
+  window.addEventListener('mouseup', () => drag = null);
+})();
+
+// Host protocol
+window.addEventListener('message', e => {
+  const d = e.data || {};
+  if(d.type === '__activate_edit_mode')   twkPanel.classList.add('open');
+  if(d.type === '__deactivate_edit_mode') twkPanel.classList.remove('open');
+});
+document.getElementById('twk-close').addEventListener('click', () => {
+  twkPanel.classList.remove('open');
+  try{ window.parent.postMessage({type:'__edit_mode_dismissed'}, '*'); }catch(_){}
+});
+try{ window.parent.postMessage({type:'__edit_mode_available'}, '*'); }catch(_){}
+
+applyTweaks();
+
+// CM period toggle
+const segBtns = document.querySelectorAll('#cm-seg button');
+segBtns.forEach(b => b.addEventListener('click', () => {
+  segBtns.forEach(x => x.classList.toggle('on', x===b));
+  const is2026 = b.dataset.period === '2026';
+  document.getElementById('cm-2026').style.display      = is2026 ? '' : 'none';
+  document.getElementById('cm-2026-note').style.display = is2026 ? '' : 'none';
+  document.getElementById('cm-2025').style.display      = is2026 ? 'none' : '';
+  document.getElementById('cm-2025-note').style.display = is2026 ? 'none' : '';
+  document.getElementById('cm-title').textContent = is2026 ? 'CM output · 2026 YTD' : 'CM output · 2025 full year';
+}));
+
+// Filter chips (visual only — no real filter)
+document.querySelectorAll('.chips').forEach(group => {
+  group.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      group.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c===chip));
+    });
+  });
+});
+
+/* =========================================================
+   Sparklines
+   ========================================================= */
+const colorMap = {
+  'ink-3':'#6e6e73', 'amber':'#f5a524', 'red':'#d70015',
+  'green':'#34c759', 'blue':'#0071e3', 'purple':'#7e5bd1'
+};
+function renderSpark(el){
+  const data = el.dataset.spark.split(',').map(Number);
+  const isBars = el.dataset.bars === '1';
+  const color = colorMap[el.dataset.color] || '#6e6e73';
+  const w = 100, h = 28;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = (max-min) || 1;
+
+  if(isBars){
+    const bw = w / data.length - 2;
+    let bars = '';
+    data.forEach((v,i) => {
+      const bh = ((v - min) / range) * (h - 4) + 4;
+      const x = i * (w/data.length);
+      bars += `<rect x="${x}" y="${h-bh}" width="${bw}" height="${bh}" fill="${color}" opacity="0.6" rx="1"/>`;
+    });
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+    return;
+  }
+
+  const pts = data.map((v,i) => {
+    const x = (i / (data.length-1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return [x,y];
+  });
+  const linePath = pts.map((p,i) => (i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  const areaPath = `${linePath} L${w} ${h} L0 ${h} Z`;
+  const last = pts[pts.length-1];
+  el.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${areaPath}" fill="${color}" opacity="0.12"/>
+      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="2" fill="${color}"/>
+    </svg>`;
+}
+document.querySelectorAll('.spark').forEach(renderSpark);
+
+/* =========================================================
+   Shared helpers (used by Pipeline, Settlements, CM, DQ)
+   ========================================================= */
+function _parseDate(str){
+  if(!str||typeof str!=='string') return null;
+  var p=str.trim().split('/'); if(p.length!==3) return null;
+  var d=new Date(parseInt(p[2],10),parseInt(p[0],10)-1,parseInt(p[1],10));
+  return isNaN(d.getTime())?null:d;
+}
+function _parseLimit(str){
+  if(!str) return null;
+  var m=str.match(/(\d+)k/i); return m?parseInt(m[1],10)*1000:null;
+}
+function _fmtCurrency(n){
+  if(n==null||isNaN(n)) return '—';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return '$'+Math.round(n/1e3)+'K';
+  return '$'+Math.round(n).toLocaleString();
+}
+function _esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(String(s==null?'':s)));return d.innerHTML;}
+
+/* =========================================================
+   Demand area chart -- live build from DATA.demands
+   Called by renderPipeline() after fetch.
+   ========================================================= */
+function buildDemandChart(demands){
+  var counts={};
+  (demands||[]).forEach(function(d){
+    if(!d.datesent) return;
+    var parts=d.datesent.split('/');
+    if(parts.length!==3) return;
+    var key=parts[2]+'-'+parts[0];
+    counts[key]=(counts[key]||0)+1;
+  });
+
+  var now=new Date();
+  var months=[];
+  var cur=new Date(2025,0,1);
+  var MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  while(cur<=now){
+    var y=cur.getFullYear(), mo=cur.getMonth()+1;
+    var key=y+'-'+(mo<10?'0':'')+mo;
+    var label=mo===1?(MONTH_NAMES[0]+' '+(y-2000)):MONTH_NAMES[mo-1]+(y===2026&&mo===2?' 26':'');
+    months.push([label,counts[key]||0,y===2026?1:0]);
+    cur=new Date(y,mo,1);
+  }
+
+  if(months.length<2) return;
+
+  var cutIdx=months.findIndex(function(m){return m[2]===1;});
+  if(cutIdx<0) cutIdx=months.length;
+
+  var svg=document.getElementById('vol-area');
+  var W=800,H=170,pad={l:36,r:14,t:16,b:28};
+  var innerW=W-pad.l-pad.r, innerH=H-pad.t-pad.b;
+  var maxV=Math.max.apply(null,months.map(function(m){return m[1];}));
+  if(maxV===0) maxV=1;
+  var niceMax=Math.ceil(maxV/10)*10;
+  var xstep=innerW/(months.length-1);
+  var xf=function(i){return pad.l+i*xstep;};
+  var yf=function(v){return pad.t+innerH-(v/niceMax)*innerH;};
+
+  var grid='';
+  for(var gi=0;gi<=4;gi++){
+    var yy=pad.t+(innerH/4)*gi;
+    var val=Math.round(niceMax-(niceMax/4)*gi);
+    grid+='<line x1="'+pad.l+'" y1="'+yy+'" x2="'+(pad.l+innerW)+'" y2="'+yy+'" stroke="#e5e5e7" stroke-width="1"/>';
+    grid+='<text x="'+(pad.l-8)+'" y="'+(yy+4)+'" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="#8e8e93">'+val+'</text>';
+  }
+
+  var histEnd=Math.min(cutIdx,months.length-1);
+  var histPts=months.slice(0,histEnd+1).map(function(m,i){return[xf(i),yf(m[1])];});
+  var histLine=histPts.map(function(p,i){return(i?'L':'M')+p[0]+' '+p[1];}).join(' ');
+
+  var recentPts=cutIdx<months.length?months.slice(cutIdx).map(function(m,i){return[xf(cutIdx+i),yf(m[1])];}) :[];
+  var recentLine=recentPts.map(function(p,i){return(i?'L':'M')+p[0]+' '+p[1];}).join(' ');
+
+  var areaPath=histPts.length>1?histLine+' L'+xf(histEnd)+' '+(pad.t+innerH)+' L'+xf(0)+' '+(pad.t+innerH)+' Z':'';
+  var recentArea=recentPts.length>1?recentLine+' L'+xf(months.length-1)+' '+(pad.t+innerH)+' L'+xf(cutIdx)+' '+(pad.t+innerH)+' Z':'';
+
+  var xlabs='';
+  months.forEach(function(m,i){
+    if(i%2===0||i>=cutIdx){
+      xlabs+='<text x="'+xf(i)+'" y="'+(H-8)+'" text-anchor="middle" font-family="Inter" font-size="10" font-weight="600" fill="#8e8e93" letter-spacing="0.06em">'+m[0].toUpperCase()+'</text>';
+    }
+  });
+
+  var peakI=0;
+  months.forEach(function(m,i){if(m[1]>months[peakI][1]) peakI=i;});
+  var peakX=xf(peakI),peakY=yf(months[peakI][1]);
+  var peakAnno='<circle cx="'+peakX+'" cy="'+peakY+'" r="3.5" fill="#0071e3" stroke="#fff" stroke-width="2"/>'+
+    '<text x="'+peakX+'" y="'+(peakY-10)+'" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#0071e3">'+months[peakI][1]+' peak</text>';
+
+  var dots='';
+  histPts.forEach(function(p){dots+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2" fill="#1d1d1f"/>';});
+  recentPts.forEach(function(p,i){if(i>0||cutIdx===0) dots+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="#f5a524"/>';});
+
+  svg.innerHTML=
+    grid+
+    (areaPath?'<path d="'+areaPath+'" fill="#1d1d1f" opacity="0.06"/>':'')+
+    (recentArea?'<path d="'+recentArea+'" fill="#f5a524" opacity="0.18"/>':'')+
+    (histLine?'<path d="'+histLine+'" fill="none" stroke="#1d1d1f" stroke-width="1.6" stroke-linejoin="round"/>':'')+
+    (recentLine?'<path d="'+recentLine+'" fill="none" stroke="#f5a524" stroke-width="2" stroke-linejoin="round"/>':'')+
+    dots+peakAnno+xlabs;
+}
+
+/* =========================================================
+   renderPipeline() -- Pipeline tab KPIs + bar + chart
+   ========================================================= */
+function renderPipeline(raw){
+  var settlement=raw.settlement||[];
+  var disbursement=raw.disbursement||[];
+  var demands=raw.demands||[];
+  var lienOverview=raw.lienOverview||[];
+
+  var seg={};
+  settlement.forEach(function(r){var s=r.casestatus||'';seg[s]=(seg[s]||0)+1;});
+  var pendingDemand=(seg['Pending Demand']||0);
+  var demandPrepped=(seg['Demand Prepped']||0);
+  var demanded3p=(seg['Demanded']||0);
+  var uimDemanded=(seg['UIM Demanded']||0);
+  var settleNeg=(seg['Settlement Negotiations']||0);
+  var settled=(seg['Settled']||0);
+  var lienNeg=lienOverview.length;
+  var disb=disbursement.length;
+
+  var bar=document.getElementById('pipebar');
+  if(bar){
+    var segs=bar.querySelectorAll('.pipeseg');
+    var vals=[pendingDemand,demandPrepped,demanded3p,uimDemanded,settleNeg,settled,lienNeg,disb];
+    segs.forEach(function(el,i){
+      var v=Math.max(vals[i]||0,1);
+      el.style.flex=v;
+      var cnt=el.querySelector('.pcount');
+      if(cnt) cnt.textContent=vals[i]||0;
+    });
+  }
+
+  var total=pendingDemand+demandPrepped+demanded3p+uimDemanded+settleNeg+settled+lienNeg+disb;
+  var totalEl=document.querySelector('.pipeline-head .total');
+  if(totalEl) totalEl.innerHTML='<b>'+total+'</b> open cases · 8 stages';
+
+  var pipeKpis=document.querySelectorAll('[data-page="pipeline"] .kpi .value');
+  if(pipeKpis[0]) pipeKpis[0].textContent=demanded3p+uimDemanded;
+  if(pipeKpis[1]) pipeKpis[1].textContent=settleNeg;
+  if(pipeKpis[2]) pipeKpis[2].textContent=lienNeg;
+  if(pipeKpis[3]) pipeKpis[3].textContent=disb;
+
+  var pipeSubs=document.querySelectorAll('[data-page="pipeline"] .kpi .sub');
+  if(pipeSubs[0]) pipeSubs[0].textContent=demanded3p+' third-party · '+uimDemanded+' UIM';
+  if(pipeSubs[3]) pipeSubs[3].textContent='Final payout pending';
+
+  var now=new Date();
+  var expiredCount=(demands||[]).filter(function(d){
+    if(d.offer_amount!==null&&d.offer_amount!==undefined&&d.offer_amount!=='') return false;
+    if(!d.dateexpires) return false;
+    var exp=_parseDate(d.dateexpires);
+    return exp&&exp<now;
+  }).length;
+
+  var pipeItems=document.querySelectorAll('[data-page="pipeline"] .briefing .items .item');
+  if(pipeItems[0]){
+    var m=pipeItems[0].querySelector('.marker');
+    var t=pipeItems[0].querySelector('span:last-child');
+    if(m) m.textContent=expiredCount;
+    if(t) t.textContent='expired demands need adjuster follow-up — Mark & Hernan.';
+  }
+  if(pipeItems[1]){var m2=pipeItems[1].querySelector('.marker');if(m2) m2.textContent=settleNeg;}
+  if(pipeItems[2]){var m3=pipeItems[2].querySelector('.marker');if(m3) m3.textContent=disb+' cases';}
+
+  buildDemandChart(demands);
+}
+
+/* =========================================================
+   renderSettlements() -- Settlements tab KPIs + tables
+   ========================================================= */
+function renderSettlements(raw){
+  var demands=raw.demands||[];
+  var settlement=raw.settlement||[];
+  var now=new Date();
+
+  var demands2026=demands.filter(function(d){return d.datesent&&d.datesent.indexOf('/2026')>0;});
+  var sent2026=demands2026.length;
+
+  var expired=demands.filter(function(d){
+    if(d.offer_amount!==null&&d.offer_amount!==undefined&&d.offer_amount!=='') return false;
+    if(!d.dateexpires) return false;
+    var exp=_parseDate(d.dateexpires);
+    return exp&&exp<now;
+  }).length;
+
+  var pending=demands.filter(function(d){
+    if(d.offer_amount!==null&&d.offer_amount!==undefined&&d.offer_amount!=='') return false;
+    if(!d.dateexpires) return true;
+    var exp=_parseDate(d.dateexpires);
+    return !exp||(exp>=now);
+  }).length;
+
+  var activeNeg=settlement.filter(function(s){return s.casestatus==='Settlement Negotiations';}).length;
+  var settledCount=settlement.filter(function(s){return s.casestatus==='Settled';}).length;
+
+  var settleKpis=document.querySelectorAll('[data-page="settlements"] .kpi .value');
+  if(settleKpis[0]) settleKpis[0].textContent=sent2026;
+  if(settleKpis[1]) settleKpis[1].textContent=expired;
+  if(settleKpis[2]) settleKpis[2].textContent=pending;
+  if(settleKpis[3]) settleKpis[3].textContent=activeNeg;
+
+  var byMonth={};
+  demands2026.forEach(function(d){
+    if(!d.datesent) return;
+    var p=d.datesent.split('/');
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[0],10)-1];
+    byMonth[mo]=(byMonth[mo]||0)+1;
+  });
+  var subParts=Object.keys(byMonth).map(function(k){return k+': '+byMonth[k];});
+  var settleSubs=document.querySelectorAll('[data-page="settlements"] .kpi .sub');
+  if(settleSubs[0]) settleSubs[0].textContent=subParts.slice(0,4).join(' · ')||'No demands yet';
+
+  var settleTbody=document.querySelector('[data-page="settlements"] .panel table.t tbody');
+  if(settleTbody){
+    var rows=settleTbody.querySelectorAll('tr');
+    var counts=[expired,pending,activeNeg,settledCount];
+    rows.forEach(function(tr,i){
+      var numCell=tr.querySelector('.num');
+      if(numCell&&counts[i]!==undefined) numCell.textContent=counts[i];
+    });
+  }
+
+  renderCarriers(demands);
+
+  var settleItems=document.querySelectorAll('[data-page="settlements"] .briefing .items .item');
+  if(settleItems[0]){var sm=settleItems[0].querySelector('.marker');if(sm) sm.textContent=expired;}
+  if(settleItems[2]){var sm3=settleItems[2].querySelector('.marker');if(sm3) sm3.textContent=settledCount;}
+}
+
+/* =========================================================
+   renderCarriers() -- Top carriers table (Settlements tab)
+   ========================================================= */
+function renderCarriers(demands){
+  var map={};
+  (demands||[]).forEach(function(d){
+    var ins=((d.insurance||'').trim())||'Unknown';
+    if(!map[ins]) map[ins]={name:ins,count:0,pops:0,analyzable:0,offerSum:0,offerCount:0};
+    map[ins].count++;
+    var lim=_parseLimit(d.insurance_policy);
+    var offer=(d.offer_amount!=null&&d.offer_amount!=='') ? parseFloat(d.offer_amount) : null;
+    if(lim&&offer!==null){
+      map[ins].analyzable++;
+      if(offer>=lim) map[ins].pops++;
+    }
+    if(offer!==null&&offer>0){map[ins].offerSum+=offer;map[ins].offerCount++;}
+  });
+
+  var arr=Object.keys(map).map(function(k){return map[k];});
+  arr.sort(function(a,b){return b.count-a.count;});
+  arr=arr.slice(0,10);
+
+  var maxD=arr.length?arr[0].count:1;
+  var maxOffer=Math.max.apply(null,arr.map(function(c){return c.offerCount?c.offerSum/c.offerCount:0;}).concat([1]));
+
+  var tbody=document.getElementById('carriers');
+  if(!tbody) return;
+  tbody.innerHTML='';
+  arr.forEach(function(c){
+    var pct=Math.round(c.count/maxD*100);
+    var popRate=c.analyzable>0?Math.round(c.pops/c.analyzable*100):null;
+    var avgOffer=c.offerCount>0?Math.round(c.offerSum/c.offerCount):0;
+    var offerPct=Math.round(avgOffer/maxOffer*100);
+    var popClass=popRate===null?'gray':(popRate>=40?'green':(popRate<=28?'amber':'blue'));
+    var popDisp=popRate===null?'—':popRate+'%';
+    tbody.insertAdjacentHTML('beforeend',
+      '<tr>'+
+      '<td class="name">'+_esc(c.name)+'</td>'+
+      '<td class="num"><span class="bic blue"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+c.count+'</span></span></td>'+
+      '<td class="num">'+c.pops+'</td>'+
+      '<td class="num"><span class="flag '+popClass+'">'+popDisp+'</span></td>'+
+      '<td class="num"><span class="bic green"><span class="barfill" style="width:'+offerPct+'%"></span><span class="barlbl">'+(avgOffer>0?'$'+avgOffer.toLocaleString():'—')+'</span></span></td>'+
+      '</tr>'
+    );
+  });
+  if(!arr.length) tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No demand data.</td></tr>';
+}
+
+/* =========================================================
+   renderCMPerformance() -- CM Performance tab tables
+   ========================================================= */
+function renderCMPerformance(raw){
+  var demands=raw.demands||[];
+  var deposits=raw.deposits||[];
+
+  ['2026','2025'].forEach(function(year){
+    var yearDemands=demands.filter(function(d){
+      return d.datesent&&d.datesent.indexOf('/'+year)>0;
+    });
+
+    var demandByCM={};
+    yearDemands.forEach(function(d){
+      var cm=(d.case_manager||'Unknown').trim();
+      if(cm==='Junior Alvarez') return;
+      if(!demandByCM[cm]) demandByCM[cm]={demands:0,pops:0,analyzable:0};
+      demandByCM[cm].demands++;
+      var lim=_parseLimit(d.insurance_policy);
+      var offer=(d.offer_amount!=null&&d.offer_amount!=='') ? parseFloat(d.offer_amount) : null;
+      if(lim&&offer!==null){
+        demandByCM[cm].analyzable++;
+        if(offer>=lim) demandByCM[cm].pops++;
+      }
+    });
+
+    var yearDeposits=deposits.filter(function(d){
+      return d.check_date&&d.check_date.indexOf('/'+year)>0;
+    });
+
+    var depByCM={};
+    yearDeposits.forEach(function(d){
+      var cm=((d.case&&d.case.case_manager)||'Unknown').trim();
+      if(!depByCM[cm]) depByCM[cm]=0;
+      depByCM[cm]+=(parseFloat(d.amount)||0);
+    });
+
+    var cmSet={};
+    Object.keys(demandByCM).forEach(function(k){cmSet[k]=true;});
+    Object.keys(depByCM).forEach(function(k){if(k!=='Junior Alvarez') cmSet[k]=true;});
+
+    var rows=Object.keys(cmSet).map(function(cm){
+      var dd=demandByCM[cm]||{demands:0,pops:0,analyzable:0};
+      var rev=depByCM[cm]||0;
+      var popRate=dd.analyzable>0?Math.round(dd.pops/dd.analyzable*100):null;
+      return{cm:cm,demands:dd.demands,pops:dd.pops,popRate:popRate,revenue:rev,fees:Math.round(rev/3)};
+    });
+    rows.sort(function(a,b){return b.revenue-a.revenue;});
+
+    var maxRev=rows.reduce(function(mx,r){return Math.max(mx,r.revenue);},1);
+
+    var popCell=function(pr){
+      if(pr===null) return '<span style="color:var(--ink-4)">—</span>';
+      if(pr>=40) return '<span class="flag green">'+pr+'%</span>';
+      if(pr===0) return '<span class="flag gray">0%</span>';
+      return '<span class="flag gray">'+pr+'%</span>';
+    };
+
+    var tbody=document.getElementById('cm-'+year+'-body');
+    if(!tbody) return;
+    tbody.innerHTML='';
+    rows.forEach(function(r){
+      var pct=Math.round(r.revenue/maxRev*100);
+      var isExec=r.cm==='Kausar Sarwari';
+      var cls=isExec?'row-exec':'';
+      var tag=isExec?'<span class="badge-exec">Exec</span>':'';
+      tbody.insertAdjacentHTML('beforeend',
+        '<tr class="'+cls+'">'+
+        '<td class="name">'+_esc(r.cm)+tag+'</td>'+
+        '<td class="num">'+r.demands+'</td>'+
+        '<td class="num">'+r.pops+'</td>'+
+        '<td class="num">'+popCell(r.popRate)+'</td>'+
+        '<td class="num"><span class="bic blue"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+_fmtCurrency(r.revenue)+'</span></span></td>'+
+        '<td class="num">'+_fmtCurrency(r.fees)+'</td>'+
+        '</tr>'
+      );
+    });
+    if(!rows.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">No data for '+year+'.</td></tr>';
+
+    var totalRev=yearDeposits.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+    var estFees=Math.round(totalRev/3);
+    var note=document.getElementById('cm-'+year+'-note');
+    if(note){
+      note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+_fmtCurrency(totalRev)+' settlement revenue · '+yearDeposits.length+' check deposits · est. fees ~'+_fmtCurrency(estFees)+'.';
+    }
+  });
+
+  var dep2026=deposits.filter(function(d){return d.check_date&&d.check_date.indexOf('/2026')>0;});
+  var rev2026=dep2026.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+  var cmItems=document.querySelectorAll('[data-page="cm"] .briefing .items .item');
+  if(cmItems[0]){var m=cmItems[0].querySelector('.marker');if(m) m.textContent=_fmtCurrency(rev2026);}
+  var stamp=document.querySelector('[data-page="cm"] .briefing .stamp');
+  if(stamp) stamp.innerHTML='<b>Through '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>est. fees ~'+_fmtCurrency(Math.round(rev2026/3));
+}
+
+/* =========================================================
+   renderDataQuality() -- Data Quality tab
+   ========================================================= */
+function renderDataQuality(raw){
+  var demands=raw.demands||[];
+  var lienMgmt=raw.lienMgmt||[];
+  var now=new Date();
+
+  var d2026=demands.filter(function(d){return d.datesent&&d.datesent.indexOf('/2026')>0;});
+  var total2026=d2026.length;
+  var missingAmount=d2026.filter(function(d){return !d.amount||d.amount==='0.00';}).length;
+  var missingPolicy=d2026.filter(function(d){return !d.insurance_policy;}).length;
+  var missingOffer=d2026.filter(function(d){return d.offer_amount===null||d.offer_amount===undefined||d.offer_amount==='';}).length;
+
+  var dqKpis=document.querySelectorAll('[data-page="dq"] .kpi .value');
+  if(dqKpis[0]) dqKpis[0].textContent=total2026;
+  if(dqKpis[1]) dqKpis[1].textContent=missingAmount;
+  if(dqKpis[2]) dqKpis[2].textContent=missingPolicy;
+  if(dqKpis[3]) dqKpis[3].textContent=missingOffer;
+
+  var allDqDeltas=document.querySelectorAll('[data-page="dq"] .kpi .delta');
+  if(allDqDeltas[0]&&total2026>0) allDqDeltas[0].textContent=Math.round(missingAmount/total2026*100)+'%';
+  if(allDqDeltas[1]&&total2026>0) allDqDeltas[1].textContent=Math.round(missingPolicy/total2026*100)+'%';
+
+  var totalLiens=lienMgmt.length;
+  var blankPayee=lienMgmt.filter(function(r){return !(r.payee||'').trim();}).length;
+  var zeroBill=lienMgmt.filter(function(r){
+    if(!(r.payee||'').trim()) return false;
+    var b=parseFloat((r.case_stats||{}).original_bill);
+    return isNaN(b)||b<=0;
+  }).length;
+  var placeholders=lienMgmt.filter(function(r){
+    var p=(r.payee||'').trim(); if(!p) return false;
+    var u=p.toUpperCase();
+    if(u.indexOf('PLACEHOLDER')<0&&u.indexOf('DO NOT EDIT')<0&&u.indexOf('ROE SETTLEMENT')<0) return false;
+    var b=parseFloat((r.case_stats||{}).original_bill);
+    return !isNaN(b)&&b>0;
+  }).length;
+
+  if(dqKpis[4]) dqKpis[4].textContent=totalLiens;
+  if(dqKpis[5]) dqKpis[5].textContent=blankPayee;
+  if(dqKpis[6]) dqKpis[6].textContent=zeroBill;
+  if(dqKpis[7]) dqKpis[7].textContent=placeholders;
+
+  if(allDqDeltas[3]&&totalLiens>0) allDqDeltas[3].textContent=Math.round(blankPayee/totalLiens*100)+'%';
+  if(allDqDeltas[4]&&totalLiens>0) allDqDeltas[4].textContent=Math.round(zeroBill/totalLiens*100)+'%';
+  if(allDqDeltas[5]&&totalLiens>0) allDqDeltas[5].textContent=Math.round(placeholders/totalLiens*100)+'%';
+
+  var byCM={};
+  d2026.forEach(function(d){
+    var cm=(d.case_manager||'Unknown').trim();
+    if(!byCM[cm]) byCM[cm]={total:0,hasPolicy:0};
+    byCM[cm].total++;
+    if(d.insurance_policy) byCM[cm].hasPolicy++;
+  });
+  var cmArr=Object.keys(byCM).map(function(k){
+    var pct=Math.round(byCM[k].hasPolicy/byCM[k].total*100);
+    return{cm:k,total:byCM[k].total,has:byCM[k].hasPolicy,pct:pct};
+  });
+  cmArr.sort(function(a,b){return b.pct-a.pct||(b.total-a.total);});
+
+  var dqTbody=document.querySelector('[data-page="dq"] .panel table.t tbody');
+  if(dqTbody){
+    dqTbody.innerHTML='';
+    cmArr.forEach(function(r){
+      var barCls=r.pct>=80?'green':'amber';
+      var rowCls=r.pct===100?'row-good':(r.pct<50?'row-alert':'row-warn');
+      var missing=r.total-r.has;
+      var statusCls=r.pct===100?'green':(r.pct<50?'red':'amber');
+      var statusLbl=r.pct===100?'Complete':(missing+' missing');
+      dqTbody.insertAdjacentHTML('beforeend',
+        '<tr class="'+rowCls+'">'+
+        '<td class="name">'+_esc(r.cm)+'</td>'+
+        '<td class="num">'+r.total+'</td>'+
+        '<td class="num">'+r.has+'</td>'+
+        '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+r.pct+'%"></span><span class="barlbl">'+r.pct+'%</span></span></td>'+
+        '<td><span class="flag '+statusCls+'">'+statusLbl+'</span></td>'+
+        '</tr>'
+      );
+    });
+    if(!cmArr.length) dqTbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No 2026 demand data.</td></tr>';
+  }
+
+  var dqItems=document.querySelectorAll('[data-page="dq"] .briefing .items .item');
+  if(dqItems[0]){var m=dqItems[0].querySelector('.marker');if(m) m.textContent=missingPolicy;}
+  if(dqItems[1]){var m2=dqItems[1].querySelector('.marker');if(m2) m2.textContent=zeroBill;}
+  var perfect=cmArr.filter(function(r){return r.pct===100;}).length;
+  if(dqItems[2]){var m3=dqItems[2].querySelector('.marker');if(m3) m3.textContent=perfect+' CM'+(perfect!==1?'s':'');}
+}
+
+/* =========================================================
+   LIEN OPS — Live data controller (CasePeer API)
+   Spec: KAL-Ops-API-Mapping.md
+   ========================================================= */
+(function(){
+  'use strict';
+
+  // ---- Helpers ----
+  function parseDate(str){
+    if(!str || typeof str !== 'string') return null;
+    var p = str.trim().split('/');
+    if(p.length !== 3) return null;
+    var d = new Date(parseInt(p[2],10), parseInt(p[0],10)-1, parseInt(p[1],10));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function daysBetween(a,b){ if(!a||!b) return null; return Math.floor((b-a)/86400000); }
+  function isPlaceholder(p){
+    if(!p) return false;
+    var u = String(p).toUpperCase();
+    return u.indexOf('PLACEHOLDER')>=0 || u.indexOf('DO NOT EDIT')>=0 || u.indexOf('ROE SETTLEMENT')>=0;
+  }
+  function esc(s){ var d=document.createElement('div'); d.appendChild(document.createTextNode(String(s==null?'':s))); return d.innerHTML; }
+  function fmtCurrency(n){ if(n==null||isNaN(n)) return '—'; if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M'; if(n>=1e3) return '$'+Math.round(n/1e3)+'K'; return '$'+Math.round(n).toLocaleString(); }
+  function fmtDate(d){ if(!d) return '—'; return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); }
+
+  async function fetchAll(baseUrl){
+    var all=[], page=1, hasMore=true, guard=0;
+    var base = (state.baseUrl || '');
+    while(hasMore && guard++ < 200){
+      var sep = baseUrl.indexOf('?')>=0 ? '&' : '?';
+      var url = base + baseUrl + sep + 'page=' + page;
+      var resp = await fetch(url, {credentials:'include', mode:'cors'});
+      if(!resp.ok) throw new Error('HTTP '+resp.status+' on '+url);
+      var json = await resp.json();
+      if(json && json.results) all = all.concat(json.results);
+      else if(Array.isArray(json)) { all = all.concat(json); hasMore=false; break; }
+      hasMore = !!(json && json.next);
+      page++;
+    }
+    return all;
+  }
+
+  // ---- State ----
+  var state = {
+    baseUrl: '',
+    raw:{ lienMgmt:[], lienOverview:[], disbursement:[] },
+    valid:[], cases:[], excludedCount:0,
+    sort:{ col:'maxDays', dir:'desc' },
+    expanded:{},
+    refDate: new Date(),
+    sub:'cases'
+  };
+
+  function getThresholds(){
+    return {
+      stuck: parseInt(document.getElementById('lien-th-stuck').value,10)||45,
+      inactive: parseInt(document.getElementById('lien-th-inactive').value,10)||14,
+      load: parseInt(document.getElementById('lien-th-load').value,10)||5
+    };
+  }
+
+  // ---- Process raw lienMgmt into valid liens + case rollups ----
+  function processData(){
+    var rows = state.raw.lienMgmt;
+    var valid=[], excluded=0;
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i] || {};
+      var caseObj = r.case || {};
+      var stats = r.case_stats || {};
+      var payee = (r.payee||'').trim();
+      var bill = parseFloat(stats.original_bill);
+      if(!payee){ excluded++; continue; }
+      if(isNaN(bill) || bill<=0){ excluded++; continue; }
+      if(isPlaceholder(payee)){ excluded++; continue; }
+      var lastTouched = parseDate(caseObj.last_touched_lien_negotiator);
+      var clientComm = parseDate(caseObj.last_communication);
+      valid.push({
+        caseId: caseObj.id,
+        caseName: (caseObj._casename||'').trim(),
+        payee: payee,
+        negotiator: (caseObj.lien_negotiator||'').trim(),
+        leadAttorney: (caseObj.lead_attorney||'').trim(),
+        lienType: (r.lien_type||'').trim(),
+        originalBill: bill,
+        daysInLiens: parseInt(caseObj.days_in_liens,10)||0,
+        lastTouched: lastTouched,
+        daysSinceTouch: daysBetween(lastTouched, state.refDate),
+        clientComm: clientComm,
+        settlementTotal: parseFloat(stats.settlement_total)||0
+      });
+    }
+    state.valid = valid;
+    state.excludedCount = excluded;
+
+    // Case rollups
+    var map = {};
+    for(var j=0;j<valid.length;j++){
+      var l = valid[j];
+      if(!map[l.caseName]) map[l.caseName] = { caseName:l.caseName, negSet:{}, liens:[], settlementTotal:0, caseId:l.caseId };
+      map[l.caseName].liens.push(l);
+      if(l.negotiator) map[l.caseName].negSet[l.negotiator]=true;
+      if(l.settlementTotal > map[l.caseName].settlementTotal) map[l.caseName].settlementTotal = l.settlementTotal;
+    }
+    var cases=[]; var keys=Object.keys(map);
+    for(var k=0;k<keys.length;k++){
+      var c = map[keys[k]];
+      var maxDays=0, total=0, bestTouch=null;
+      for(var m=0;m<c.liens.length;m++){
+        var ll=c.liens[m];
+        if(ll.daysInLiens>maxDays) maxDays=ll.daysInLiens;
+        total+=ll.daysInLiens;
+        if(ll.lastTouched && (!bestTouch || ll.lastTouched>bestTouch)) bestTouch=ll.lastTouched;
+      }
+      cases.push({
+        caseName:c.caseName,
+        negotiator:Object.keys(c.negSet).sort().join(', ')||'—',
+        lienCount:c.liens.length,
+        maxDays:maxDays,
+        avgDays:Math.round(total/c.liens.length),
+        lastTouched:bestTouch,
+        daysSinceTouch:daysBetween(bestTouch,state.refDate),
+        settlementTotal:c.settlementTotal,
+        liens:c.liens
+      });
+    }
+    state.cases = cases;
+
+    // Populate negotiator filter
+    var sel = document.getElementById('lien-f-neg');
+    var negSet={}; for(var n=0;n<valid.length;n++){ if(valid[n].negotiator) negSet[valid[n].negotiator]=true; }
+    var negList = Object.keys(negSet).sort();
+    sel.innerHTML = '<option value="">All</option>';
+    for(var p=0;p<negList.length;p++){
+      var opt=document.createElement('option'); opt.value=negList[p]; opt.textContent=negList[p];
+      sel.appendChild(opt);
+    }
+  }
+
+  function getFlags(c){
+    var t = getThresholds();
+    var f=[];
+    if(c.maxDays > t.stuck) f.push('Stuck');
+    if(c.daysSinceTouch!=null && c.daysSinceTouch >= t.inactive) f.push('No Activity');
+    if(c.lienCount > t.load) f.push('High Lien Load');
+    return f;
+  }
+
+  function flagBadges(flags){
+    var html='';
+    for(var i=0;i<flags.length;i++){
+      var f=flags[i];
+      var cls = f==='Stuck' ? 'red' : (f==='No Activity' ? 'amber' : 'amber');
+      html += '<span class="flag '+cls+'">'+esc(f)+'</span>';
+    }
+    return html;
+  }
+
+  // ---- Filter + sort ----
+  function getFiltered(){
+    var neg = document.getElementById('lien-f-neg').value;
+    var flag = document.getElementById('lien-f-flag').value;
+    var search = document.getElementById('lien-f-search').value.toLowerCase().trim();
+    var out=[];
+    for(var i=0;i<state.cases.length;i++){
+      var c=state.cases[i];
+      if(neg && c.negotiator.indexOf(neg)<0) continue;
+      if(search && c.caseName.toLowerCase().indexOf(search)<0) continue;
+      var fl = getFlags(c);
+      if(flag==='flagged' && fl.length===0) continue;
+      if(flag==='clean' && fl.length>0) continue;
+      if(flag && flag!=='flagged' && flag!=='clean' && fl.indexOf(flag)<0) continue;
+      out.push(c);
+    }
+    return out;
+  }
+  function sortCases(arr){
+    var col=state.sort.col, mult=state.sort.dir==='asc'?1:-1;
+    return arr.slice().sort(function(a,b){
+      var va=a[col], vb=b[col];
+      if(typeof va==='string') va=va.toLowerCase();
+      if(typeof vb==='string') vb=vb.toLowerCase();
+      if(va==null) return 1;
+      if(vb==null) return -1;
+      if(va<vb) return -1*mult;
+      if(va>vb) return 1*mult;
+      return 0;
+    });
+  }
+
+  // ---- Renderers ----
+  function renderKPIs(){
+    var t = getThresholds();
+    var inactive=0;
+    for(var i=0;i<state.valid.length;i++){
+      if(state.valid[i].daysSinceTouch!=null && state.valid[i].daysSinceTouch>=t.inactive) inactive++;
+    }
+    document.getElementById('lien-kpi-active').textContent = state.valid.length;
+    document.getElementById('lien-kpi-active-sub').textContent = state.excludedCount>0
+      ? state.excludedCount+' rows excluded · '+inactive+' inactive '+t.inactive+'d+'
+      : inactive+' inactive '+t.inactive+'d+';
+    document.getElementById('lien-kpi-cases').textContent = (state.raw.lienOverview||[]).length;
+    document.getElementById('lien-kpi-cases-sub').textContent = 'In lien-negotiations stage';
+    document.getElementById('lien-kpi-disb').textContent = (state.raw.disbursement||[]).length;
+    document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
+    // Settled value: sum unique-case settlement_total where >0
+    var seen={}, total=0, count=0;
+    for(var j=0;j<state.cases.length;j++){
+      if(state.cases[j].settlementTotal>0 && !seen[state.cases[j].caseName]){
+        seen[state.cases[j].caseName]=true;
+        total += state.cases[j].settlementTotal;
+        count++;
+      }
+    }
+    document.getElementById('lien-kpi-settled').textContent = fmtCurrency(total);
+    document.getElementById('lien-kpi-settled-sub').textContent = 'Across '+count+' cases';
+  }
+
+  function renderBriefing(){
+    var t = getThresholds();
+    var cases = state.cases;
+    // Compute negotiator stats for briefing
+    var byNeg={};
+    for(var i=0;i<state.valid.length;i++){
+      var l=state.valid[i]; var n=l.negotiator||'Unassigned';
+      if(!byNeg[n]) byNeg[n]={ totalDays:0, count:0, inactive:0 };
+      byNeg[n].totalDays+=l.daysInLiens; byNeg[n].count++;
+      if(l.daysSinceTouch!=null && l.daysSinceTouch>=t.inactive) byNeg[n].inactive++;
+    }
+    var negs=[]; var keys=Object.keys(byNeg);
+    for(var k=0;k<keys.length;k++){
+      negs.push({ name:keys[k], avg:Math.round(byNeg[keys[k]].totalDays/byNeg[keys[k]].count), count:byNeg[keys[k]].count, inactive:byNeg[keys[k]].inactive });
+    }
+    negs.sort(function(a,b){ return b.avg - a.avg; });
+
+    var stuck=0, inactiveCases=0;
+    for(var c=0;c<cases.length;c++){
+      var f = getFlags(cases[c]);
+      if(f.indexOf('Stuck')>=0) stuck++;
+      if(f.indexOf('No Activity')>=0) inactiveCases++;
+    }
+
+    var head = document.querySelector('#lien-briefing .head');
+    head.innerHTML = '<span class="pulse"></span>Lien Ops · live from CasePeer';
+
+    var items = document.getElementById('lien-briefing-items');
+    items.innerHTML = '';
+    if(negs[0]){
+      items.insertAdjacentHTML('beforeend','<div class="item red"><span class="marker">'+negs[0].avg+'d</span><span>'+esc(negs[0].name)+'\'s average lien-negotiation time.</span></div>');
+    }
+    items.insertAdjacentHTML('beforeend','<div class="item amber"><span class="marker">'+stuck+'</span><span>cases stuck &gt; '+t.stuck+' days.</span></div>');
+    items.insertAdjacentHTML('beforeend','<div class="item blue"><span class="marker">'+(state.raw.disbursement||[]).length+'</span><span>cases in disbursement awaiting payout.</span></div>');
+
+    document.getElementById('lien-stamp-title').textContent = 'Lien team status';
+    document.getElementById('lien-stamp-meta').textContent = negs.length+' negotiators · live';
+  }
+
+  function renderCases(){
+    var arr = sortCases(getFiltered());
+    var tbody = document.getElementById('lien-cases-body');
+    document.getElementById('lien-cases-count').textContent = 'Cases · '+arr.length+' shown of '+state.cases.length;
+
+    // sort arrows
+    var ths = document.querySelectorAll('#lien-cases-table th[data-sort]');
+    for(var h=0;h<ths.length;h++){
+      var col = ths[h].getAttribute('data-sort');
+      var base = ths[h].getAttribute('data-baselabel') || ths[h].textContent.replace(/\s*[▲▼]\s*$/,'').trim();
+      ths[h].setAttribute('data-baselabel', base);
+      ths[h].textContent = base + (col===state.sort.col ? (state.sort.dir==='asc'?' ▲':' ▼') : '');
+    }
+
+    if(arr.length===0){
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
+      return;
+    }
+    var html='';
+    for(var i=0;i<arr.length;i++){
+      var c = arr[i];
+      var fl = getFlags(c);
+      var rowCls = fl.length ? (fl.indexOf('Stuck')>=0 ? 'row-alert' : 'row-warn') : '';
+      var exp = !!state.expanded[c.caseName];
+      var dst = c.daysSinceTouch!=null ? c.daysSinceTouch+'d' : '—';
+      html += '<tr class="'+rowCls+'" data-case="'+esc(c.caseName)+'">';
+      html += '<td><button class="chip" data-expand="'+esc(c.caseName)+'" style="padding:1px 8px;font-size:13px;line-height:1;">'+(exp?'−':'+')+'</button></td>';
+      html += '<td class="name">'+esc(c.caseName)+'</td>';
+      html += '<td>'+esc(c.negotiator)+'</td>';
+      html += '<td class="num">'+c.lienCount+'</td>';
+      html += '<td class="num">'+c.maxDays+'d</td>';
+      html += '<td class="num">'+dst+'</td>';
+      html += '<td class="flagcol"><div class="stack">'+flagBadges(fl)+'</div></td>';
+      html += '</tr>';
+      if(exp) html += renderSubRows(c);
+    }
+    tbody.innerHTML = html;
+
+    // Bind expand
+    var btns = tbody.querySelectorAll('button[data-expand]');
+    for(var b=0;b<btns.length;b++){
+      btns[b].addEventListener('click', function(){
+        var name = this.getAttribute('data-expand');
+        if(state.expanded[name]) delete state.expanded[name]; else state.expanded[name]=true;
+        renderCases();
+      });
+    }
+  }
+
+  function renderSubRows(c){
+    var t = getThresholds();
+    var sorted = c.liens.slice().sort(function(a,b){ return b.daysInLiens - a.daysInLiens; });
+    var hdr = 'font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);';
+    var html = '';
+    html += '<tr style="background:var(--surface-2);">';
+    html += '<td></td>';
+    html += '<td style="'+hdr+'padding-left:24px;">Payee</td>';
+    html += '<td style="'+hdr+'">Lien Type</td>';
+    html += '<td class="num" style="'+hdr+'">Days</td>';
+    html += '<td class="num" style="'+hdr+'">Last Touched</td>';
+    html += '<td class="num" style="'+hdr+'">Days Since</td>';
+    html += '<td style="'+hdr+'">Client Comm</td>';
+    html += '</tr>';
+    for(var i=0;i<sorted.length;i++){
+      var l=sorted[i];
+      var inactive = l.daysSinceTouch!=null && l.daysSinceTouch>=t.inactive;
+      var rowStyle = 'background:var(--surface-2);'+(inactive?'color:var(--amber);':'color:var(--ink-2);');
+      html += '<tr style="'+rowStyle+'">';
+      html += '<td></td>';
+      html += '<td style="padding-left:24px;font-size:12.5px;">'+esc(l.payee)+'</td>';
+      html += '<td style="font-size:12.5px;">'+esc(l.lienType||'—')+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+l.daysInLiens+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+fmtDate(l.lastTouched)+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
+      html += '<td style="font-size:12.5px;">'+fmtDate(l.clientComm)+'</td>';
+      html += '</tr>';
+    }
+    return html;
+  }
+
+  function renderNegotiators(){
+    var t = getThresholds();
+    var byNeg={};
+    for(var i=0;i<state.valid.length;i++){
+      var l=state.valid[i]; var n=l.negotiator||'Unassigned';
+      if(!byNeg[n]) byNeg[n]={ name:n, liens:[], caseSet:{} };
+      byNeg[n].liens.push(l); byNeg[n].caseSet[l.caseName]=true;
+    }
+    var arr=[]; var keys=Object.keys(byNeg);
+    for(var k=0;k<keys.length;k++){
+      var d=byNeg[keys[k]]; var sumD=0, inact=0;
+      for(var j=0;j<d.liens.length;j++){
+        sumD+=d.liens[j].daysInLiens;
+        if(d.liens[j].daysSinceTouch!=null && d.liens[j].daysSinceTouch>=t.inactive) inact++;
+      }
+      var flagged=0;
+      for(var c=0;c<state.cases.length;c++){
+        if(state.cases[c].negotiator.indexOf(d.name)>=0 && getFlags(state.cases[c]).length>0) flagged++;
+      }
+      arr.push({ name:d.name, total:d.liens.length, cases:Object.keys(d.caseSet).length, avg:Math.round(sumD/d.liens.length), inactive:inact, flagged:flagged });
+    }
+    arr.sort(function(a,b){ return b.total - a.total; });
+    var maxL = Math.max.apply(null, arr.map(function(x){ return x.total; }).concat([1]));
+    var tbody = document.getElementById('lien-neg-body');
+    var html='';
+    for(var p=0;p<arr.length;p++){
+      var n=arr[p];
+      var cls = n.flagged>0 ? 'row-alert' : (n.inactive>0 ? 'row-warn' : 'row-good');
+      var pct = Math.round(n.total/maxL*100);
+      var status = n.flagged>0 ? '<span class="flag red">'+n.flagged+' flagged</span>'
+                  : n.inactive>0 ? '<span class="flag amber">'+n.inactive+' inactive</span>'
+                  : '<span class="flag green">Current</span>';
+      html += '<tr class="'+cls+'">';
+      html += '<td class="name">'+esc(n.name)+'</td>';
+      html += '<td class="num"><span class="bic amber"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+n.total+'</span></span></td>';
+      html += '<td class="num">'+n.cases+'</td>';
+      html += '<td class="num">'+n.avg+'</td>';
+      html += '<td class="num">'+n.inactive+'</td>';
+      html += '<td class="num">'+n.flagged+'</td>';
+      html += '<td class="flagcol"><div class="stack">'+status+'</div></td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No negotiators yet.</td></tr>';
+  }
+
+  function renderDisbursement(){
+    var rows = (state.raw.disbursement||[]).slice();
+    rows.sort(function(a,b){ return (b.days_in_disbursement||0)-(a.days_in_disbursement||0); });
+    var tbody = document.getElementById('disb-body');
+    document.getElementById('lien-disb-count').textContent = 'Cases pending payout · '+rows.length;
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursement cases.</td></tr>'; return; }
+    var maxD = Math.max.apply(null, rows.map(function(r){ return r.days_in_disbursement||0; }).concat([1]));
+    var html='';
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i] || {};
+      var d = r.days_in_disbursement||0;
+      var pct = Math.round(d/maxD*100);
+      var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
+      var barCls = d>=120 ? 'amber' : 'blue';
+      html += '<tr class="'+rowCls+'">';
+      html += '<td class="case-cell"><div class="case-name">'+esc(r._casename||'—')+'</div></td>';
+      html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
+      html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
+      html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
+      html += '<td class="num">'+esc(r.pending_disbursement_date||'—')+'</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function renderAll(){
+    renderKPIs();
+    renderBriefing();
+    renderCases();
+    renderNegotiators();
+    renderDisbursement();
+  }
+
+  function setSubtab(name){
+    state.sub = name;
+    var chips = document.querySelectorAll('#lien-subtabs .chip');
+    for(var i=0;i<chips.length;i++){ chips[i].classList.toggle('on', chips[i].getAttribute('data-sub')===name); }
+    document.getElementById('lien-pane-cases').style.display = name==='cases'?'':'none';
+    document.getElementById('lien-pane-negotiators').style.display = name==='negotiators'?'':'none';
+    document.getElementById('lien-pane-disb').style.display = name==='disb'?'':'none';
+    document.getElementById('lien-filter-bar').style.display = name==='cases'?'':'none';
+  }
+
+  function bindEvents(){
+    var subs = document.querySelectorAll('#lien-subtabs .chip');
+    for(var i=0;i<subs.length;i++){
+      subs[i].addEventListener('click', function(){ setSubtab(this.getAttribute('data-sub')); });
+    }
+    document.getElementById('lien-f-neg').addEventListener('change', renderCases);
+    document.getElementById('lien-f-flag').addEventListener('change', renderCases);
+    document.getElementById('lien-f-search').addEventListener('input', renderCases);
+    ['lien-th-stuck','lien-th-inactive','lien-th-load'].forEach(function(id){
+      document.getElementById(id).addEventListener('change', function(){ renderAll(); });
+    });
+    var ths = document.querySelectorAll('#lien-cases-table th[data-sort]');
+    for(var h=0;h<ths.length;h++){
+      ths[h].style.cursor='pointer';
+      ths[h].addEventListener('click', function(){
+        var col = this.getAttribute('data-sort');
+        if(state.sort.col===col) state.sort.dir = state.sort.dir==='asc'?'desc':'asc';
+        else { state.sort.col=col; state.sort.dir = (col==='caseName'||col==='negotiator')?'asc':'desc'; }
+        renderCases();
+      });
+    }
+  }
+
+  function showError(msg){
+    var head = document.querySelector('#lien-briefing .head');
+    if(head) head.innerHTML = '<span class="pulse" style="background:var(--red-mark);"></span>Lien Ops · '+esc(msg);
+    var ids = ['lien-cases-body','lien-neg-body','disb-body'];
+    for(var i=0;i<ids.length;i++){
+      var el=document.getElementById(ids[i]);
+      if(el) el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--red);">'+esc(msg)+'</td></tr>';
+    }
+  }
+
+  function showOffHostBanner(msg){
+    // Replace every briefing head across all tabs with the message
+    document.querySelectorAll('.briefing .head').forEach(function(el){
+      el.innerHTML = '<span class="pulse" style="background:var(--amber)"></span>'+msg;
+    });
+    // Wipe all hardcoded KPI values so stale numbers don't show
+    document.querySelectorAll('.kpi .value').forEach(function(el){
+      if(!el.id) el.textContent = '—';
+    });
+    document.querySelectorAll('.kpi .sub').forEach(function(el){
+      if(!el.id) el.textContent = '';
+    });
+    // Wipe pipeline bar counts
+    document.querySelectorAll('.pipeseg .pcount').forEach(function(el){ el.textContent = '—'; });
+    var totalEl = document.querySelector('.pipeline-head .total');
+    if(totalEl) totalEl.innerHTML = '<b>—</b> open cases · deploy to my.casepeer.com';
+    // Wipe action table counts in Settlements
+    document.querySelectorAll('[data-page="settlements"] .panel table.t tbody .num').forEach(function(el){
+      el.textContent = '—';
+    });
+    // Wipe carriers
+    var carriers = document.getElementById('carriers');
+    if(carriers) carriers.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+    // Wipe CM tables
+    ['cm-2026-body','cm-2025-body'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+    });
+    // Wipe DQ completeness table
+    var dqTbody = document.querySelector('[data-page="dq"] .panel table.t tbody');
+    if(dqTbody) dqTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+  }
+
+  async function init(){
+    bindEvents();
+    setSubtab('cases');
+
+    // Detect host — if not on CasePeer, use full URL with credentials
+    var host = window.location.hostname;
+    var onCasePeer = host === 'my.casepeer.com' || host.indexOf('casepeer') >= 0;
+    // BASE_URL is empty when on CasePeer (relative URLs work),
+    // or the full origin when running locally (cross-origin with credentials)
+    state.baseUrl = onCasePeer ? '' : 'https://my.casepeer.com';
+
+    try {
+      var results = await Promise.all([
+        fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
+        fetchAll('/api/v1/case/lien-negotiations-overview/'),
+        fetchAll('/api/v1/case/disbursement-overview/'),
+        fetchAll('/api/v1/case/settlement-overview/'),
+        fetchAll('/api/v1/case/demands/?datesent__gte=2024-01-01&datesent__lte=2026-12-31'),
+        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
+      ]);
+      var lienMgmt    = results[0];
+      var lienOverview = results[1];
+      var disbursement = results[2];
+      var settlement   = results[3];
+      var demands      = results[4];
+      var deposits     = results[5];
+
+      state.raw.lienMgmt    = lienMgmt;
+      state.raw.lienOverview = lienOverview;
+      state.raw.disbursement = disbursement;
+      state.raw.settlement   = settlement;
+      state.raw.demands      = demands;
+      state.raw.deposits     = deposits;
+
+      // Lien tab (existing pipeline)
+      processData();
+      renderAll();
+
+      // Wire remaining 4 tabs
+      var raw = {
+        settlement:   settlement,
+        disbursement: disbursement,
+        demands:      demands,
+        deposits:     deposits,
+        lienOverview: lienOverview,
+        lienMgmt:     lienMgmt
+      };
+      renderPipeline(raw);
+      renderSettlements(raw);
+      renderCMPerformance(raw);
+      renderDataQuality(raw);
+
+    } catch(err){
+      var msg = err && err.message || 'unknown error';
+      var hint = msg.toLowerCase().indexOf('failed to fetch') >= 0
+        ? 'CORS blocked — CasePeer does not allow cross-origin requests. Must be opened from my.casepeer.com.'
+        : msg.indexOf('401') >= 0 || msg.indexOf('403') >= 0
+          ? 'Auth error — log into my.casepeer.com first, then reload.'
+          : msg;
+      console.warn('[KAL Ops] fetch failed:', msg);
+      showOffHostBanner('CasePeer fetch failed · '+hint);
+      showError(hint);
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
+</body>
+</html>
