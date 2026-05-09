@@ -752,7 +752,7 @@
         <div class="accent-rule"></div>
         <h2>Demand volume · 14 months</h2>
       </div>
-      <div class="hint">Jan 2025 – Feb 2026</div>
+      <div class="hint">Jan 2025 – current month</div>
     </div>
     <div class="panel area-card">
       <div class="area-head">
@@ -763,6 +763,74 @@
         </div>
       </div>
       <svg class="area-svg" id="vol-area" viewBox="0 0 800 170" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- Money Feed -->
+    <div class="section-title" style="margin-top:28px">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Money feed</h2>
+      </div>
+      <div class="seg" id="money-period-seg">
+        <button class="on" data-days="7">7 days</button>
+        <button data-days="14">14 days</button>
+        <button data-days="30">30 days</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+
+      <!-- Checks deposited -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Checks deposited</h3>
+          <div class="meta-r" id="money-deposit-meta">Last 7 days</div>
+        </div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>CM</th>
+              <th class="num">Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="money-deposit-body">
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div class="panel-foot" id="money-deposit-foot" style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+          <span style="color:var(--ink-3)">7-day total</span>
+          <span id="money-deposit-total" style="font-weight:600;color:var(--green);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+        </div>
+      </div>
+
+      <!-- Open offers -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Open offers on the table</h3>
+          <div class="meta-r">Sorted by expiration</div>
+        </div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Carrier</th>
+              <th class="num">Offer</th>
+              <th>Expires</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="money-offers-body">
+            <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div class="panel-foot" id="money-offers-foot" style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+          <span id="money-offers-meta" style="color:var(--ink-3)">—</span>
+          <span id="money-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+        </div>
+      </div>
+
     </div>
 
   </section>
@@ -903,6 +971,82 @@
       </table>
     </div>
 
+    <!-- Open Offers panel -->
+    <div class="section-title" style="margin-top:28px">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Open offers on the table</h2>
+      </div>
+      <div class="seg" id="settle-offer-seg">
+        <button class="on" data-view="expiring">Expiring soon</button>
+        <button data-view="all">All open</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3 id="settle-offers-title">Offers expiring within 14 days</h3>
+        <div class="meta-r" id="settle-offers-meta">—</div>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>CM</th>
+            <th>Carrier</th>
+            <th class="num">Offer</th>
+            <th class="num">Policy Limit</th>
+            <th>Expires</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="settle-offers-body">
+          <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+        </tbody>
+      </table>
+      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+        <span id="settle-offers-urgency" style="color:var(--ink-3)">—</span>
+        <span id="settle-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+      </div>
+    </div>
+
+    <!-- Recent Deposits panel -->
+    <div class="section-title" style="margin-top:24px">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Recent deposits</h2>
+      </div>
+      <div class="seg" id="settle-deposit-seg">
+        <button class="on" data-days="7">7 days</button>
+        <button data-days="14">14 days</button>
+        <button data-days="30">30 days</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Checks deposited</h3>
+        <div class="meta-r" id="settle-deposit-meta">Last 7 days</div>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>CM</th>
+            <th>Payee</th>
+            <th>Type</th>
+            <th class="num">Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="settle-deposit-body">
+          <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+        </tbody>
+      </table>
+      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+        <span id="settle-deposit-count" style="color:var(--ink-3)">—</span>
+        <span id="settle-deposit-total" style="font-weight:600;color:var(--green);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+      </div>
+    </div>
+
   </section>
 
 
@@ -946,6 +1090,9 @@
         <thead>
           <tr>
             <th>Case Manager</th>
+            <th class="num">Active Cases</th>
+            <th class="num">In Treating</th>
+            <th class="num">New Intakes</th>
             <th class="num">Demands</th>
             <th class="num">Pops</th>
             <th class="num">Pop Rate</th>
@@ -966,6 +1113,9 @@
         <thead>
           <tr>
             <th>Case Manager</th>
+            <th class="num">Active Cases</th>
+            <th class="num">In Treating</th>
+            <th class="num">New Intakes</th>
             <th class="num">Demands</th>
             <th class="num">Pops</th>
             <th class="num">Pop Rate</th>
@@ -1716,6 +1866,228 @@ function buildDemandChart(demands){
 /* =========================================================
    renderPipeline() -- Pipeline tab KPIs + bar + chart
    ========================================================= */
+/* =========================================================
+   Money feed helpers — shared by Pipeline and Settlements
+   ========================================================= */
+
+var _moneyPeriodDays = 7;
+var _settleOfferView = 'expiring';
+var _settleDepositDays = 7;
+
+function _depositsInDays(deposits, days){
+  var now = new Date();
+  var cutoff = new Date(now.getTime() - days * 86400000);
+  return (deposits||[]).filter(function(d){
+    if(!d.created) return false;
+    var p = d.created.split('/');
+    if(p.length !== 3) return false;
+    var dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
+    return dt >= cutoff;
+  }).sort(function(a,b){
+    var pa=a.check_date?a.check_date.split('/'):[0,0,0];
+    var pb=b.check_date?b.check_date.split('/'):[0,0,0];
+    var da=new Date(parseInt(pa[2]),parseInt(pa[0])-1,parseInt(pa[1]));
+    var db=new Date(parseInt(pb[2]),parseInt(pb[0])-1,parseInt(pb[1]));
+    return db - da;
+  });
+}
+
+function _openOffers(demands){
+  var now = new Date();
+  return (demands||[]).filter(function(d){
+    return d.offer_amount !== null && d.offer_amount !== undefined && d.offer_amount !== '';
+  }).sort(function(a,b){
+    var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
+    var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
+    if(!ea) return 1; if(!eb) return -1;
+    return ea - eb;
+  });
+}
+
+function _offerRowStatus(dateexpires){
+  if(!dateexpires) return {label:'Pending',cls:'gray',urgent:false,days:null};
+  var exp = _parseDate(dateexpires);
+  if(!exp) return {label:'Pending',cls:'gray',urgent:false,days:null};
+  var now = new Date();
+  var days = Math.ceil((exp - now) / 86400000);
+  if(days < 0)  return {label:'Expired',cls:'red',urgent:true,days:days};
+  if(days <= 3)  return {label:'Urgent',cls:'red',urgent:true,days:days};
+  if(days <= 14) return {label:'Expiring',cls:'amber',urgent:false,days:days};
+  return {label:'Pending',cls:'gray',urgent:false,days:days};
+}
+
+function _fmtCheckDate(str){
+  if(!str) return '—';
+  var p = str.split('/');
+  if(p.length !== 3) return str;
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[parseInt(p[0],10)-1] + ' ' + parseInt(p[1],10);
+}
+
+function renderMoneyFeed(raw){
+  var deposits = raw.deposits||[];
+  var demands  = raw.demands||[];
+
+  // ---- Deposit panel ----
+  var filtered = _depositsInDays(deposits, _moneyPeriodDays);
+  var total = filtered.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+  var depBody = document.getElementById('money-deposit-body');
+  var depMeta = document.getElementById('money-deposit-meta');
+  var depTotalEl = document.getElementById('money-deposit-total');
+  var depFootLabel = document.querySelector('#money-deposit-foot span:first-child');
+  if(depMeta) depMeta.textContent = 'Last '+_moneyPeriodDays+' days';
+  if(depFootLabel) depFootLabel.textContent = _moneyPeriodDays+'-day total';
+  if(depTotalEl) depTotalEl.textContent = _fmtCurrency(total);
+  if(depBody){
+    if(!filtered.length){
+      depBody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">No deposits in last '+_moneyPeriodDays+' days.</td></tr>';
+    } else {
+      depBody.innerHTML = filtered.slice(0,10).map(function(d){
+        var cm = (d.case&&d.case.case_manager)||'—';
+        var cmShort = cm.split(' ');
+        var cmDisp = cmShort.length>1 ? cmShort[0]+' '+cmShort[cmShort.length-1][0]+'.' : cm;
+        return '<tr>'+
+          '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+          '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
+          '<td class="num" style="color:var(--green);font-weight:600">'+_fmtCurrency(parseFloat(d.amount)||0)+'</td>'+
+          '<td style="color:var(--ink-3)">'+_fmtCheckDate(d.check_date)+'</td>'+
+          '</tr>';
+      }).join('');
+    }
+  }
+
+  // ---- Offers panel ----
+  var allOffers = _openOffers(demands);
+  var offerBody = document.getElementById('money-offers-body');
+  var offerMeta = document.getElementById('money-offers-meta');
+  var offerTotalEl = document.getElementById('money-offers-total');
+  var offerTotal = allOffers.reduce(function(s,d){return s+(parseFloat(d.offer_amount)||0);},0);
+  var urgentCount = allOffers.filter(function(d){return _offerRowStatus(d.dateexpires).urgent;}).length;
+  if(offerMeta) offerMeta.textContent = urgentCount+' urgent · '+allOffers.length+' total open';
+  if(offerTotalEl) offerTotalEl.textContent = _fmtCurrency(offerTotal)+' on table';
+  if(offerBody){
+    if(!allOffers.length){
+      offerBody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-3)">No open offers.</td></tr>';
+    } else {
+      offerBody.innerHTML = allOffers.slice(0,8).map(function(d){
+        var st = _offerRowStatus(d.dateexpires);
+        var rowCls = st.urgent ? 'row-warn' : '';
+        var daysDisp = st.days !== null ? (st.days < 0 ? 'Expired' : st.days+'d') : '—';
+        var expiresDisp = d.dateexpires ? _fmtCheckDate(d.dateexpires)+' <span style="color:var(--ink-4);font-size:11px">('+daysDisp+')</span>' : '—';
+        var ins = (d.insurance||'—');
+        var insShort = ins.length > 20 ? ins.substring(0,18)+'…' : ins;
+        return '<tr class="'+rowCls+'">'+
+          '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+          '<td style="color:var(--ink-3);font-size:11px">'+_esc(insShort)+'</td>'+
+          '<td class="num" style="color:var(--amber);font-weight:600">'+_fmtCurrency(parseFloat(d.offer_amount)||0)+'</td>'+
+          '<td style="font-size:11px">'+expiresDisp+'</td>'+
+          '<td><span class="flag '+st.cls+'">'+st.label+'</span></td>'+
+          '</tr>';
+      }).join('');
+    }
+  }
+
+  // Update Pipeline briefing with financial pulse
+  var pipeItems = document.querySelectorAll('[data-page="pipeline"] .briefing .items .item');
+  if(pipeItems[0]){
+    var m=pipeItems[0].querySelector('.marker');
+    var t=pipeItems[0].querySelector('span:last-child');
+    if(m){ m.textContent=_fmtCurrency(total); m.className='marker'; m.style.background='var(--green-bg)'; m.style.color='var(--green)'; }
+    if(t) t.textContent='deposited in last '+_moneyPeriodDays+' days — '+filtered.length+' checks.';
+    pipeItems[0].className='item blue';
+  }
+  if(pipeItems[1]){
+    var m2=pipeItems[1].querySelector('.marker');
+    var t2=pipeItems[1].querySelector('span:last-child');
+    var expiring14 = allOffers.filter(function(d){var s=_offerRowStatus(d.dateexpires);return s.days!==null&&s.days>=0&&s.days<=14;}).length;
+    if(m2) m2.textContent=expiring14;
+    if(t2) t2.textContent='open offers expiring within 14 days.';
+    pipeItems[1].className='item amber';
+  }
+}
+
+function renderSettleOffers(demands, view){
+  var allOffers = _openOffers(demands);
+  var now = new Date();
+  var filtered = view === 'expiring'
+    ? allOffers.filter(function(d){
+        if(!d.dateexpires) return false;
+        var exp = _parseDate(d.dateexpires);
+        return exp && (exp-now)/86400000 <= 14;
+      })
+    : allOffers;
+
+  var title = document.getElementById('settle-offers-title');
+  var meta  = document.getElementById('settle-offers-meta');
+  var urgency = document.getElementById('settle-offers-urgency');
+  var totalEl = document.getElementById('settle-offers-total');
+  var tbody = document.getElementById('settle-offers-body');
+
+  if(title) title.textContent = view==='expiring' ? 'Offers expiring within 14 days' : 'All open offers';
+  var total = filtered.reduce(function(s,d){return s+(parseFloat(d.offer_amount)||0);},0);
+  var urgentCount = filtered.filter(function(d){return _offerRowStatus(d.dateexpires).urgent;}).length;
+  if(meta) meta.textContent = filtered.length+' offers · '+_fmtCurrency(allOffers.reduce(function(s,d){return s+(parseFloat(d.offer_amount)||0);},0))+' total on table';
+  if(urgency) urgency.textContent = urgentCount+' urgent (≤3 days) · '+filtered.filter(function(d){var s=_offerRowStatus(d.dateexpires);return s.days!==null&&s.days>=0&&s.days<=14;}).length+' expiring (≤14 days)';
+  if(totalEl) totalEl.textContent = _fmtCurrency(total)+' in view';
+
+  if(!tbody) return;
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">No offers match this filter.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(d){
+    var st = _offerRowStatus(d.dateexpires);
+    var rowCls = st.urgent ? 'row-warn' : '';
+    var daysDisp = st.days !== null ? (st.days < 0 ? 'Expired' : st.days+'d') : '—';
+    var expiresDisp = d.dateexpires ? _fmtCheckDate(d.dateexpires)+' <span style="color:var(--ink-4);font-size:11px">('+daysDisp+')</span>' : '—';
+    var lim = _parseLimit(d.insurance_policy);
+    var offer = parseFloat(d.offer_amount)||0;
+    var isPop = lim && offer >= lim;
+    var offerDisp = _fmtCurrency(offer)+(isPop ? ' <span style="color:var(--green);font-size:10px;font-weight:600">✓ pop</span>' : '');
+    var polDisp = d.insurance_policy ? _esc(d.insurance_policy) : '—';
+    var cm = (d.case_manager||'—');
+    var cmShort = cm.split(' ');
+    var cmDisp = cmShort.length>1 ? cmShort[0]+' '+cmShort[cmShort.length-1][0]+'.' : cm;
+    return '<tr class="'+rowCls+'">'+
+      '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+      '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
+      '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
+      '<td class="num" style="color:var(--amber);font-weight:600">'+offerDisp+'</td>'+
+      '<td class="num" style="color:var(--ink-3)">'+polDisp+'</td>'+
+      '<td style="font-size:11px">'+expiresDisp+'</td>'+
+      '<td><span class="flag '+st.cls+'">'+st.label+'</span></td>'+
+      '</tr>';
+  }).join('');
+}
+
+function renderSettleDeposits(deposits, days){
+  var filtered = _depositsInDays(deposits, days);
+  var total = filtered.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+  var meta  = document.getElementById('settle-deposit-meta');
+  var count = document.getElementById('settle-deposit-count');
+  var totalEl = document.getElementById('settle-deposit-total');
+  var tbody = document.getElementById('settle-deposit-body');
+  if(meta) meta.textContent = 'Last '+days+' days';
+  if(count) count.textContent = filtered.length+' checks · '+days+'-day total';
+  if(totalEl) totalEl.textContent = _fmtCurrency(total);
+  if(!tbody) return;
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-3)">No deposits in last '+days+' days.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(d){
+    var cm = (d.case&&d.case.case_manager)||'—';
+    return '<tr>'+
+      '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+      '<td style="color:var(--ink-3)">'+_esc(cm)+'</td>'+
+      '<td style="color:var(--ink-3);font-size:11px">'+_esc(d.payee||'—')+'</td>'+
+      '<td><span class="flag green" style="font-size:10px">'+_esc(d.check_type||'Deposit')+'</span></td>'+
+      '<td class="num" style="color:var(--green);font-weight:600">'+_fmtCurrency(parseFloat(d.amount)||0)+'</td>'+
+      '<td style="color:var(--ink-3)">'+_fmtCheckDate(d.check_date)+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
 function renderPipeline(raw){
   var settlement=raw.settlement||[];
   var disbursement=raw.disbursement||[];
@@ -1778,6 +2150,8 @@ function renderPipeline(raw){
   if(pipeItems[2]){var m3=pipeItems[2].querySelector('.marker');if(m3) m3.textContent=disb+' cases';}
 
   buildDemandChart(demands);
+  renderMoneyFeed(raw);
+  bindMoneyPeriodToggle(raw);
 }
 
 /* =========================================================
@@ -1836,6 +2210,9 @@ function renderSettlements(raw){
   }
 
   renderCarriers(demands);
+  renderSettleOffers(demands, _settleOfferView);
+  renderSettleDeposits(raw.deposits||[], _settleDepositDays);
+  bindSettlePanelToggles(raw);
 
   var settleItems=document.querySelectorAll('[data-page="settlements"] .briefing .items .item');
   if(settleItems[0]){var sm=settleItems[0].querySelector('.marker');if(sm) sm.textContent=expired;}
@@ -1896,6 +2273,35 @@ function renderCarriers(demands){
 function renderCMPerformance(raw){
   var demands=raw.demands||[];
   var deposits=raw.deposits||[];
+  var treating=raw.treating||[];
+
+  // Build treating counts by CM
+  var treatingByCM={};
+  treating.forEach(function(t){
+    var cm=(t.case_manager||'Unknown').trim();
+    if(cm==='Junior Alvarez') return;
+    if(!treatingByCM[cm]) treatingByCM[cm]={total:0,treating:0};
+    treatingByCM[cm].total++;
+    if(t.casestatus==='Treating') treatingByCM[cm].treating++;
+  });
+
+  // Build new intakes this month by CM (retainref_date in current month)
+  var now=new Date();
+  var curMonth='/'+String(now.getMonth()+1).padStart(2,'0')+'/'+(now.getFullYear());
+  // Also match single-digit month: e.g. "4/2026"
+  var curMonthAlt='/'+String(now.getMonth()+1)+'/'+(now.getFullYear());
+  var intakesByCM={};
+  treating.forEach(function(t){
+    var cm=(t.case_manager||'Unknown').trim();
+    if(cm==='Junior Alvarez') return;
+    if(!t.retainref_date) return;
+    // retainref_date format: MM/DD/YYYY — check month+year match
+    var p=t.retainref_date.split('/');
+    if(p.length!==3) return;
+    if(parseInt(p[0],10)===now.getMonth()+1 && parseInt(p[2],10)===now.getFullYear()){
+      intakesByCM[cm]=(intakesByCM[cm]||0)+1;
+    }
+  });
 
   ['2026','2025'].forEach(function(year){
     var yearDemands=demands.filter(function(d){
@@ -1930,12 +2336,15 @@ function renderCMPerformance(raw){
     var cmSet={};
     Object.keys(demandByCM).forEach(function(k){cmSet[k]=true;});
     Object.keys(depByCM).forEach(function(k){if(k!=='Junior Alvarez') cmSet[k]=true;});
+    Object.keys(treatingByCM).forEach(function(k){cmSet[k]=true;});
 
     var rows=Object.keys(cmSet).map(function(cm){
       var dd=demandByCM[cm]||{demands:0,pops:0,analyzable:0};
       var rev=depByCM[cm]||0;
+      var tc=treatingByCM[cm]||{total:0,treating:0};
+      var intakes=intakesByCM[cm]||0;
       var popRate=dd.analyzable>0?Math.round(dd.pops/dd.analyzable*100):null;
-      return{cm:cm,demands:dd.demands,pops:dd.pops,popRate:popRate,revenue:rev,fees:Math.round(rev/3)};
+      return{cm:cm,activeCases:tc.total,treating:tc.treating,intakes:intakes,demands:dd.demands,pops:dd.pops,popRate:popRate,revenue:rev,fees:Math.round(rev/3)};
     });
     rows.sort(function(a,b){return b.revenue-a.revenue;});
 
@@ -1954,12 +2363,25 @@ function renderCMPerformance(raw){
     rows.forEach(function(r){
       var pct=Math.round(r.revenue/maxRev*100);
       var isExec=r.cm==='Kausar Sarwari';
-      var cls=isExec?'row-exec':'';
+      // Flag: high intakes this month (>=5) with low demands (<4) = bandwidth context
+      var highIntake = year==='2026' && r.intakes>=5 && r.demands<4;
+      // Flag: low demands with no intake explanation = potential issue
+      var lowOutput = year==='2026' && r.demands<=2 && r.intakes<5 && r.activeCases>20;
+      var cls=isExec?'row-exec':(lowOutput?'row-warn':'');
       var tag=isExec?'<span class="badge-exec">Exec</span>':'';
+      var demandsDisp=highIntake
+        ? r.demands+' <span style="font-size:10px;color:var(--ink-3);font-weight:400">high intakes</span>'
+        : String(r.demands);
+      var intakesDisp=r.intakes>0
+        ? '<span style="color:var(--green);font-weight:600">'+r.intakes+'</span>'
+        : '0';
       tbody.insertAdjacentHTML('beforeend',
         '<tr class="'+cls+'">'+
         '<td class="name">'+_esc(r.cm)+tag+'</td>'+
-        '<td class="num">'+r.demands+'</td>'+
+        '<td class="num">'+r.activeCases+'</td>'+
+        '<td class="num">'+r.treating+'</td>'+
+        '<td class="num">'+intakesDisp+'</td>'+
+        '<td class="num">'+demandsDisp+'</td>'+
         '<td class="num">'+r.pops+'</td>'+
         '<td class="num">'+popCell(r.popRate)+'</td>'+
         '<td class="num"><span class="bic blue"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+_fmtCurrency(r.revenue)+'</span></span></td>'+
@@ -1967,13 +2389,13 @@ function renderCMPerformance(raw){
         '</tr>'
       );
     });
-    if(!rows.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">No data for '+year+'.</td></tr>';
+    if(!rows.length) tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink-3);">No data for '+year+'.</td></tr>';
 
     var totalRev=yearDeposits.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
     var estFees=Math.round(totalRev/3);
     var note=document.getElementById('cm-'+year+'-note');
     if(note){
-      note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+_fmtCurrency(totalRev)+' settlement revenue · '+yearDeposits.length+' check deposits · est. fees ~'+_fmtCurrency(estFees)+'.';
+      note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+_fmtCurrency(totalRev)+' settlement revenue · '+yearDeposits.length+' check deposits · est. fees ~'+_fmtCurrency(estFees)+'. <span style="color:var(--ink-3)">Active Cases / In Treating / New Intakes pulled from treating-overview. High-intake months shown in green — explains low demand counts.</span>';
     }
   });
 
@@ -2565,6 +2987,44 @@ function renderDataQuality(raw){
     if(dqTbody) dqTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
   }
 
+  function bindMoneyPeriodToggle(raw){
+    var seg = document.getElementById('money-period-seg');
+    if(!seg) return;
+    seg.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        seg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+        btn.classList.add('on');
+        _moneyPeriodDays = parseInt(btn.getAttribute('data-days'),10);
+        renderMoneyFeed(raw);
+      });
+    });
+  }
+
+  function bindSettlePanelToggles(raw){
+    var offerSeg = document.getElementById('settle-offer-seg');
+    if(offerSeg){
+      offerSeg.querySelectorAll('button').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          offerSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+          btn.classList.add('on');
+          _settleOfferView = btn.getAttribute('data-view');
+          renderSettleOffers(raw.demands||[], _settleOfferView);
+        });
+      });
+    }
+    var depSeg = document.getElementById('settle-deposit-seg');
+    if(depSeg){
+      depSeg.querySelectorAll('button').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          depSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+          btn.classList.add('on');
+          _settleDepositDays = parseInt(btn.getAttribute('data-days'),10);
+          renderSettleDeposits(raw.deposits||[], _settleDepositDays);
+        });
+      });
+    }
+  }
+
   async function init(){
     bindEvents();
     setSubtab('cases');
@@ -2583,14 +3043,16 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/disbursement-overview/'),
         fetchAll('/api/v1/case/settlement-overview/'),
         fetchAll('/api/v1/case/demands/?datesent__gte=2024-01-01&datesent__lte=2026-12-31'),
-        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
+        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31'),
+        fetchAll('/api/v1/case/treating-overview/')
       ]);
-      var lienMgmt    = results[0];
+      var lienMgmt     = results[0];
       var lienOverview = results[1];
       var disbursement = results[2];
       var settlement   = results[3];
       var demands      = results[4];
       var deposits     = results[5];
+      var treating     = results[6];
 
       state.raw.lienMgmt    = lienMgmt;
       state.raw.lienOverview = lienOverview;
@@ -2598,6 +3060,7 @@ function renderDataQuality(raw){
       state.raw.settlement   = settlement;
       state.raw.demands      = demands;
       state.raw.deposits     = deposits;
+      state.raw.treating     = treating;
 
       // Lien tab (existing pipeline)
       processData();
@@ -2610,7 +3073,8 @@ function renderDataQuality(raw){
         demands:      demands,
         deposits:     deposits,
         lienOverview: lienOverview,
-        lienMgmt:     lienMgmt
+        lienMgmt:     lienMgmt,
+        treating:     treating
       };
       renderPipeline(raw);
       renderSettlements(raw);
