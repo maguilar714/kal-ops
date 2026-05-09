@@ -1892,10 +1892,20 @@ function _depositsInDays(deposits, days){
   });
 }
 
-function _openOffers(demands){
-  var now = new Date();
+function _openOffers(demands, settlementMap){
+  // Only show offers on cases still in an active stage
+  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Prepped'];
   return (demands||[]).filter(function(d){
-    return d.offer_amount !== null && d.offer_amount !== undefined && d.offer_amount !== '';
+    if(d.offer_amount === null || d.offer_amount === undefined || d.offer_amount === '') return false;
+    // If we have a settlement map, filter to active cases only
+    if(settlementMap){
+      var caseId = d.case && d.case.id;
+      var caseStatus = settlementMap[caseId];
+      // If case is not in settlement overview at all, or is in a closed stage, exclude it
+      if(!caseStatus) return false;
+      if(activeStatuses.indexOf(caseStatus) < 0) return false;
+    }
+    return true;
   }).sort(function(a,b){
     var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
     var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
@@ -1927,6 +1937,9 @@ function _fmtCheckDate(str){
 function renderMoneyFeed(raw){
   var deposits = raw.deposits||[];
   var demands  = raw.demands||[];
+  // Build settlement status map for filtering active offers
+  var settlementMap = {};
+  (raw.settlement||[]).forEach(function(s){ settlementMap[s.id] = s.casestatus; });
 
   // ---- Deposit panel ----
   var filtered = _depositsInDays(deposits, _moneyPeriodDays);
@@ -1957,7 +1970,7 @@ function renderMoneyFeed(raw){
   }
 
   // ---- Offers panel ----
-  var allOffers = _openOffers(demands);
+  var allOffers = _openOffers(demands, settlementMap);
   var offerBody = document.getElementById('money-offers-body');
   var offerMeta = document.getElementById('money-offers-meta');
   var offerTotalEl = document.getElementById('money-offers-total');
@@ -2006,8 +2019,8 @@ function renderMoneyFeed(raw){
   }
 }
 
-function renderSettleOffers(demands, view){
-  var allOffers = _openOffers(demands);
+function renderSettleOffers(demands, view, settlementMap){
+  var allOffers = _openOffers(demands, settlementMap);
   var now = new Date();
   var filtered = view === 'expiring'
     ? allOffers.filter(function(d){
@@ -2086,6 +2099,44 @@ function renderSettleDeposits(deposits, days){
       '<td style="color:var(--ink-3)">'+_fmtCheckDate(d.check_date)+'</td>'+
       '</tr>';
   }).join('');
+}
+
+function bindMoneyPeriodToggle(raw){
+  var seg = document.getElementById('money-period-seg');
+  if(!seg) return;
+  seg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      seg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _moneyPeriodDays = parseInt(btn.getAttribute('data-days'),10);
+      renderMoneyFeed(raw);
+    });
+  });
+}
+
+function bindSettlePanelToggles(raw, settlementMap){
+  var offerSeg = document.getElementById('settle-offer-seg');
+  if(offerSeg){
+    offerSeg.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        offerSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+        btn.classList.add('on');
+        _settleOfferView = btn.getAttribute('data-view');
+        renderSettleOffers(raw.demands||[], _settleOfferView, settlementMap);
+      });
+    });
+  }
+  var depSeg = document.getElementById('settle-deposit-seg');
+  if(depSeg){
+    depSeg.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        depSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+        btn.classList.add('on');
+        _settleDepositDays = parseInt(btn.getAttribute('data-days'),10);
+        renderSettleDeposits(raw.deposits||[], _settleDepositDays);
+      });
+    });
+  }
 }
 
 function renderPipeline(raw){
@@ -2209,10 +2260,12 @@ function renderSettlements(raw){
     });
   }
 
+  var settlementMap = {};
+  (raw.settlement||[]).forEach(function(s){ settlementMap[s.id] = s.casestatus; });
   renderCarriers(demands);
-  renderSettleOffers(demands, _settleOfferView);
+  renderSettleOffers(demands, _settleOfferView, settlementMap);
   renderSettleDeposits(raw.deposits||[], _settleDepositDays);
-  bindSettlePanelToggles(raw);
+  bindSettlePanelToggles(raw, settlementMap);
 
   var settleItems=document.querySelectorAll('[data-page="settlements"] .briefing .items .item');
   if(settleItems[0]){var sm=settleItems[0].querySelector('.marker');if(sm) sm.textContent=expired;}
@@ -2987,43 +3040,6 @@ function renderDataQuality(raw){
     if(dqTbody) dqTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
   }
 
-  function bindMoneyPeriodToggle(raw){
-    var seg = document.getElementById('money-period-seg');
-    if(!seg) return;
-    seg.querySelectorAll('button').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        seg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
-        btn.classList.add('on');
-        _moneyPeriodDays = parseInt(btn.getAttribute('data-days'),10);
-        renderMoneyFeed(raw);
-      });
-    });
-  }
-
-  function bindSettlePanelToggles(raw){
-    var offerSeg = document.getElementById('settle-offer-seg');
-    if(offerSeg){
-      offerSeg.querySelectorAll('button').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          offerSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
-          btn.classList.add('on');
-          _settleOfferView = btn.getAttribute('data-view');
-          renderSettleOffers(raw.demands||[], _settleOfferView);
-        });
-      });
-    }
-    var depSeg = document.getElementById('settle-deposit-seg');
-    if(depSeg){
-      depSeg.querySelectorAll('button').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          depSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
-          btn.classList.add('on');
-          _settleDepositDays = parseInt(btn.getAttribute('data-days'),10);
-          renderSettleDeposits(raw.deposits||[], _settleDepositDays);
-        });
-      });
-    }
-  }
 
   async function init(){
     bindEvents();
