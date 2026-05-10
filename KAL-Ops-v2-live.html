@@ -620,8 +620,8 @@
       <button class="tab" data-tab="settlements" data-alerts="1"><span>Settlements</span><span class="alert-dot"></span></button>
       <button class="tab" data-tab="cm">CM Performance</button>
       <button class="tab" data-tab="lien" data-alerts="1"><span>Lien Operations</span><span class="alert-dot"></span></button>
-      <button class="tab" data-tab="dq">Data Quality</button>
       <button class="tab" data-tab="sol" id="sol-tab"><span>SOL</span><span class="alert-dot" style="display:none"></span></button>
+      <button class="tab" data-tab="dq">Data Quality</button>
     </nav>
 
     <div class="meta">
@@ -1466,8 +1466,8 @@
        =========================================================== -->
   <section class="page" data-page="sol" style="--accent:#d70015">
 
-    <div id="sol-alert-banner" style="display:none;background:#fdecea;border:1px solid #f5c8c4;border-left:4px solid #d70015;border-radius:0;padding:12px 16px;margin-bottom:14px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#b3261e;margin-bottom:8px;">⚠ SOL — cases expiring within 30 days · red alert</div>
+    <div id="sol-alert-banner" style="display:none;background:var(--red-bg);border:1px solid var(--red-bg);border-left:4px solid var(--red-mark);border-radius:0;padding:12px 16px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--red);margin-bottom:8px;">⚠ SOL — cases expiring within 30 days · red alert</div>
       <div id="sol-alert-items" style="display:flex;flex-direction:column;gap:5px;"></div>
     </div>
 
@@ -1506,8 +1506,8 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:11px;color:var(--ink-3)">
-          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:#efeaf9;color:#5b3aa8;text-transform:uppercase;letter-spacing:.05em">M</span> manual &nbsp;
-          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:#f0f0f2;color:#6e6e73;text-transform:uppercase;letter-spacing:.05em">A</span> auto from CasePeer
+          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:var(--purple-bg);color:var(--purple);text-transform:uppercase;letter-spacing:.05em">M</span> manual &nbsp;
+          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:var(--surface-3);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">A</span> auto from CasePeer
         </div>
         <div class="seg" id="sol-view-seg">
           <button class="on" data-view="30">30 days</button>
@@ -1519,19 +1519,19 @@
     </div>
 
     <!-- Within 30 days panel -->
-    <div class="panel" id="sol-panel-30" style="border-color:#f09595">
-      <div class="panel-head" style="background:#fff5f4;border-bottom-color:#f5c8c4">
-        <h3 style="color:#b3261e">Within 30 days — red alert</h3>
-        <div class="meta-r" id="sol-panel-30-meta" style="color:#b3261e">—</div>
+    <div class="panel" id="sol-panel-30" style="border-color:var(--red-bg)">
+      <div class="panel-head" style="background:var(--surface);border-bottom-color:var(--line)">
+        <h3 style="color:var(--red)">Within 30 days — red alert</h3>
+        <div class="meta-r" id="sol-panel-30-meta" style="color:var(--red)">—</div>
       </div>
       <table class="t">
         <thead>
           <tr>
-            <th style="background:#fff5f4">Case</th>
-            <th class="num" style="background:#fff5f4;width:100px">SOL date</th>
-            <th class="num" style="background:#fff5f4;width:80px">Days left</th>
-            <th style="background:#fff5f4;width:170px">Status</th>
-            <th style="background:#fff5f4">Action</th>
+            <th>Case</th>
+            <th class="num" style="width:100px">SOL date</th>
+            <th class="num" style="width:80px">Days left</th>
+            <th style="width:170px">Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="sol-body-30">
