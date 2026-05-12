@@ -2094,6 +2094,15 @@ function _setFlag(caseName, flag){
   }).catch(function(e){ console.warn('Flag save failed:', e.message); });
 }
 
+function _clearFlag(caseName){
+  delete _flagCache[caseName];
+  fetch(_RAILWAY_URL + '/flags', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName })
+  }).catch(function(e){ console.warn('Flag clear failed:', e.message); });
+}
+
 function _getFlag(caseName){
   return _flagCache[caseName] || null;
 }
@@ -2108,6 +2117,20 @@ function _showFlagDropdown(anchorEl, caseName, onSelect){
   var rect = anchorEl.getBoundingClientRect();
   dd.style.top  = (rect.bottom + 4) + 'px';
   dd.style.left = rect.left + 'px';
+  // Clear option at top
+  var clearItem = document.createElement('div');
+  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
+  clearItem.textContent = '— Clear status';
+  clearItem.addEventListener('mouseenter', function(){ clearItem.style.background='var(--surface-3)'; });
+  clearItem.addEventListener('mouseleave', function(){ clearItem.style.background=''; });
+  clearItem.addEventListener('click', function(e){
+    e.stopPropagation();
+    _clearFlag(caseName);
+    onSelect(null);
+    _closeFlagDropdown();
+  });
+  dd.appendChild(clearItem);
+
   _FLAG_OPTIONS.forEach(function(opt){
     var item = document.createElement('div');
     var cls = _FLAG_COLORS[opt] || 'gray';
@@ -2847,13 +2870,23 @@ function bindSettlePanelToggles(raw, settlementMap){
       e.stopPropagation();
       var caseName = el.getAttribute('data-case');
       _showFlagDropdown(el, caseName, function(newFlag){
-        // Update the cell in place without re-rendering the whole table
-        var newCls = _FLAG_COLORS[newFlag] || 'gray';
-        el.className = 'flag ' + newCls;
-        el.textContent = newFlag;
-        el.style.color = '';
-        el.style.fontSize = '';
-        el.style.padding = '';
+        if(newFlag){
+          var newCls = _FLAG_COLORS[newFlag] || 'gray';
+          el.className = 'flag ' + newCls;
+          el.textContent = newFlag;
+          el.style.color = '';
+          el.style.fontSize = '';
+          el.style.padding = '';
+          el.setAttribute('data-action', 'open-flag-dd');
+        } else {
+          // Reset to dash
+          el.className = '';
+          el.textContent = '—';
+          el.style.color = 'var(--ink-4)';
+          el.style.fontSize = '13px';
+          el.style.padding = '2px 4px';
+          el.setAttribute('data-action', 'open-flag-dd');
+        }
       });
     });
   }
