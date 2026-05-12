@@ -969,22 +969,23 @@
         <h3 id="settle-offers-title">Expired demands — past 30-day window</h3>
         <div class="meta-r" id="settle-offers-meta">—</div>
       </div>
-      <table class="t">
+      <table class="t" id="tracker-table">
         <thead>
-          <tr>
-            <th>Case</th>
-            <th>CM</th>
-            <th>Carrier</th>
-            <th class="num">Policy Limit</th>
-            <th class="num">Offer</th>
-            <th>Expires</th>
-            <th>Last Touched</th>
-            <th>SOL</th>
-            <th>Type</th>
+          <tr id="tracker-thead">
+            <th data-sort="case" style="cursor:pointer;user-select:none">Case <span class="sort-ind"></span></th>
+            <th data-sort="cm" style="cursor:pointer;user-select:none">CM <span class="sort-ind"></span></th>
+            <th data-sort="carrier" style="cursor:pointer;user-select:none">Carrier <span class="sort-ind"></span></th>
+            <th class="num" data-sort="policy" style="cursor:pointer;user-select:none">Policy Limit <span class="sort-ind"></span></th>
+            <th class="num" data-sort="offer" style="cursor:pointer;user-select:none">Offer <span class="sort-ind"></span></th>
+            <th data-sort="expires" style="cursor:pointer;user-select:none">Expires <span class="sort-ind"></span></th>
+            <th data-sort="touched" style="cursor:pointer;user-select:none">Last Touched <span class="sort-ind"></span></th>
+            <th data-sort="sol" style="cursor:pointer;user-select:none">SOL <span class="sort-ind"></span></th>
+            <th data-sort="type" style="cursor:pointer;user-select:none">Type <span class="sort-ind"></span></th>
+            <th data-sort="status" style="cursor:pointer;user-select:none">Status <span class="sort-ind"></span></th>
           </tr>
         </thead>
         <tbody id="settle-offers-body">
-          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+          <tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
         </tbody>
       </table>
       <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
@@ -1013,44 +1014,6 @@
         </thead>
         <tbody id="carriers"></tbody>
       </table>
-    </div>
-
-    <!-- Recent Deposits panel -->
-    <div class="section-title" style="margin-top:24px">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Recent deposits</h2>
-      </div>
-      <div class="seg" id="settle-deposit-seg">
-        <button class="on" data-days="7">7 days</button>
-        <button data-days="14">14 days</button>
-        <button data-days="30">30 days</button>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h3>Checks deposited</h3>
-        <div class="meta-r" id="settle-deposit-meta">Last 7 days</div>
-      </div>
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th>CM</th>
-            <th>Payee</th>
-            <th>Type</th>
-            <th class="num">Amount</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="settle-deposit-body">
-          <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
-        </tbody>
-      </table>
-      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
-        <span id="settle-deposit-count" style="color:var(--ink-3)">—</span>
-        <span id="settle-deposit-total" style="font-weight:600;color:var(--green);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
-      </div>
     </div>
 
   </section>
@@ -2092,6 +2055,39 @@ function buildDemandChart(demands){
 
 var _moneyPeriodDays = 7;
 var _settleOfferView = 'expired';
+var _trackerSortCol = 'expires';
+var _trackerSortDir = 1; // 1=asc, -1=desc
+
+// --- Case status flags (localStorage, migrates to Railway later) ---
+var _TRACKER_FLAGS_KEY = 'kal_tracker_flags';
+var _FLAG_CYCLE = ['Pre-Lit','Lit','Arb','Referred','Drop'];
+var _FLAG_COLORS = {
+  'Pre-Lit': 'gray',
+  'Lit':     'indigo',
+  'Arb':     'blue',
+  'Referred':'amber',
+  'Drop':    'red'
+};
+
+function _getFlags(){
+  try { return JSON.parse(localStorage.getItem(_TRACKER_FLAGS_KEY)||'{}'); } catch(e){ return {}; }
+}
+function _setFlag(caseName, flag){
+  var flags = _getFlags();
+  if(flag === 'Pre-Lit') delete flags[caseName];
+  else flags[caseName] = flag;
+  try { localStorage.setItem(_TRACKER_FLAGS_KEY, JSON.stringify(flags)); } catch(e){}
+}
+function _getFlag(caseName){
+  return _getFlags()[caseName] || 'Pre-Lit';
+}
+function _cycleFlag(caseName){
+  var cur = _getFlag(caseName);
+  var idx = _FLAG_CYCLE.indexOf(cur);
+  var next = _FLAG_CYCLE[(idx+1) % _FLAG_CYCLE.length];
+  _setFlag(caseName, next);
+  return next;
+}
 var _settleDepositDays = 7;
 
 function _depositsInDays(deposits, days){
@@ -2298,18 +2294,66 @@ function renderSettleOffers(demands, view, settlementMap){
     totalEl.textContent = offerTotal > 0 ? _fmtCurrency(offerTotal)+' in offers' : '—';
   }
 
+  // Enrich records with sort keys before sorting
+  var enriched = filtered.map(function(d){
+    var caseName = (d.case && d.case._casename) || '—';
+    var info = settlementMap[caseName] || {};
+    var offer = parseFloat(d.offer_amount) || 0;
+    var lim = _parseLimit(d.insurance_policy);
+    var exp = _parseDate(d.dateexpires);
+    var ltDate = info.last_touched ? _parseDate(info.last_touched) : null;
+    var solDate = info.statutedate ? _parseDate(info.statutedate) : null;
+    var dtype = (d.demandtype||'').toLowerCase().indexOf('uim') >= 0 ? 'UIM' : 'TP';
+    var flag = _getFlag(caseName);
+    return {
+      d: d, info: info, caseName: caseName,
+      offer: offer, lim: lim, exp: exp,
+      ltDate: ltDate, solDate: solDate,
+      dtype: dtype, flag: flag,
+      _sortCase:    caseName.toLowerCase(),
+      _sortCm:      (d.case_manager||'').toLowerCase(),
+      _sortCarrier: (d.insurance||'').toLowerCase(),
+      _sortPolicy:  lim || 0,
+      _sortOffer:   offer,
+      _sortExpires: exp ? exp.getTime() : 0,
+      _sortTouched: ltDate ? ltDate.getTime() : 0,
+      _sortSol:     solDate ? solDate.getTime() : 0,
+      _sortType:    dtype,
+      _sortStatus:  _FLAG_CYCLE.indexOf(flag)
+    };
+  });
+
+  // Apply sort
+  var sortKey = '_sort' + _trackerSortCol.charAt(0).toUpperCase() + _trackerSortCol.slice(1);
+  enriched.sort(function(a,b){
+    var av = a[sortKey], bv = b[sortKey];
+    if(typeof av === 'string') return av < bv ? -_trackerSortDir : av > bv ? _trackerSortDir : 0;
+    return (av - bv) * _trackerSortDir;
+  });
+
+  // Update sort indicators in header
+  var thead = document.getElementById('tracker-thead');
+  if(thead){
+    thead.querySelectorAll('th').forEach(function(th){
+      var ind = th.querySelector('.sort-ind');
+      if(!ind) return;
+      var col = th.getAttribute('data-sort');
+      if(col === _trackerSortCol) ind.textContent = _trackerSortDir === 1 ? ' ↑' : ' ↓';
+      else ind.textContent = '';
+    });
+  }
+
   if(!tbody) return;
-  if(!filtered.length){
-    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-3)">No demands match this filter.</td></tr>';
+  if(!enriched.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink-3)">No demands match this filter.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = filtered.map(function(d){
-    var caseName = (d.case && d.case._casename) || '—';
-    var info = settlementMap[caseName] || {};
-
-    // Demand type label
-    var dtype = (d.demandtype||'').toLowerCase().indexOf('uim') >= 0 ? 'UIM' : 'TP';
+  tbody.innerHTML = enriched.map(function(e){
+    var d = e.d;
+    var info = e.info;
+    var caseName = e.caseName;
+    var dtype = e.dtype;
     var dtypeCls = dtype === 'UIM' ? 'indigo' : 'blue';
 
     // Policy limit
@@ -2318,16 +2362,14 @@ function renderSettleOffers(demands, view, settlementMap){
       : '—';
 
     // Offer
-    var offer = parseFloat(d.offer_amount) || 0;
-    var lim = _parseLimit(d.insurance_policy);
-    var isPop = lim && offer >= lim;
+    var offer = e.offer;
+    var isPop = e.lim && offer >= e.lim;
     var offerDisp = offer > 0
       ? _fmtCurrency(offer) + (isPop ? ' <span style="color:var(--green);font-size:10px;font-weight:600">✓ pop</span>' : '')
       : '<span style="color:var(--red);font-size:11px">No offer</span>';
 
     // Expiry
-    var exp = _parseDate(d.dateexpires);
-    var daysFromExp = exp ? Math.ceil((now - exp) / 86400000) : null;
+    var daysFromExp = e.exp ? Math.ceil((now - e.exp) / 86400000) : null;
     var expiresDisp = d.dateexpires
       ? _fmtCheckDate(d.dateexpires) + (daysFromExp !== null
           ? ' <span style="color:var(--ink-4);font-size:11px">('+
@@ -2338,8 +2380,7 @@ function renderSettleOffers(demands, view, settlementMap){
 
     // Last touched
     var lt = info.last_touched || null;
-    var ltDate = lt ? _parseDate(lt) : null;
-    var daysSinceTouch = ltDate ? Math.floor((now - ltDate) / 86400000) : null;
+    var daysSinceTouch = e.ltDate ? Math.floor((now - e.ltDate) / 86400000) : null;
     var ltDisp = lt
       ? _fmtCheckDate(lt) + ' <span style="color:var(--ink-4);font-size:11px">('+daysSinceTouch+'d)</span>'
       : '—';
@@ -2347,8 +2388,7 @@ function renderSettleOffers(demands, view, settlementMap){
 
     // SOL
     var sol = info.statutedate || null;
-    var solDate = sol ? _parseDate(sol) : null;
-    var daysToSol = solDate ? Math.ceil((solDate - now) / 86400000) : null;
+    var daysToSol = e.solDate ? Math.ceil((e.solDate - now) / 86400000) : null;
     var solDisp = sol
       ? _fmtCheckDate(sol) + (daysToSol !== null
           ? ' <span style="color:'+(daysToSol < 90 ? 'var(--red)' : 'var(--ink-4)')+';font-size:11px">('+daysToSol+'d)</span>'
@@ -2360,6 +2400,11 @@ function renderSettleOffers(demands, view, settlementMap){
     var cm = (d.case_manager||'—');
     var cmParts = cm.split(' ');
     var cmDisp = cmParts.length>1 ? cmParts[0]+' '+cmParts[cmParts.length-1][0]+'.' : cm;
+
+    // Flag badge
+    var flag = e.flag;
+    var flagCls = _FLAG_COLORS[flag] || 'gray';
+    var flagDisp = '<span class="flag '+flagCls+'" data-case="'+_esc(caseName)+'" data-action="cycle-flag" style="cursor:pointer" title="Click to change status">'+_esc(flag)+'</span>';
 
     // Row class
     var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
@@ -2374,6 +2419,7 @@ function renderSettleOffers(demands, view, settlementMap){
       '<td style="font-size:11px'+(ltAlert?';color:var(--amber)':'')+'">'+ltDisp+'</td>'+
       '<td style="font-size:11px'+(solAlert?';color:var(--red)':'')+'">'+solDisp+'</td>'+
       '<td><span class="flag '+dtypeCls+'">'+dtype+'</span></td>'+
+      '<td>'+flagDisp+'</td>'+
       '</tr>';
   }).join('');
 }
@@ -2729,15 +2775,33 @@ function bindSettlePanelToggles(raw, settlementMap){
       });
     });
   }
-  var depSeg = document.getElementById('settle-deposit-seg');
-  if(depSeg){
-    depSeg.querySelectorAll('button').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        depSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
-        btn.classList.add('on');
-        _settleDepositDays = parseInt(btn.getAttribute('data-days'),10);
-        renderSettleDeposits(raw.deposits||[], _settleDepositDays);
+  // Sort headers
+  var thead = document.getElementById('tracker-thead');
+  if(thead){
+    thead.querySelectorAll('th[data-sort]').forEach(function(th){
+      th.addEventListener('click', function(){
+        var col = th.getAttribute('data-sort');
+        if(_trackerSortCol === col){
+          _trackerSortDir *= -1;
+        } else {
+          _trackerSortCol = col;
+          _trackerSortDir = 1;
+        }
+        renderSettleOffers(raw.demands||[], _settleOfferView, settlementMap);
       });
+    });
+  }
+
+  // Flag badge clicks (delegated to tbody)
+  var trackerTbody = document.getElementById('settle-offers-body');
+  if(trackerTbody){
+    trackerTbody.addEventListener('click', function(e){
+      var badge = e.target.closest('[data-action="cycle-flag"]');
+      if(!badge) return;
+      var caseName = badge.getAttribute('data-case');
+      var newFlag = _cycleFlag(caseName);
+      badge.textContent = newFlag;
+      badge.className = 'flag ' + (_FLAG_COLORS[newFlag]||'gray');
     });
   }
 }
@@ -2873,7 +2937,6 @@ function renderSettlements(raw){
   });
   renderCarriers(demands);
   renderSettleOffers(demands, _settleOfferView, settlementMap);
-  renderSettleDeposits(raw.deposits||[], _settleDepositDays);
   bindSettlePanelToggles(raw, settlementMap);
 
   var settleItems=document.querySelectorAll('[data-page="settlements"] .briefing .items .item');
