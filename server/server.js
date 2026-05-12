@@ -1,19 +1,3 @@
-{
-  "name": "kal-ops-server",
-  "version": "1.0.0",
-  "description": "KAL Ops backend — flags, shared state",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "pg": "^8.11.3"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
-
 const http = require('http');
 const { Pool } = require('pg');
 
