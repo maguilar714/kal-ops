@@ -2059,8 +2059,8 @@ var _trackerSortCol = 'expires';
 var _trackerSortDir = 1; // 1=asc, -1=desc
 
 // --- Case status flags (localStorage, migrates to Railway later) ---
-var _TRACKER_FLAGS_KEY = 'kal_tracker_flags';
-var _FLAG_CYCLE = ['Pre-Lit','Lit','Arb','Referred','Drop'];
+var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+var _FLAG_OPTIONS = ['Pre-Lit','Lit','Arb','Referred','Drop'];
 var _FLAG_COLORS = {
   'Pre-Lit': 'gray',
   'Lit':     'indigo',
@@ -2069,24 +2069,69 @@ var _FLAG_COLORS = {
   'Drop':    'red'
 };
 
-function _getFlags(){
-  try { return JSON.parse(localStorage.getItem(_TRACKER_FLAGS_KEY)||'{}'); } catch(e){ return {}; }
+// In-memory cache — loaded from Railway at startup
+var _flagCache = {};
+
+function _loadFlags(){
+  return fetch(_RAILWAY_URL + '/flags')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _flagCache = data || {};
+      console.log('Flags loaded from Railway:', Object.keys(_flagCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load flags from Railway:', e.message);
+      _flagCache = {};
+    });
 }
+
 function _setFlag(caseName, flag){
-  var flags = _getFlags();
-  if(flag === 'Pre-Lit') delete flags[caseName];
-  else flags[caseName] = flag;
-  try { localStorage.setItem(_TRACKER_FLAGS_KEY, JSON.stringify(flags)); } catch(e){}
+  _flagCache[caseName] = flag;
+  fetch(_RAILWAY_URL + '/flags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName, flag: flag })
+  }).catch(function(e){ console.warn('Flag save failed:', e.message); });
 }
+
 function _getFlag(caseName){
-  return _getFlags()[caseName] || 'Pre-Lit';
+  return _flagCache[caseName] || null;
 }
-function _cycleFlag(caseName){
-  var cur = _getFlag(caseName);
-  var idx = _FLAG_CYCLE.indexOf(cur);
-  var next = _FLAG_CYCLE[(idx+1) % _FLAG_CYCLE.length];
-  _setFlag(caseName, next);
-  return next;
+
+// Dropdown — shown near the clicked element
+var _flagDropdown = null;
+function _showFlagDropdown(anchorEl, caseName, onSelect){
+  _closeFlagDropdown();
+  var dd = document.createElement('div');
+  dd.id = '_flag_dd';
+  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
+  var rect = anchorEl.getBoundingClientRect();
+  dd.style.top  = (rect.bottom + 4) + 'px';
+  dd.style.left = rect.left + 'px';
+  _FLAG_OPTIONS.forEach(function(opt){
+    var item = document.createElement('div');
+    var cls = _FLAG_COLORS[opt] || 'gray';
+    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
+    item.innerHTML = '<span class="flag '+cls+'" style="pointer-events:none">'+opt+'</span>';
+    item.addEventListener('mouseenter', function(){ item.style.background='var(--surface-3)'; });
+    item.addEventListener('mouseleave', function(){ item.style.background=''; });
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      _setFlag(caseName, opt);
+      onSelect(opt);
+      _closeFlagDropdown();
+    });
+    dd.appendChild(item);
+  });
+  document.body.appendChild(dd);
+  _flagDropdown = dd;
+  // Close on outside click
+  setTimeout(function(){
+    document.addEventListener('click', _closeFlagDropdown, {once:true});
+  }, 0);
+}
+function _closeFlagDropdown(){
+  if(_flagDropdown){ _flagDropdown.remove(); _flagDropdown = null; }
 }
 var _settleDepositDays = 7;
 
@@ -2319,7 +2364,7 @@ function renderSettleOffers(demands, view, settlementMap){
       _sortTouched: ltDate ? ltDate.getTime() : 0,
       _sortSol:     solDate ? solDate.getTime() : 0,
       _sortType:    dtype,
-      _sortStatus:  _FLAG_CYCLE.indexOf(flag)
+      _sortStatus:  flag ? _FLAG_OPTIONS.indexOf(flag) : -1
     };
   });
 
@@ -2403,8 +2448,9 @@ function renderSettleOffers(demands, view, settlementMap){
 
     // Flag badge
     var flag = e.flag;
-    var flagCls = _FLAG_COLORS[flag] || 'gray';
-    var flagDisp = '<span class="flag '+flagCls+'" data-case="'+_esc(caseName)+'" data-action="cycle-flag" style="cursor:pointer" title="Click to change status">'+_esc(flag)+'</span>';
+    var flagDisp = flag
+      ? '<span class="flag '+(_FLAG_COLORS[flag]||'gray')+'" data-case="'+_esc(caseName)+'" data-action="open-flag-dd" style="cursor:pointer" title="Click to change status">'+_esc(flag)+'</span>'
+      : '<span data-case="'+_esc(caseName)+'" data-action="open-flag-dd" style="cursor:pointer;color:var(--ink-4);font-size:13px;padding:2px 4px;" title="Set status">—</span>';
 
     // Row class
     var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
@@ -2792,16 +2838,23 @@ function bindSettlePanelToggles(raw, settlementMap){
     });
   }
 
-  // Flag badge clicks (delegated to tbody)
+  // Flag badge / dash clicks (delegated to tbody) — opens dropdown
   var trackerTbody = document.getElementById('settle-offers-body');
   if(trackerTbody){
     trackerTbody.addEventListener('click', function(e){
-      var badge = e.target.closest('[data-action="cycle-flag"]');
-      if(!badge) return;
-      var caseName = badge.getAttribute('data-case');
-      var newFlag = _cycleFlag(caseName);
-      badge.textContent = newFlag;
-      badge.className = 'flag ' + (_FLAG_COLORS[newFlag]||'gray');
+      var el = e.target.closest('[data-action="open-flag-dd"]');
+      if(!el) return;
+      e.stopPropagation();
+      var caseName = el.getAttribute('data-case');
+      _showFlagDropdown(el, caseName, function(newFlag){
+        // Update the cell in place without re-rendering the whole table
+        var newCls = _FLAG_COLORS[newFlag] || 'gray';
+        el.className = 'flag ' + newCls;
+        el.textContent = newFlag;
+        el.style.color = '';
+        el.style.fontSize = '';
+        el.style.padding = '';
+      });
     });
   }
 }
@@ -3716,6 +3769,9 @@ function renderDataQuality(raw){
   async function init(){
     bindEvents();
     setSubtab('cases');
+
+    // Load shared flags from Railway
+    await _loadFlags();
 
     // Detect host — if not on CasePeer, use full URL with credentials
     var host = window.location.hostname;
