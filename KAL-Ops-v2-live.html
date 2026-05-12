@@ -953,6 +953,46 @@
       </table>
     </div>
 
+    <!-- Demand Tracker panel -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Demand tracker · settlement stage</h2>
+      </div>
+      <div class="seg" id="settle-offer-seg">
+        <button class="on" data-view="expired">Expired</button>
+        <button data-view="pending">Pending</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3 id="settle-offers-title">Expired demands — past 30-day window</h3>
+        <div class="meta-r" id="settle-offers-meta">—</div>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>CM</th>
+            <th>Carrier</th>
+            <th class="num">Policy Limit</th>
+            <th class="num">Offer</th>
+            <th>Expires</th>
+            <th>Last Touched</th>
+            <th>SOL</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="settle-offers-body">
+          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+        </tbody>
+      </table>
+      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+        <span id="settle-offers-urgency" style="color:var(--ink-3)">—</span>
+        <span id="settle-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+      </div>
+    </div>
+
     <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
@@ -973,44 +1013,6 @@
         </thead>
         <tbody id="carriers"></tbody>
       </table>
-    </div>
-
-    <!-- Open Offers panel -->
-    <div class="section-title" style="margin-top:28px">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Open offers on the table</h2>
-      </div>
-      <div class="seg" id="settle-offer-seg">
-        <button class="on" data-view="expiring">Expiring soon</button>
-        <button data-view="all">All open</button>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h3 id="settle-offers-title">Offers expiring within 14 days</h3>
-        <div class="meta-r" id="settle-offers-meta">—</div>
-      </div>
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th>CM</th>
-            <th>Carrier</th>
-            <th class="num">Offer</th>
-            <th class="num">Policy Limit</th>
-            <th>Expires</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="settle-offers-body">
-          <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
-        </tbody>
-      </table>
-      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
-        <span id="settle-offers-urgency" style="color:var(--ink-3)">—</span>
-        <span id="settle-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
-      </div>
     </div>
 
     <!-- Recent Deposits panel -->
@@ -2089,7 +2091,7 @@ function buildDemandChart(demands){
    ========================================================= */
 
 var _moneyPeriodDays = 7;
-var _settleOfferView = 'expiring';
+var _settleOfferView = 'expired';
 var _settleDepositDays = 7;
 
 function _depositsInDays(deposits, days){
@@ -2115,13 +2117,11 @@ function _openOffers(demands, settlementMap){
   var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Prepped'];
   return (demands||[]).filter(function(d){
     if(d.offer_amount === null || d.offer_amount === undefined || d.offer_amount === '') return false;
-    // If we have a settlement map, filter to active cases only
     if(settlementMap){
-      var caseId = d.case && d.case.id;
-      var caseStatus = settlementMap[caseId];
-      // If case is not in settlement overview at all, or is in a closed stage, exclude it
-      if(!caseStatus) return false;
-      if(activeStatuses.indexOf(caseStatus) < 0) return false;
+      var caseName = d.case && d.case._casename;
+      var info = settlementMap[caseName];
+      if(!info) return false;
+      if(activeStatuses.indexOf(info.casestatus) < 0) return false;
     }
     return true;
   }).sort(function(a,b){
@@ -2157,7 +2157,13 @@ function renderMoneyFeed(raw){
   var demands  = raw.demands||[];
   // Build settlement status map for filtering active offers
   var settlementMap = {};
-  (raw.settlement||[]).forEach(function(s){ settlementMap[s.id] = s.casestatus; });
+  (raw.settlement||[]).forEach(function(s){
+    if(s._casename) settlementMap[s._casename] = {
+      casestatus:   s.casestatus,
+      last_touched: s.last_touched || null,
+      statutedate:  s.statutedate  || null
+    };
+  });
 
   // ---- Deposit panel ----
   var filtered = _depositsInDays(deposits, _moneyPeriodDays);
@@ -2238,55 +2244,136 @@ function renderMoneyFeed(raw){
 }
 
 function renderSettleOffers(demands, view, settlementMap){
-  var allOffers = _openOffers(demands, settlementMap);
+  // settlementMap keyed by _casename → {casestatus, last_touched, statutedate}
   var now = new Date();
-  var filtered = view === 'expiring'
-    ? allOffers.filter(function(d){
-        if(!d.dateexpires) return false;
-        var exp = _parseDate(d.dateexpires);
-        return exp && (exp-now)/86400000 <= 14;
-      })
-    : allOffers;
+  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Prepped'];
 
-  var title = document.getElementById('settle-offers-title');
-  var meta  = document.getElementById('settle-offers-meta');
+  // All demands on active cases, no offer filter — we want expired with NO offer too
+  var allDemands = (demands||[]).filter(function(d){
+    if(!d.dateexpires) return false; // need an expiry to categorize
+    var caseName = d.case && d.case._casename;
+    if(!caseName) return false;
+    var info = settlementMap[caseName];
+    if(!info) return false;
+    if(activeStatuses.indexOf(info.casestatus) < 0) return false;
+    return true;
+  });
+
+  // Tab: Expired = dateexpires < today
+  // Tab: Pending = dateexpires >= today
+  var filtered = view === 'expired'
+    ? allDemands.filter(function(d){
+        var exp = _parseDate(d.dateexpires);
+        return exp && exp < now;
+      }).sort(function(a,b){
+        // oldest expiry first (most overdue)
+        return _parseDate(a.dateexpires) - _parseDate(b.dateexpires);
+      })
+    : allDemands.filter(function(d){
+        var exp = _parseDate(d.dateexpires);
+        return exp && exp >= now;
+      }).sort(function(a,b){
+        // soonest expiry first
+        return _parseDate(a.dateexpires) - _parseDate(b.dateexpires);
+      });
+
+  var title   = document.getElementById('settle-offers-title');
+  var meta    = document.getElementById('settle-offers-meta');
   var urgency = document.getElementById('settle-offers-urgency');
   var totalEl = document.getElementById('settle-offers-total');
-  var tbody = document.getElementById('settle-offers-body');
+  var tbody   = document.getElementById('settle-offers-body');
 
-  if(title) title.textContent = view==='expiring' ? 'Offers expiring within 14 days' : 'All open offers';
-  var total = filtered.reduce(function(s,d){return s+(parseFloat(d.offer_amount)||0);},0);
-  var urgentCount = filtered.filter(function(d){return _offerRowStatus(d.dateexpires).urgent;}).length;
-  if(meta) meta.textContent = filtered.length+' offers · '+_fmtCurrency(allOffers.reduce(function(s,d){return s+(parseFloat(d.offer_amount)||0);},0))+' total on table';
-  if(urgency) urgency.textContent = urgentCount+' urgent (≤3 days) · '+filtered.filter(function(d){var s=_offerRowStatus(d.dateexpires);return s.days!==null&&s.days>=0&&s.days<=14;}).length+' expiring (≤14 days)';
-  if(totalEl) totalEl.textContent = _fmtCurrency(total)+' in view';
+  var noOfferCount = filtered.filter(function(d){ return !d.offer_amount; }).length;
+  var withOfferCount = filtered.length - noOfferCount;
+
+  if(title) title.textContent = view === 'expired'
+    ? 'Expired demands — past 30-day window'
+    : 'Pending demands — inside response window';
+  if(meta) meta.textContent = filtered.length + ' demands · ' + withOfferCount + ' with offer · ' + noOfferCount + ' no response';
+  if(urgency) urgency.textContent = view === 'expired'
+    ? noOfferCount + ' need adjuster follow-up · Mark & Hernan'
+    : 'Monitor — response window still open';
+  if(totalEl){
+    var offerTotal = filtered.reduce(function(s,d){ return s+(parseFloat(d.offer_amount)||0); }, 0);
+    totalEl.textContent = offerTotal > 0 ? _fmtCurrency(offerTotal)+' in offers' : '—';
+  }
 
   if(!tbody) return;
   if(!filtered.length){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">No offers match this filter.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-3)">No demands match this filter.</td></tr>';
     return;
   }
+
   tbody.innerHTML = filtered.map(function(d){
-    var st = _offerRowStatus(d.dateexpires);
-    var rowCls = st.urgent ? 'row-warn' : '';
-    var daysDisp = st.days !== null ? (st.days < 0 ? 'Expired' : st.days+'d') : '—';
-    var expiresDisp = d.dateexpires ? _fmtCheckDate(d.dateexpires)+' <span style="color:var(--ink-4);font-size:11px">('+daysDisp+')</span>' : '—';
+    var caseName = (d.case && d.case._casename) || '—';
+    var info = settlementMap[caseName] || {};
+
+    // Demand type label
+    var dtype = (d.demandtype||'').toLowerCase().indexOf('uim') >= 0 ? 'UIM' : 'TP';
+    var dtypeCls = dtype === 'UIM' ? 'indigo' : 'blue';
+
+    // Policy limit
+    var polDisp = d.insurance_policy
+      ? _esc(d.insurance_policy) + ' <span style="font-size:10px;font-weight:600;color:var(--'+dtypeCls+')">'+dtype+'</span>'
+      : '—';
+
+    // Offer
+    var offer = parseFloat(d.offer_amount) || 0;
     var lim = _parseLimit(d.insurance_policy);
-    var offer = parseFloat(d.offer_amount)||0;
     var isPop = lim && offer >= lim;
-    var offerDisp = _fmtCurrency(offer)+(isPop ? ' <span style="color:var(--green);font-size:10px;font-weight:600">✓ pop</span>' : '');
-    var polDisp = d.insurance_policy ? _esc(d.insurance_policy) : '—';
+    var offerDisp = offer > 0
+      ? _fmtCurrency(offer) + (isPop ? ' <span style="color:var(--green);font-size:10px;font-weight:600">✓ pop</span>' : '')
+      : '<span style="color:var(--red);font-size:11px">No offer</span>';
+
+    // Expiry
+    var exp = _parseDate(d.dateexpires);
+    var daysFromExp = exp ? Math.ceil((now - exp) / 86400000) : null;
+    var expiresDisp = d.dateexpires
+      ? _fmtCheckDate(d.dateexpires) + (daysFromExp !== null
+          ? ' <span style="color:var(--ink-4);font-size:11px">('+
+            (view==='expired' ? daysFromExp+'d ago' : Math.abs(daysFromExp)+'d left')+
+            ')</span>'
+          : '')
+      : '—';
+
+    // Last touched
+    var lt = info.last_touched || null;
+    var ltDate = lt ? _parseDate(lt) : null;
+    var daysSinceTouch = ltDate ? Math.floor((now - ltDate) / 86400000) : null;
+    var ltDisp = lt
+      ? _fmtCheckDate(lt) + ' <span style="color:var(--ink-4);font-size:11px">('+daysSinceTouch+'d)</span>'
+      : '—';
+    var ltAlert = daysSinceTouch !== null && daysSinceTouch >= 14;
+
+    // SOL
+    var sol = info.statutedate || null;
+    var solDate = sol ? _parseDate(sol) : null;
+    var daysToSol = solDate ? Math.ceil((solDate - now) / 86400000) : null;
+    var solDisp = sol
+      ? _fmtCheckDate(sol) + (daysToSol !== null
+          ? ' <span style="color:'+(daysToSol < 90 ? 'var(--red)' : 'var(--ink-4)')+';font-size:11px">('+daysToSol+'d)</span>'
+          : '')
+      : '—';
+    var solAlert = daysToSol !== null && daysToSol < 90;
+
+    // CM
     var cm = (d.case_manager||'—');
-    var cmShort = cm.split(' ');
-    var cmDisp = cmShort.length>1 ? cmShort[0]+' '+cmShort[cmShort.length-1][0]+'.' : cm;
+    var cmParts = cm.split(' ');
+    var cmDisp = cmParts.length>1 ? cmParts[0]+' '+cmParts[cmParts.length-1][0]+'.' : cm;
+
+    // Row class
+    var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
+
     return '<tr class="'+rowCls+'">'+
-      '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+      '<td class="name" style="font-size:12px">'+_esc(caseName)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
-      '<td class="num" style="color:var(--amber);font-weight:600">'+offerDisp+'</td>'+
-      '<td class="num" style="color:var(--ink-3)">'+polDisp+'</td>'+
+      '<td class="num">'+polDisp+'</td>'+
+      '<td class="num">'+offerDisp+'</td>'+
       '<td style="font-size:11px">'+expiresDisp+'</td>'+
-      '<td><span class="flag '+st.cls+'">'+st.label+'</span></td>'+
+      '<td style="font-size:11px'+(ltAlert?';color:var(--amber)':'')+'">'+ltDisp+'</td>'+
+      '<td style="font-size:11px'+(solAlert?';color:var(--red)':'')+'">'+solDisp+'</td>'+
+      '<td><span class="flag '+dtypeCls+'">'+dtype+'</span></td>'+
       '</tr>';
   }).join('');
 }
@@ -2777,7 +2864,13 @@ function renderSettlements(raw){
   }
 
   var settlementMap = {};
-  (raw.settlement||[]).forEach(function(s){ settlementMap[s.id] = s.casestatus; });
+  (raw.settlement||[]).forEach(function(s){
+    if(s._casename) settlementMap[s._casename] = {
+      casestatus:   s.casestatus,
+      last_touched: s.last_touched || null,
+      statutedate:  s.statutedate  || null
+    };
+  });
   renderCarriers(demands);
   renderSettleOffers(demands, _settleOfferView, settlementMap);
   renderSettleDeposits(raw.deposits||[], _settleDepositDays);
