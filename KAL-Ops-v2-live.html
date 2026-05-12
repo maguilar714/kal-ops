@@ -2114,7 +2114,7 @@ function _depositsInDays(deposits, days){
 
 function _openOffers(demands, settlementMap){
   // Only show offers on cases still in an active stage
-  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Prepped'];
+  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Writing'];
   return (demands||[]).filter(function(d){
     if(d.offer_amount === null || d.offer_amount === undefined || d.offer_amount === '') return false;
     if(settlementMap){
@@ -2246,7 +2246,7 @@ function renderMoneyFeed(raw){
 function renderSettleOffers(demands, view, settlementMap){
   // settlementMap keyed by _casename → {casestatus, last_touched, statutedate}
   var now = new Date();
-  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Prepped'];
+  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Writing'];
 
   // All demands on active cases, no offer filter — we want expired with NO offer too
   var allDemands = (demands||[]).filter(function(d){
