@@ -979,6 +979,7 @@
             <th class="num" data-sort="offer" style="cursor:pointer;user-select:none">Offer <span class="sort-ind"></span></th>
             <th data-sort="expires" style="cursor:pointer;user-select:none">Expires <span class="sort-ind"></span></th>
             <th data-sort="touched" style="cursor:pointer;user-select:none">Last Touched <span class="sort-ind"></span></th>
+            <th style="width:160px;min-width:120px">Note</th>
             <th data-sort="sol" style="cursor:pointer;user-select:none">SOL <span class="sort-ind"></span></th>
             <th data-sort="type" style="cursor:pointer;user-select:none">Type <span class="sort-ind"></span></th>
             <th data-sort="status" style="cursor:pointer;user-select:none">Status <span class="sort-ind"></span></th>
@@ -2107,6 +2108,44 @@ function _getFlag(caseName){
   return _flagCache[caseName] || null;
 }
 
+// --- Case notes (Railway) ---
+var _noteCache = {};
+
+function _loadNotes(){
+  return fetch(_RAILWAY_URL + '/notes')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _noteCache = data || {};
+      console.log('Notes loaded from Railway:', Object.keys(_noteCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load notes from Railway:', e.message);
+      _noteCache = {};
+    });
+}
+
+function _setNote(caseName, note){
+  _noteCache[caseName] = note;
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName, note: note })
+  }).catch(function(e){ console.warn('Note save failed:', e.message); });
+}
+
+function _clearNote(caseName){
+  delete _noteCache[caseName];
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName })
+  }).catch(function(e){ console.warn('Note clear failed:', e.message); });
+}
+
+function _getNote(caseName){
+  return _noteCache[caseName] || null;
+}
+
 // Dropdown — shown near the clicked element
 var _flagDropdown = null;
 function _showFlagDropdown(anchorEl, caseName, onSelect){
@@ -2475,6 +2514,12 @@ function renderSettleOffers(demands, view, settlementMap){
       ? '<span class="flag '+(_FLAG_COLORS[flag]||'gray')+'" data-case="'+_esc(caseName)+'" data-action="open-flag-dd" style="cursor:pointer" title="Click to change status">'+_esc(flag)+'</span>'
       : '<span data-case="'+_esc(caseName)+'" data-action="open-flag-dd" style="cursor:pointer;color:var(--ink-4);font-size:13px;padding:2px 4px;" title="Set status">—</span>';
 
+    // Note
+    var note = _getNote(caseName);
+    var noteDisp = note
+      ? '<span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+_esc(note)+'" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(note)+'</span>'
+      : '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px" title="Click to add note">+ add</span>';
+
     // Row class
     var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
 
@@ -2486,6 +2531,7 @@ function renderSettleOffers(demands, view, settlementMap){
       '<td class="num">'+offerDisp+'</td>'+
       '<td style="font-size:11px">'+expiresDisp+'</td>'+
       '<td style="font-size:11px'+(ltAlert?';color:var(--amber)':'')+'">'+ltDisp+'</td>'+
+      '<td style="width:160px;max-width:160px">'+noteDisp+'</td>'+
       '<td style="font-size:11px'+(solAlert?';color:var(--red)':'')+'">'+solDisp+'</td>'+
       '<td><span class="flag '+dtypeCls+'">'+dtype+'</span></td>'+
       '<td>'+flagDisp+'</td>'+
@@ -2887,6 +2933,39 @@ function bindSettlePanelToggles(raw, settlementMap){
           el.style.padding = '2px 4px';
           el.setAttribute('data-action', 'open-flag-dd');
         }
+      });
+    });
+  }
+
+  // Note cell click — inline edit (delegated to tbody)
+  if(trackerTbody){
+    trackerTbody.addEventListener('click', function(e){
+      var el = e.target.closest('[data-action="edit-note"]');
+      if(!el) return;
+      e.stopPropagation();
+      var caseName = el.getAttribute('data-case');
+      var td = el.closest('td');
+      if(!td || td.querySelector('textarea')) return; // already editing
+      var current = _getNote(caseName) || '';
+      td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
+      var ta = td.querySelector('textarea');
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      function saveNote(){
+        var val = ta.value.trim();
+        if(val && val !== current){ _setNote(caseName, val); }
+        else if(!val && current){ _clearNote(caseName); }
+        var saved = val || null;
+        if(saved){
+          td.innerHTML = '<span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+_esc(saved)+'" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(saved)+'</span>';
+        } else {
+          td.innerHTML = '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px" title="Click to add note">+ add</span>';
+        }
+      }
+      ta.addEventListener('blur', saveNote);
+      ta.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+        if(ev.key === 'Escape'){ ta.value = current; ta.blur(); }
       });
     });
   }
@@ -3803,8 +3882,9 @@ function renderDataQuality(raw){
     bindEvents();
     setSubtab('cases');
 
-    // Load shared flags from Railway
+    // Load shared flags + notes from Railway
     await _loadFlags();
+    await _loadNotes();
 
     // Detect host — if not on CasePeer, use full URL with credentials
     var host = window.location.hostname;
