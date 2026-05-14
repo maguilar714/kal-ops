@@ -439,7 +439,7 @@
     width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:1px;
   }
   .area-head .legend .pip.recent i{background:var(--amber-mark)}
-  .area-svg{width:100%;height:170px;display:block}
+  .area-svg{width:100%;height:200px;display:block}
 
   /* ---------- Tables ---------- */
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -766,7 +766,7 @@
           <span class="pip recent"><i></i>2026 YTD</span>
         </div>
       </div>
-      <svg class="area-svg" id="vol-area" viewBox="0 0 800 170" preserveAspectRatio="none"></svg>
+      <svg class="area-svg" id="vol-area" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
 
     <!-- Money Feed -->
@@ -972,10 +972,12 @@
       <table class="t" id="tracker-table">
         <thead>
           <tr id="tracker-thead">
+            <th style="width:28px;padding:10px 8px"></th>
             <th data-sort="case" style="cursor:pointer;user-select:none">Case <span class="sort-ind"></span></th>
             <th data-sort="cm" style="cursor:pointer;user-select:none">CM <span class="sort-ind"></span></th>
             <th data-sort="carrier" style="cursor:pointer;user-select:none">Carrier <span class="sort-ind"></span></th>
             <th class="num" data-sort="policy" style="cursor:pointer;user-select:none">Policy Limit <span class="sort-ind"></span></th>
+            <th class="num" data-sort="meds" style="cursor:pointer;user-select:none">Specials <span class="sort-ind"></span></th>
             <th class="num" data-sort="offer" style="cursor:pointer;user-select:none">Offer <span class="sort-ind"></span></th>
             <th data-sort="expires" style="cursor:pointer;user-select:none">Expires <span class="sort-ind"></span></th>
             <th data-sort="touched" style="cursor:pointer;user-select:none">Last Touched <span class="sort-ind"></span></th>
@@ -1576,7 +1578,7 @@
 
   <footer class="foot">
     <div>KAL Operations · v2 · live data</div>
-    <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
+    <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
 
@@ -1775,11 +1777,11 @@ function activate(name){
 tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
 activate('pipeline');
 
-const order = ['pipeline','settlements','cm','lien','dq'];
+const order = ['pipeline','settlements','cm','lien','dq','sol'];
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const n = parseInt(e.key,10);
-  if(n>=1 && n<=5) activate(order[n-1]);
+  if(n>=1 && n<=6) activate(order[n-1]);
   if(e.key.toLowerCase() === 'y') document.querySelector('#cm-seg button:not(.on)')?.click();
 });
 
@@ -1994,15 +1996,20 @@ function buildDemandChart(demands){
   if(cutIdx<0) cutIdx=months.length;
 
   var svg=document.getElementById('vol-area');
-  var W=800,H=170,pad={l:36,r:14,t:16,b:28};
+  var W=800,H=200,pad={l:36,r:14,t:28,b:26};
   var innerW=W-pad.l-pad.r, innerH=H-pad.t-pad.b;
   var maxV=Math.max.apply(null,months.map(function(m){return m[1];}));
   if(maxV===0) maxV=1;
   var niceMax=Math.ceil(maxV/10)*10;
-  var xstep=innerW/(months.length-1);
-  var xf=function(i){return pad.l+i*xstep;};
+  var n=months.length;
+  var slotW=innerW/n;
+  var gap=slotW*0.22;
+  var barW=slotW-gap;
+  var r=3;
   var yf=function(v){return pad.t+innerH-(v/niceMax)*innerH;};
+  var xLeft=function(i){return pad.l+i*slotW+gap/2;};
 
+  // Grid lines
   var grid='';
   for(var gi=0;gi<=4;gi++){
     var yy=pad.t+(innerH/4)*gi;
@@ -2011,40 +2018,67 @@ function buildDemandChart(demands){
     grid+='<text x="'+(pad.l-8)+'" y="'+(yy+4)+'" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="#8e8e93">'+val+'</text>';
   }
 
-  var histEnd=Math.min(cutIdx,months.length-1);
-  var histPts=months.slice(0,histEnd+1).map(function(m,i){return[xf(i),yf(m[1])];});
-  var histLine=histPts.map(function(p,i){return(i?'L':'M')+p[0]+' '+p[1];}).join(' ');
-
-  var recentPts=cutIdx<months.length?months.slice(cutIdx).map(function(m,i){return[xf(cutIdx+i),yf(m[1])];}) :[];
-  var recentLine=recentPts.map(function(p,i){return(i?'L':'M')+p[0]+' '+p[1];}).join(' ');
-
-  var areaPath=histPts.length>1?histLine+' L'+xf(histEnd)+' '+(pad.t+innerH)+' L'+xf(0)+' '+(pad.t+innerH)+' Z':'';
-  var recentArea=recentPts.length>1?recentLine+' L'+xf(months.length-1)+' '+(pad.t+innerH)+' L'+xf(cutIdx)+' '+(pad.t+innerH)+' Z':'';
-
-  var xlabs='';
-  months.forEach(function(m,i){
-    if(i%2===0||i>=cutIdx){
-      xlabs+='<text x="'+xf(i)+'" y="'+(H-8)+'" text-anchor="middle" font-family="Inter" font-size="10" font-weight="600" fill="#8e8e93" letter-spacing="0.06em">'+m[0].toUpperCase()+'</text>';
-    }
-  });
-
+  // Peak index
   var peakI=0;
   months.forEach(function(m,i){if(m[1]>months[peakI][1]) peakI=i;});
-  var peakX=xf(peakI),peakY=yf(months[peakI][1]);
-  var peakAnno='<circle cx="'+peakX+'" cy="'+peakY+'" r="3.5" fill="#0071e3" stroke="#fff" stroke-width="2"/>'+
-    '<text x="'+peakX+'" y="'+(peakY-10)+'" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#0071e3">'+months[peakI][1]+' peak</text>';
 
-  var dots='';
-  histPts.forEach(function(p){dots+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2" fill="#1d1d1f"/>';});
-  recentPts.forEach(function(p,i){if(i>0||cutIdx===0) dots+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="#f5a524"/>';});
+  // Bars + labels
+  var bars='', xlabs='';
+  months.forEach(function(m,i){
+    var is26=m[2]===1;
+    var color=is26?'#34c759':'#0071e3';
+    var opacity=is26?1:0.7;
+    var x=xLeft(i);
+    var cx=x+barW/2;
+    var barH=(m[1]/niceMax)*innerH;
+    var y=pad.t+innerH-barH;
+    var tipText=m[0]+' · '+m[1]+' demands';
 
-  svg.innerHTML=
-    grid+
-    (areaPath?'<path d="'+areaPath+'" fill="#1d1d1f" opacity="0.06"/>':'')+
-    (recentArea?'<path d="'+recentArea+'" fill="#f5a524" opacity="0.18"/>':'')+
-    (histLine?'<path d="'+histLine+'" fill="none" stroke="#1d1d1f" stroke-width="1.6" stroke-linejoin="round"/>':'')+
-    (recentLine?'<path d="'+recentLine+'" fill="none" stroke="#f5a524" stroke-width="2" stroke-linejoin="round"/>':'')+
-    dots+peakAnno+xlabs;
+    if(m[1]>0){
+      // Rounded-top bar path
+      var path='M'+(x+r)+','+y+
+        ' h'+(barW-2*r)+
+        ' a'+r+','+r+' 0 0 1 '+r+','+r+
+        ' v'+(barH-r)+
+        ' h-'+barW+
+        ' v-'+(barH-r)+
+        ' a'+r+','+r+' 0 0 1 '+r+',-'+r+' Z';
+      bars+='<path d="'+path+'" fill="'+color+'" opacity="'+opacity+'" data-tip="'+tipText+'"/>';
+      // Invisible hover overlay for easier mouse targeting
+      bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" fill="transparent" data-tip="'+tipText+'"/>';
+      // Value label above bar
+      bars+='<text x="'+cx+'" y="'+(y-5)+'" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="600" fill="'+color+'" opacity="'+opacity+'">'+m[1]+'</text>';
+      // Peak badge
+      if(i===peakI){
+        bars+='<text x="'+cx+'" y="'+(y-17)+'" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="'+color+'" letter-spacing="0.04em">PEAK</text>';
+      }
+    }
+
+    // X-axis label — all months
+    xlabs+='<text x="'+cx+'" y="'+(H-8)+'" text-anchor="middle" font-family="Inter" font-size="10" font-weight="600" fill="#8e8e93" letter-spacing="0.05em">'+m[0].toUpperCase()+'</text>';
+  });
+
+  svg.innerHTML=grid+bars+xlabs;
+
+  // Hover tooltip
+  var tt=document.getElementById('_chart_tt');
+  if(!tt){
+    tt=document.createElement('div');
+    tt.id='_chart_tt';
+    tt.style.cssText='position:fixed;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.4;padding:6px 10px;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none;display:none;z-index:200;font-family:Inter,sans-serif;white-space:nowrap;';
+    document.body.appendChild(tt);
+  }
+  svg.onmouseover=function(e){
+    var el=e.target.closest('[data-tip]');
+    if(!el) return;
+    tt.textContent=el.getAttribute('data-tip');
+    tt.style.display='block';
+  };
+  svg.onmousemove=function(e){
+    tt.style.left=(e.clientX+14)+'px';
+    tt.style.top=(e.clientY-32)+'px';
+  };
+  svg.onmouseout=function(){tt.style.display='none';};
 }
 
 /* =========================================================
@@ -2144,6 +2178,69 @@ function _clearNote(caseName){
 
 function _getNote(caseName){
   return _noteCache[caseName] || null;
+}
+
+// --- Case contacts: adjuster email + claim number (Railway) ---
+var _contactCache = {};
+
+function _loadContacts(){
+  return fetch(_RAILWAY_URL + '/contacts')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _contactCache = data || {};
+      console.log('Contacts loaded from Railway:', Object.keys(_contactCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load contacts from Railway:', e.message);
+      _contactCache = {};
+    });
+}
+
+function _setContact(caseName, fields){
+  if(!_contactCache[caseName]) _contactCache[caseName] = {};
+  Object.assign(_contactCache[caseName], fields);
+  fetch(_RAILWAY_URL + '/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
+  }).catch(function(e){ console.warn('Contact save failed:', e.message); });
+}
+
+function _getContact(caseName){
+  return _contactCache[caseName] || {};
+}
+
+// Build a mailto: URL from template number + case data
+var _demandDataMap = {};
+function _openEmailTemplate(tmpl, caseName){
+  var d = _demandDataMap[caseName] || {};
+  var contact = _getContact(caseName);
+  var to = contact.adjusterEmail || '';
+  var claimNum = contact.claimNumber || '';
+  var claimStr = claimNum ? ' — Claim ' + claimNum : '';
+  var carrier = d.insurance || '';
+  var demandDate = d.datesent || '';
+  var expiryDate = d.dateexpires || '';
+  var policyLimit = d.insurance_policy || '';
+  var offerAmt = d.offer_amount ? '$' + parseFloat(d.offer_amount).toLocaleString() : '';
+  var subj, body;
+  if(tmpl === 1){
+    subj = 'Demand Submitted — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI wanted to confirm that our demand package was submitted on ' + demandDate + ' for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ' + expiryDate + '.\n\n';
+  } else if(tmpl === 2){
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI wanted to follow up on our demand submitted on ' + demandDate + '. If you’ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n';
+  } else if(tmpl === 3){
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI am following up on our demand submitted on ' + demandDate + '. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n';
+  } else {
+    subj = 'Re: Settlement Offer — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nThank you for your offer of ' + (offerAmt||'[offer amount]') + ' on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n';
+  }
+  var url = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  var a = document.createElement('a');
+  a.href = url;
+  a.click();
 }
 
 // Dropdown — shown near the clicked element
@@ -2421,6 +2518,7 @@ function renderSettleOffers(demands, view, settlementMap){
       _sortCm:      (d.case_manager||'').toLowerCase(),
       _sortCarrier: (d.insurance||'').toLowerCase(),
       _sortPolicy:  lim || 0,
+      _sortMeds:    parseFloat(d.total_meds) || 0,
       _sortOffer:   offer,
       _sortExpires: exp ? exp.getTime() : 0,
       _sortTouched: ltDate ? ltDate.getTime() : 0,
@@ -2467,6 +2565,10 @@ function renderSettleOffers(demands, view, settlementMap){
     var polDisp = d.insurance_policy
       ? _esc(d.insurance_policy) + ' <span style="font-size:10px;font-weight:600;color:var(--'+dtypeCls+')">'+dtype+'</span>'
       : '—';
+
+    // Specials (total meds)
+    var medsRaw = parseFloat(d.total_meds) || 0;
+    var medsDisp = medsRaw > 0 ? _fmtCurrency(medsRaw) : '<span style="color:var(--ink-4)">—</span>';
 
     // Offer
     var offer = e.offer;
@@ -2523,11 +2625,52 @@ function renderSettleOffers(demands, view, settlementMap){
     // Row class
     var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
 
-    return '<tr class="'+rowCls+'">'+
+    // Store demand data for mailto builder
+    _demandDataMap[caseName] = d;
+
+    // Contact data
+    var contact = _getContact(caseName);
+    var adjEmail = contact.adjusterEmail || '';
+    var claimNum = contact.claimNumber || '';
+    var colCount = 13;
+
+    // Expand row
+    var expandRow = '<tr class="expand-row" data-expand-for="'+_esc(caseName)+'" style="display:none">'+
+      '<td colspan="'+colCount+'" style="padding:0;border-bottom:1px solid var(--line)">'+
+      '<div style="padding:12px 20px 14px;background:var(--surface-2);display:flex;align-items:flex-end;gap:32px;flex-wrap:wrap">'+
+      // Claim # field
+      '<div>'+
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:5px">Claim #</div>'+
+        (claimNum
+          ? '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(claimNum)+'</span>'
+          : '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+      '</div>'+
+      // Adjuster email field
+      '<div>'+
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:5px">Adj. Email</div>'+
+        (adjEmail
+          ? '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(adjEmail)+'</span>'
+          : '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+      '</div>'+
+      // Email template buttons
+      '<div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
+        '<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:2px">Send:</span>'+
+        '<button data-action="send-email" data-template="1" data-case="'+_esc(caseName)+'" style="border:1px solid var(--line);background:var(--surface);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--ink-2)" title="Confirm demand receipt + response due date">Receipt</button>'+
+        '<button data-action="send-email" data-template="2" data-case="'+_esc(caseName)+'" style="border:1px solid var(--line);background:var(--surface);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--ink-2)" title="14-day follow-up, request availability">14 Day F/U</button>'+
+        '<button data-action="send-email" data-template="3" data-case="'+_esc(caseName)+'" style="border:1px solid var(--amber-bg);background:var(--amber-bg);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--amber)" title="30-day window expired">Expired</button>'+
+        '<button data-action="send-email" data-template="4" data-case="'+_esc(caseName)+'" style="border:1px solid var(--blue-soft);background:var(--blue-soft);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--blue)" title="Request offer valuation breakdown">Offer Breakdown</button>'+
+      '</div>'+
+      '</div>'+
+      '</td>'+
+      '</tr>';
+
+    return expandRow + '<tr class="'+rowCls+'">'+
+      '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
       '<td class="name" style="font-size:12px">'+_esc(caseName)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
       '<td class="num">'+polDisp+'</td>'+
+      '<td class="num">'+medsDisp+'</td>'+
       '<td class="num">'+offerDisp+'</td>'+
       '<td style="font-size:11px">'+expiresDisp+'</td>'+
       '<td style="font-size:11px'+(ltAlert?';color:var(--amber)':'')+'">'+ltDisp+'</td>'+
@@ -2934,6 +3077,80 @@ function bindSettlePanelToggles(raw, settlementMap){
           el.setAttribute('data-action', 'open-flag-dd');
         }
       });
+    });
+  }
+
+  // Expand row toggle + contact edits + email sends (delegated to tbody)
+  if(trackerTbody){
+    trackerTbody.addEventListener('click', function(e){
+      // Toggle expand
+      var toggleBtn = e.target.closest('[data-action="toggle-expand"]');
+      if(toggleBtn){
+        var cn = toggleBtn.getAttribute('data-case');
+        var expandRow = trackerTbody.querySelector('[data-expand-for="'+CSS.escape(cn)+'"]');
+        if(expandRow){
+          var open = expandRow.style.display !== 'none';
+          expandRow.style.display = open ? 'none' : '';
+          toggleBtn.textContent = open ? '+' : '−';
+          toggleBtn.style.color = open ? 'var(--ink-3)' : 'var(--blue)';
+          toggleBtn.style.borderColor = open ? 'var(--line)' : 'var(--blue)';
+        }
+        return;
+      }
+      // Email send
+      var sendBtn = e.target.closest('[data-action="send-email"]');
+      if(sendBtn){
+        var tmpl = parseInt(sendBtn.getAttribute('data-template'), 10);
+        var cn = sendBtn.getAttribute('data-case');
+        _openEmailTemplate(tmpl, cn);
+        return;
+      }
+      // Edit claim number
+      var claimEl = e.target.closest('[data-action="edit-claim"]');
+      if(claimEl){
+        var cn = claimEl.getAttribute('data-case');
+        var current = _getContact(cn).claimNumber || '';
+        claimEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="Claim #" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:120px;outline:none;background:var(--surface);color:var(--ink)">';
+        var inp = claimEl.querySelector('input');
+        inp.focus(); inp.select();
+        function saveClaimNum(){
+          var val = inp.value.trim();
+          if(val !== current) _setContact(cn, { claimNumber: val });
+          claimEl.innerHTML = val
+            ? '<span style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(val)+'</span>'
+            : '<span style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>';
+          claimEl.setAttribute('data-action','edit-claim');
+        }
+        inp.addEventListener('blur', saveClaimNum);
+        inp.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
+          if(ev.key==='Escape'){ inp.value=current; inp.blur(); }
+        });
+        return;
+      }
+      // Edit adjuster email
+      var emailEl = e.target.closest('[data-action="edit-adj-email"]');
+      if(emailEl){
+        var cn = emailEl.getAttribute('data-case');
+        var current = _getContact(cn).adjusterEmail || '';
+        emailEl.innerHTML = '<input type="email" value="'+_esc(current)+'" placeholder="adjuster@carrier.com" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:180px;outline:none;background:var(--surface);color:var(--ink)">';
+        var inp = emailEl.querySelector('input');
+        inp.focus(); inp.select();
+        function saveEmail(){
+          var val = inp.value.trim();
+          if(val !== current) _setContact(cn, { adjusterEmail: val });
+          emailEl.innerHTML = val
+            ? '<span style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(val)+'</span>'
+            : '<span style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>';
+          emailEl.setAttribute('data-action','edit-adj-email');
+        }
+        inp.addEventListener('blur', saveEmail);
+        inp.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
+          if(ev.key==='Escape'){ inp.value=current; inp.blur(); }
+        });
+        return;
+      }
     });
   }
 
@@ -3882,9 +4099,10 @@ function renderDataQuality(raw){
     bindEvents();
     setSubtab('cases');
 
-    // Load shared flags + notes from Railway
+    // Load shared flags, notes, and contacts from Railway
     await _loadFlags();
     await _loadNotes();
+    await _loadContacts();
 
     // Detect host — if not on CasePeer, use full URL with credentials
     var host = window.location.hostname;
