@@ -2237,10 +2237,10 @@ function _openEmailTemplate(tmpl, caseName){
     subj = 'Re: Settlement Offer — ' + caseName + claimStr;
     body = 'Dear [Adjuster],\n\nThank you for your offer of ' + (offerAmt||'[offer amount]') + ' on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n';
   }
-  var url = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
-  var a = document.createElement('a');
-  a.href = url;
-  a.click();
+  // Open Outlook Web compose — avoids triggering system default mail app
+  var owcBase = 'https://outlook.office.com/mail/deeplink/compose';
+  var params = '?to=' + encodeURIComponent(to) + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  window.open(owcBase + params, '_blank');
 }
 
 // Dropdown — shown near the clicked element
@@ -2664,7 +2664,7 @@ function renderSettleOffers(demands, view, settlementMap){
       '</td>'+
       '</tr>';
 
-    return expandRow + '<tr class="'+rowCls+'">'+
+    return '<tr class="'+rowCls+'">'+
       '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
       '<td class="name" style="font-size:12px">'+_esc(caseName)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
@@ -2678,7 +2678,7 @@ function renderSettleOffers(demands, view, settlementMap){
       '<td style="font-size:11px'+(solAlert?';color:var(--red)':'')+'">'+solDisp+'</td>'+
       '<td><span class="flag '+dtypeCls+'">'+dtype+'</span></td>'+
       '<td>'+flagDisp+'</td>'+
-      '</tr>';
+      '</tr>' + expandRow;
   }).join('');
 }
 
