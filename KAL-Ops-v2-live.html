@@ -2643,12 +2643,15 @@ function renderSettleOffers(demands, view, settlementMap){
       t3: rawLog.t3 || { checked: false, date: '' },
       t4: rawLog.t4 || { checked: false, date: '' }
     };
-    var tmpls = [
-      { key:'t1', num:'1', label:'Receipt',         color:'var(--ink-2)' },
-      { key:'t2', num:'2', label:'14 Day F/U',      color:'var(--ink-2)' },
-      { key:'t3', num:'3', label:'Expired',         color:'var(--amber)' },
-      { key:'t4', num:'4', label:'Offer Breakdown', color:'var(--blue)'  }
-    ];
+    var tmpls = view === 'pending'
+      ? [
+          { key:'t1', num:'1', label:'Receipt',    color:'var(--ink-2)' },
+          { key:'t2', num:'2', label:'14 Day F/U', color:'var(--ink-2)' }
+        ]
+      : [
+          { key:'t3', num:'3', label:'Expired',         color:'var(--amber)' },
+          { key:'t4', num:'4', label:'Offer Breakdown', color:'var(--blue)'  }
+        ];
     var gridRow1 = tmpls.map(function(t){
       var chk = eLog[t.key].checked;
       return '<td style="padding:0 24px 5px 0;white-space:nowrap;vertical-align:middle">'+
