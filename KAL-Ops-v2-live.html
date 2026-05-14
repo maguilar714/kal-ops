@@ -2635,34 +2635,60 @@ function renderSettleOffers(demands, view, settlementMap){
     var colCount = 13;
 
     // Expand row
+    // Email log state
+    var rawLog = contact.emailLog || {};
+    var eLog = {
+      t1: rawLog.t1 || { checked: false, date: '' },
+      t2: rawLog.t2 || { checked: false, date: '' },
+      t3: rawLog.t3 || { checked: false, date: '' },
+      t4: rawLog.t4 || { checked: false, date: '' }
+    };
+    var tmpls = [
+      { key:'t1', num:'1', label:'Receipt',         color:'var(--ink-2)' },
+      { key:'t2', num:'2', label:'14 Day F/U',      color:'var(--ink-2)' },
+      { key:'t3', num:'3', label:'Expired',         color:'var(--amber)' },
+      { key:'t4', num:'4', label:'Offer Breakdown', color:'var(--blue)'  }
+    ];
+    var gridRow1 = tmpls.map(function(t){
+      var chk = eLog[t.key].checked;
+      return '<td style="padding:0 24px 5px 0;white-space:nowrap;vertical-align:middle">'+
+        '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none">'+
+        '<input type="checkbox" data-action="toggle-email-log" data-case="'+_esc(caseName)+'" data-tkey="'+t.key+'" '+(chk?'checked':'')+' style="width:13px;height:13px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">'+
+        '<span data-action="send-email" data-template="'+t.num+'" data-case="'+_esc(caseName)+'" style="font-size:12px;font-weight:500;color:'+t.color+';cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted" title="Click to send">'+t.label+'</span>'+
+        '</label>'+
+        '</td>';
+    }).join('');
+    var gridRow2 = tmpls.map(function(t){
+      var dt = eLog[t.key].date || '';
+      return '<td style="padding:0 24px 0 0">'+
+        '<input type="text" value="'+_esc(dt)+'" placeholder="MM/DD/YYYY" '+
+        'data-action="set-email-date" data-case="'+_esc(caseName)+'" data-tkey="'+t.key+'" '+
+        'style="font:inherit;font-size:11px;font-family:var(--num);padding:2px 6px;border:1px solid var(--line);border-radius:4px;width:96px;background:var(--surface);color:var(--ink-2);outline:none">'+
+        '</td>';
+    }).join('');
     var expandRow = '<tr class="expand-row" data-expand-for="'+_esc(caseName)+'" style="display:none">'+
       '<td colspan="'+colCount+'" style="padding:0;border-bottom:1px solid var(--line)">'+
-      '<div style="padding:12px 20px 14px;background:var(--surface-2);display:flex;align-items:flex-end;gap:32px;flex-wrap:wrap">'+
-      // Claim # field
-      '<div>'+
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:5px">Claim #</div>'+
-        (claimNum
-          ? '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(claimNum)+'</span>'
-          : '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+      '<div style="padding:12px 20px 14px;background:var(--surface-2)">'+
+      '<div style="display:flex;gap:32px;align-items:flex-end;margin-bottom:11px">'+
+        '<div>'+
+          '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Claim #</div>'+
+          (claimNum
+            ? '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(claimNum)+'</span>'
+            : '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Adj. Email</div>'+
+          (adjEmail
+            ? '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(adjEmail)+'</span>'
+            : '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+        '</div>'+
       '</div>'+
-      // Adjuster email field
-      '<div>'+
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:5px">Adj. Email</div>'+
-        (adjEmail
-          ? '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(adjEmail)+'</span>'
-          : '<span data-action="edit-adj-email" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
-      '</div>'+
-      // Email template buttons
-      '<div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
-        '<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:2px">Send:</span>'+
-        '<button data-action="send-email" data-template="1" data-case="'+_esc(caseName)+'" style="border:1px solid var(--line);background:var(--surface);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--ink-2)" title="Confirm demand receipt + response due date">Receipt</button>'+
-        '<button data-action="send-email" data-template="2" data-case="'+_esc(caseName)+'" style="border:1px solid var(--line);background:var(--surface);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--ink-2)" title="14-day follow-up, request availability">14 Day F/U</button>'+
-        '<button data-action="send-email" data-template="3" data-case="'+_esc(caseName)+'" style="border:1px solid var(--amber-bg);background:var(--amber-bg);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--amber)" title="30-day window expired">Expired</button>'+
-        '<button data-action="send-email" data-template="4" data-case="'+_esc(caseName)+'" style="border:1px solid var(--blue-soft);background:var(--blue-soft);padding:4px 10px;border-radius:6px;font-size:11.5px;font-family:var(--ui);cursor:pointer;color:var(--blue)" title="Request offer valuation breakdown">Offer Breakdown</button>'+
-      '</div>'+
+      '<div style="border-top:1px solid var(--line);margin-bottom:10px"></div>'+
+      '<table style="border-collapse:collapse"><tr>'+gridRow1+'</tr><tr>'+gridRow2+'</tr></table>'+
       '</div>'+
       '</td>'+
       '</tr>';
+
 
     return '<tr class="'+rowCls+'">'+
       '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
@@ -3151,6 +3177,42 @@ function bindSettlePanelToggles(raw, settlementMap){
         });
         return;
       }
+      // Email log checkbox
+      var chkEl = e.target.closest('[data-action="toggle-email-log"]');
+      if(chkEl){
+        var cn = chkEl.getAttribute('data-case');
+        var tkey = chkEl.getAttribute('data-tkey');
+        var isChecked = chkEl.checked;
+        if(!_contactCache[cn]) _contactCache[cn] = {};
+        if(!_contactCache[cn].emailLog) _contactCache[cn].emailLog = {};
+        if(!_contactCache[cn].emailLog[tkey]) _contactCache[cn].emailLog[tkey] = {};
+        _contactCache[cn].emailLog[tkey].checked = isChecked;
+        // Find paired date input and update it
+        var row = chkEl.closest('tr');
+        if(row){
+          var nextRow = row.nextElementSibling;
+          if(nextRow){
+            var dateInp = nextRow.querySelector('[data-action="set-email-date"][data-tkey="'+tkey+'"]');
+            if(dateInp && !isChecked){ dateInp.value = ''; _contactCache[cn].emailLog[tkey].date = ''; }
+          }
+        }
+        _setContact(cn, { emailLog: _contactCache[cn].emailLog });
+        return;
+      }
+    });
+
+    // Email date inputs — change handler (delegated via input event)
+    trackerTbody.addEventListener('change', function(e){
+      var dateInp = e.target.closest('[data-action="set-email-date"]');
+      if(!dateInp) return;
+      var cn = dateInp.getAttribute('data-case');
+      var tkey = dateInp.getAttribute('data-tkey');
+      var val = dateInp.value.trim();
+      if(!_contactCache[cn]) _contactCache[cn] = {};
+      if(!_contactCache[cn].emailLog) _contactCache[cn].emailLog = {};
+      if(!_contactCache[cn].emailLog[tkey]) _contactCache[cn].emailLog[tkey] = {};
+      _contactCache[cn].emailLog[tkey].date = val;
+      _setContact(cn, { emailLog: _contactCache[cn].emailLog });
     });
   }
 
