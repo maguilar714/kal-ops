@@ -1,0 +1,2023 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>KAL Operations · v2</title>
+<template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
+    <rect x="80" y="92" width="120" height="16" rx="3" fill="#f5f5f7"/>
+    <rect x="60" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="335" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="610" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="885" y="180" width="255" height="160" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="80" y="210" width="80" height="10" rx="2" fill="#9a9485"/>
+    <rect x="80" y="240" width="140" height="34" rx="3" fill="#1d1d1f"/>
+    <rect x="60" y="380" width="1080" height="360" rx="10" fill="#ffffff" stroke="#e5e2da" stroke-width="2"/>
+    <rect x="80" y="410" width="200" height="14" rx="3" fill="#9a9485"/>
+    <rect x="80" y="450" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="490" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="530" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="570" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="610" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="650" width="1040" height="1" fill="#e5e2da"/>
+    <rect x="80" y="690" width="1040" height="1" fill="#e5e2da"/>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Live mode — data pulled from CasePeer API -->
+<style>
+  /* ============================================================
+     KAL Operations · v2
+     Swiss/Apple — denser, alive, scan-first
+     ============================================================ */
+  :root{
+    /* Surfaces */
+    --bg:           #f5f5f7;
+    --surface:      #ffffff;
+    --surface-2:    #fafafa;
+    --surface-3:    #f0f0f2;
+    --surface-glass:rgba(255,255,255,0.78);
+
+    /* Lines */
+    --line:         #e5e5e7;
+    --line-strong:  #d2d2d7;
+
+    /* Text */
+    --ink:          #1d1d1f;
+    --ink-2:        #424245;
+    --ink-3:        #6e6e73;
+    --ink-4:        #8e8e93;
+
+    /* Status */
+    --blue:         #0071e3;
+    --blue-soft:    #e8f1fc;
+    --indigo:       #5e5ce6;
+    --indigo-soft:  #ecebfb;
+    --amber:        #b25e09;
+    --amber-bg:     #fff4e0;
+    --amber-mark:   #f5a524;
+    --green:        #0a7d3b;
+    --green-bg:     #e6f5ec;
+    --green-mark:   #34c759;
+    --red:          #b3261e;
+    --red-bg:       #fdecea;
+    --red-mark:     #d70015;
+    --purple:       #5b3aa8;
+    --purple-bg:    #efeaf9;
+    --purple-mark:  #7e5bd1;
+    --neutral-mark: #a1a1a6;
+
+    /* Tab accent (changes per tab) */
+    --accent:       #0071e3;
+
+    /* Type */
+    --ui: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --num: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Density (toggleable) */
+    --row-pad-y: 11px;
+    --kpi-pad:   16px 18px 18px;
+    --section-gap: 24px;
+  }
+  body[data-density="cozy"]{
+    --row-pad-y: 14px;
+    --kpi-pad:   20px 22px 22px;
+    --section-gap: 30px;
+    font-size: 14.5px;
+  }
+  body[data-density="comfy"]{
+    --row-pad-y: 11px;
+    --kpi-pad:   16px 18px 18px;
+    --section-gap: 24px;
+    font-size: 14px;
+  }
+  body[data-density="compact"]{
+    --row-pad-y: 6px;
+    --kpi-pad:   10px 12px 12px;
+    --section-gap: 14px;
+    font-size: 12.5px;
+  }
+  body[data-density="compact"] .kpi{ min-height: 96px; }
+  body[data-density="compact"] .kpi .value{ font-size: 26px; }
+  body[data-density="compact"] .kpi .spark{ height: 22px; }
+  body[data-density="compact"] table.t{ font-size: 12px; }
+  body[data-density="compact"] table.t th{ padding: 7px 12px; }
+  body[data-density="compact"] table.t td{ padding: 6px 12px; }
+  body[data-density="compact"] .briefing{ padding: 10px 14px; }
+  body[data-density="compact"] .pipeline-card{ padding: 16px 18px 14px; }
+  body[data-density="compact"] .pipebar{ height: 48px; }
+
+  /* ==================  Accent intensity  ==================
+     "subtle"   = current minimal Swiss palette
+     "balanced" = stronger row tints + colored KPI accents
+     "vivid"    = colored card surfaces + gradient pipeline + stronger row stripes
+  */
+  body[data-accent="balanced"] .kpi{ border-color: color-mix(in oklab, var(--accent) 18%, var(--line)); }
+  body[data-accent="balanced"] .kpi .label{ color: color-mix(in oklab, var(--accent) 55%, var(--ink-3)); }
+  body[data-accent="balanced"] .pipeline-card{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 5%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 22%, var(--line));
+  }
+  body[data-accent="balanced"] .briefing{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, #fff), #fff);
+  }
+  body[data-accent="balanced"] tr.row-alert td{ background: #fde8e6; }
+  body[data-accent="balanced"] tr.row-warn td { background: #fff2dc; }
+  body[data-accent="balanced"] tr.row-good td { background: #e3f5ea; }
+  body[data-accent="balanced"] tr.row-exec td { background: #e0ecfb; }
+  body[data-accent="balanced"] .accent-rule{ width: 44px; height: 3px; }
+
+  body[data-accent="vivid"] .kpi{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 8%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 30%, var(--line));
+  }
+  body[data-accent="vivid"] .kpi .label{ color: color-mix(in oklab, var(--accent) 70%, var(--ink-3)); }
+  body[data-accent="vivid"] .kpi .value{ color: color-mix(in oklab, var(--accent) 30%, var(--ink)); }
+  body[data-accent="vivid"] .pipeline-card{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, #fff), #fff);
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+  }
+  body[data-accent="vivid"] .briefing{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 12%, #fff), #fff);
+    border-left-width: 4px;
+  }
+  body[data-accent="vivid"] .panel{
+    border-color: color-mix(in oklab, var(--accent) 22%, var(--line));
+  }
+  body[data-accent="vivid"] tr.row-alert td{ background: #fbd9d5; }
+  body[data-accent="vivid"] tr.row-warn td { background: #ffe6bd; }
+  body[data-accent="vivid"] tr.row-good td { background: #d0eedb; }
+  body[data-accent="vivid"] tr.row-exec td { background: #cfe0f8; }
+  body[data-accent="vivid"] .pipeseg{ filter: saturate(1.15); }
+  body[data-accent="vivid"] .accent-rule{ width: 56px; height: 3px; }
+  body[data-accent="vivid"] .topbar-wrap{
+    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 8%, rgba(255,255,255,0.85)), rgba(255,255,255,0.78));
+  }
+
+  /* Hide alert dots if turned off */
+  body[data-alert-dots="off"] .tab .alert-dot{ display:none !important; }
+  /* Hide sparklines if turned off */
+  body[data-sparklines="off"] .spark{ display:none; }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{line-height:1.45}
+  button{font-family:inherit}
+
+  /* ---------- Sticky frosted topbar ---------- */
+  .topbar-wrap{
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface-glass);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar{
+    max-width: 1440px; margin: 0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 32px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{
+    width:28px;height:28px;border-radius:7px;
+    background:#1d1d1f;color:#fff;
+    display:grid;place-items:center;
+    font-weight:700;font-size:12px;
+  }
+  .brand-title{font-weight:600;font-size:15px;letter-spacing:-0.01em}
+  .brand-sub{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+
+  .topbar-tabs{
+    display:inline-flex;
+    background: rgba(0,0,0,0.05);
+    border-radius:10px;padding:3px;gap:2px;
+  }
+  .tab{
+    border:0;background:transparent;padding:7px 13px;
+    font-size:13px;font-weight:500;color:var(--ink-2);
+    border-radius:7px;cursor:pointer;letter-spacing:-0.005em;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .tab .alert-dot{width:6px;height:6px;border-radius:50%;background:var(--red-mark);display:none}
+  .tab[data-alerts="1"] .alert-dot{display:inline-block}
+  .tab:hover{color:var(--ink)}
+  .tab.active{
+    background:#fff;color:var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 0.5px rgba(0,0,0,.04);
+  }
+
+  .meta{display:flex;align-items:center;gap:14px;color:var(--ink-3);font-size:12px}
+  .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--green-mark);display:inline-block;margin-right:6px}
+  .meta .user{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:500}
+  .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#d6d6da,#a8a8ad);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600}
+  .density{
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:7px;padding:2px;gap:1px;
+  }
+  .density button{
+    border:0;background:transparent;padding:4px 8px;
+    font-size:11px;font-weight:500;color:var(--ink-3);
+    border-radius:5px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
+  }
+  .density button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+  /* ---------- App body ---------- */
+  .app{max-width:1440px;margin:0 auto;padding:20px 32px 64px}
+
+  /* Tab accent rule (under each section title) */
+  .accent-rule{
+    height:2px;width:36px;background:var(--accent);
+    border-radius:2px;margin-bottom:8px;
+  }
+
+  /* ---------- Today briefing ---------- */
+  .briefing{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius:12px;
+    padding:14px 18px 14px 18px;
+    margin-bottom:18px;
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    gap:18px;
+    align-items:center;
+  }
+  .briefing .head{
+    font-size:10.5px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+    color:var(--ink-3);
+    display:flex;align-items:center;gap:8px;
+    border-right:1px solid var(--line);
+    padding-right:18px;
+  }
+  .briefing .head .pulse{
+    width:8px;height:8px;border-radius:50%;background:var(--red-mark);
+    box-shadow:0 0 0 0 rgba(215,0,21,0.5);
+    animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(215,0,21,0.5)}
+    70%{box-shadow:0 0 0 8px rgba(215,0,21,0)}
+    100%{box-shadow:0 0 0 0 rgba(215,0,21,0)}
+  }
+  .briefing .items{
+    display:flex;gap:24px;flex-wrap:wrap;
+  }
+  .briefing .item{
+    font-size:13px;color:var(--ink-2);line-height:1.4;
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .briefing .item .marker{
+    font-family:var(--num);font-size:13px;font-weight:600;
+    padding:1px 6px;border-radius:4px;
+  }
+  .briefing .item.red .marker{background:var(--red-bg);color:var(--red)}
+  .briefing .item.amber .marker{background:var(--amber-bg);color:var(--amber)}
+  .briefing .item.blue .marker{background:var(--blue-soft);color:var(--blue)}
+  .briefing .stamp{
+    font-size:11px;color:var(--ink-4);text-align:right;
+  }
+  .briefing .stamp b{display:block;color:var(--ink-2);font-weight:600;font-size:12px}
+
+  /* ---------- Section header ---------- */
+  .section-title{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    margin: var(--section-gap) 0 10px;
+  }
+  .section-title .left{display:flex;flex-direction:column}
+  .section-title h2{
+    margin:0;font-size:13px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-3);
+  }
+  .section-title .hint{font-size:12px;color:var(--ink-4)}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{
+    position:relative;background:var(--surface);
+    border:1px solid var(--line);border-radius:10px;
+    padding: var(--kpi-pad);min-height:124px;
+    display:flex;flex-direction:column;
+    transition: border-color .15s, transform .15s;
+  }
+  .kpi:hover{border-color:var(--line-strong)}
+  .kpi .label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink-3)}
+  .kpi .row-v{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+    margin-top:6px;
+  }
+  .kpi .value{
+    font-family:var(--num);font-size:32px;font-weight:600;
+    line-height:1.0;letter-spacing:-0.02em;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .kpi .delta{
+    font-size:11px;font-weight:600;color:var(--ink-3);
+    display:inline-flex;align-items:center;gap:3px;
+    font-family:var(--num);font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .kpi .delta.up{color:var(--green)}
+  .kpi .delta.down{color:var(--red)}
+  .kpi .delta.flat{color:var(--ink-4)}
+  .kpi .spark{height:28px;margin-top:8px}
+  .kpi .sub{margin-top:8px;font-size:12px;color:var(--ink-3);line-height:1.35}
+  .kpi .accent{
+    position:absolute;top:14px;right:16px;
+    font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+    padding:3px 7px;border-radius:999px;background:var(--surface-3);color:var(--ink-3);
+  }
+  .kpi.alert{background:#ffffff !important;border-color:var(--line) !important}
+  .kpi.alert .value{color:var(--red)}
+  .kpi.alert .accent{background:var(--red-bg);color:var(--red)}
+  .kpi.warn{background:#ffffff !important;border-color:var(--line) !important}
+  .kpi.warn .value{color:var(--amber)}
+  .kpi.warn .accent{background:var(--amber-bg);color:var(--amber)}
+  .kpi.good .accent{background:var(--green-bg);color:var(--green)}
+
+  .kpi[data-tip]{cursor:default}
+  .kpi[data-tip]:hover::after{
+    content:attr(data-tip);
+    position:absolute;left:12px;right:12px;top:calc(100% + 6px);z-index:30;
+    background:#1d1d1f;color:#f5f5f7;
+    font-size:11.5px;line-height:1.45;
+    padding:9px 11px;border-radius:8px;
+    box-shadow:0 6px 20px rgba(0,0,0,.18);
+    white-space:pre-line;pointer-events:none;
+  }
+  .kpi[data-tip]:hover::before{
+    content:"";position:absolute;top:100%;left:24px;
+    border:6px solid transparent;border-bottom-color:#1d1d1f;
+    margin-top:-6px;z-index:31;
+  }
+
+  /* ---------- Pipeline (centerpiece) ---------- */
+  .pipeline-card{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:22px 24px 18px;
+  }
+  .pipeline-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+  .pipeline-head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em}
+  .pipeline-head .total{font-family:var(--num);font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .pipeline-head .total b{color:var(--ink);font-weight:600}
+
+  /* Annotated stage labels above bar */
+  .pipe-labels{
+    display:flex;gap:3px;margin-bottom:6px;height:34px;
+  }
+  .pipe-lab{
+    display:flex;flex-direction:column;justify-content:flex-end;
+    overflow:hidden;
+    font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.05em;
+    color:var(--ink-3);line-height:1.15;
+    padding: 0 4px 4px;
+    text-align:left;
+    min-width:0;
+  }
+  .pipe-lab.bottleneck{color:var(--amber)}
+  .pipe-lab.alert{color:var(--red)}
+  .pipe-lab .arrow{color:var(--ink-4);font-weight:400;margin-left:2px}
+
+  .pipebar{
+    display:flex;gap:3px;height:62px;
+    border-radius:8px;overflow:hidden;
+    position:relative;
+  }
+  .pipeseg{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;overflow:hidden;min-width:18px;
+    transition: filter .15s;
+  }
+  .pipeseg:hover{filter:brightness(1.05)}
+  .pipeseg .pcount{
+    font-family:var(--num);font-weight:600;font-size:16px;
+    font-variant-numeric:tabular-nums;letter-spacing:-0.01em;
+  }
+  /* tiny segment fallback — show count above the bar */
+  .pipeseg.tiny .pcount{display:none}
+  .pipeseg.tiny::after{
+    content: attr(data-count);
+    position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-family:var(--num);font-weight:600;font-size:12px;
+    color:var(--ink-3);
+  }
+  .pipeseg.s-pending{background:#c7c7cc;color:#1d1d1f}
+  .pipeseg.s-prepped{background:#aeaeb2;color:#1d1d1f}
+  .pipeseg.s-3p{background:#0071e3}
+  .pipeseg.s-uim{background:#5e5ce6}
+  .pipeseg.s-neg{background:#f5a524;color:#1d1d1f}
+  .pipeseg.s-settled{background:#34c759;color:#0a4a22}
+  .pipeseg.s-lien{background:#d70015}
+  .pipeseg.s-disb{background:#7e5bd1}
+
+  /* axis under bar — proportional ticks aligned to segment edges */
+  .pipe-axis{
+    display:flex;gap:3px;height:14px;margin-top:6px;
+  }
+  .pipe-tick{
+    border-left:1px solid var(--line-strong);
+    height:6px;
+    position:relative;
+  }
+
+  /* ---------- Demand area chart ---------- */
+  .area-card{padding:18px 20px 14px}
+  .area-head{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+  }
+  .area-head h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-0.01em}
+  .area-head .legend{font-size:11.5px;color:var(--ink-3);display:flex;gap:14px;align-items:center}
+  .area-head .legend .pip{
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .area-head .legend .pip i{
+    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:1px;
+  }
+  .area-head .legend .pip.recent i{background:var(--amber-mark)}
+  .area-svg{width:100%;height:200px;display:block}
+
+  /* ---------- Tables ---------- */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:clip}
+  .panel-head{
+    padding:13px 18px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+  }
+  .panel-head h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-0.01em}
+  .panel-head .meta-r{font-size:12px;color:var(--ink-3)}
+
+  /* filter chips */
+  .chips{display:inline-flex;gap:4px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--line);background:var(--surface);
+    padding:4px 10px;border-radius:999px;
+    font-size:11.5px;font-weight:500;color:var(--ink-3);
+    cursor:pointer;letter-spacing:-0.005em;
+  }
+  .chip:hover{color:var(--ink);border-color:var(--line-strong)}
+  .chip.on{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+
+  table.t{width:100%;border-collapse:collapse;font-size:13px}
+  table.t th{
+    text-align:left;
+    font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-3);
+    padding:10px 16px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface-2);white-space:nowrap;
+    position:sticky;top:64px;z-index:10;
+  }
+  table.t td{
+    padding: var(--row-pad-y) 16px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  table.t tbody tr:last-child td{border-bottom:0}
+  table.t tbody tr:hover{background:var(--surface-3)}
+  td.num,th.num{text-align:right;font-family:var(--num);font-variant-numeric:tabular-nums}
+  th.num{width:1%;white-space:nowrap}
+  td.num{white-space:nowrap}
+  /* When a numeric cell contains a bar-in-cell, the column needs to be wide
+     enough for the bar — give the th a matching min-width so header text
+     right-aligns above the number, not above the column's narrow edge. */
+  th.num.has-bar{min-width:170px}
+  .bic{width:100%}
+  td.name{font-weight:500;color:var(--ink)}
+
+  tr.row-alert td{background:#fff5f4}
+  tr.row-alert td:first-child{box-shadow:inset 3px 0 0 var(--red-mark)}
+  tr.row-good td{background:#f1faf3}
+  tr.row-good td:first-child{box-shadow:inset 3px 0 0 var(--green-mark)}
+  tr.row-warn td{background:#fffaf0}
+  tr.row-warn td:first-child{box-shadow:inset 3px 0 0 var(--amber-mark)}
+  tr.row-exec td{background:#eff5fd}
+  tr.row-exec td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+
+  /* bar-in-cell */
+  .bic{
+    position:relative;
+    display:inline-block;min-width:160px;
+    padding:0;
+  }
+  .bic .barfill{
+    position:absolute;left:0;top:50%;transform:translateY(-50%);
+    height:18px;border-radius:3px;
+    background: var(--accent);
+    opacity:0.14;z-index:0;
+  }
+  .bic .barlbl{
+    position:relative;z-index:1;
+    display:block;text-align:right;padding:1px 8px;
+    font-family:var(--num);font-variant-numeric:tabular-nums;
+  }
+  .bic.amber .barfill{background:var(--amber-mark)}
+  .bic.green .barfill{background:var(--green-mark)}
+  .bic.blue .barfill{background:var(--blue)}
+
+  /* badges / flags */
+  .flag{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 8px;font-size:11px;font-weight:600;
+    border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;
+    white-space:nowrap;
+  }
+  .flag.red{background:var(--red-bg);color:var(--red)}
+  .flag.amber{background:var(--amber-bg);color:var(--amber)}
+  .flag.green{background:var(--green-bg);color:var(--green)}
+  .flag.blue{background:var(--blue-soft);color:var(--blue)}
+  .flag.gray{background:var(--surface-3);color:var(--ink-3)}
+  .flag.purple{background:var(--purple-bg);color:var(--purple)}
+
+  .badge-exec{
+    display:inline-block;margin-left:8px;
+    padding:2px 6px;font-size:9.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.08em;
+    background:var(--blue);color:#fff;border-radius:4px;vertical-align:2px;
+  }
+  .owner{color:var(--ink-3);font-size:12.5px}
+
+  /* spark svg */
+  .spark svg{display:block;width:100%;height:100%;overflow:visible}
+
+  /* stat-pill + blip */
+  .stat-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-2);
+  }
+  .stat-pill .blip{width:8px;height:8px;border-radius:50%;background:var(--neutral-mark)}
+  .stat-pill.red .blip{background:var(--red-mark)}
+  .stat-pill.amber .blip{background:var(--amber-mark)}
+  .stat-pill.green .blip{background:var(--green-mark)}
+  .stat-pill.blue .blip{background:var(--blue)}
+
+  /* CM toggle */
+  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:9px;padding:3px;gap:2px}
+  .seg button{
+    border:0;background:transparent;padding:6px 14px;
+    font-size:12.5px;font-weight:500;color:var(--ink-2);
+    border-radius:6px;cursor:pointer;
+  }
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06), 0 0 0 0.5px rgba(0,0,0,.04)}
+
+  .note{
+    font-size:12.5px;color:var(--ink-3);
+    background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.5;
+  }
+  .note b{color:var(--ink-2);font-weight:600}
+
+  /* case 2-line cell — fixed line-height to keep rows aligned */
+  .case-cell{line-height:1.25}
+  .case-cell .case-name{font-weight:500;color:var(--ink)}
+  .case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
+
+  /* flag stack column — vertical so column edge stays clean */
+  td.flagcol{white-space:normal}
+  td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+
+  .page{display:none}
+  .page.active{display:block}
+
+  .foot{
+    margin-top:32px;padding-top:14px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-4);
+  }
+  .foot kbd{
+    font-family:var(--num);font-size:10.5px;
+    border:1px solid var(--line);border-radius:4px;
+    padding:1px 5px;background:var(--surface);color:var(--ink-3);
+  }
+
+  /* responsive */
+  @media (max-width:1100px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .briefing{grid-template-columns:1fr;gap:10px}
+    .briefing .head{border-right:0;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:8px}
+    .briefing .stamp{text-align:left}
+  }
+  @media (max-width:720px){
+    .topbar,.app{padding-left:16px;padding-right:16px}
+    .kpi-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body data-density="comfy" data-accent="balanced" data-bg="snow" data-briefing="on" data-sparklines="on" data-alertDots="on">
+
+<div class="topbar-wrap">
+  <header class="topbar">
+    <div class="brand">
+    </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);letter-spacing:.01em;">Lien Operations</div>
+    <div class="meta">
+      <div><span class="dot"></span><span id="live-timestamp"></span></div>
+    </div>
+  </header>
+</div>
+
+<div class="app">
+
+       TAB 4 — LIEN OPERATIONS
+       =========================================================== -->
+  <section class="page active" data-page="lien" style="--accent:#0071e3">
+
+    <div class="briefing" id="lien-briefing">
+      <div class="head"><span class="pulse"></span>Lien Ops · loading live data</div>
+      <div class="items" id="lien-briefing-items">
+        <div class="item blue"><span class="marker">…</span><span>Fetching from CasePeer.</span></div>
+      </div>
+      <div class="stamp"><b id="lien-stamp-title">Lien team status</b><span id="lien-stamp-meta">connecting…</span></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi" data-tip="Open lien records.&#10;Source: CasePeer · Lien table where Status = Open.">
+        <div class="label">Active Liens</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-active">—</div>
+          <div class="delta flat" id="lien-kpi-active-delta">live</div>
+        </div>
+        <div class="sub" id="lien-kpi-active-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Count of records in lien-negotiations-overview.">
+        <div class="label">Cases in Lien Neg.</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-cases">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-cases-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Count of records in disbursement-overview.">
+        <div class="label">Cases in Disbursement</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-disb">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-disb-sub">loading…</div>
+      </div>
+      <div class="kpi" data-tip="Sum of settlement_total across unique cases with settled value.">
+        <div class="label">Settled Value · Lien Cases</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-settled">—</div>
+        </div>
+        <div class="sub" id="lien-kpi-settled-sub">loading…</div>
+      </div>
+    </div>
+
+    <!-- Lien Activity Feed — moved above drill-down -->
+    <div class="section-title" style="margin-top:0">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Lien activity feed</h2>
+      </div>
+      <div class="seg" id="lien-activity-seg">
+        <button class="on" data-days="7">7 days</button>
+        <button data-days="14">14 days</button>
+        <button data-days="30">30 days</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px">
+
+      <!-- Liens cleared → moved to disbursement -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Liens cleared → pending payout</h3>
+          <div class="meta-r" id="lien-cleared-meta">Last 7 days</div>
+        </div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Negotiator</th>
+              <th class="num">Days in Disb.</th>
+              <th class="num">Cleared</th>
+            </tr>
+          </thead>
+          <tbody id="lien-cleared-body">
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+          <span id="lien-cleared-count" style="color:var(--ink-3)">—</span>
+          <span style="font-size:11px;color:var(--ink-4)">Bianca's team — payout pending</span>
+        </div>
+      </div>
+
+      <!-- Cases fully disbursed -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Disbursed — cases closed out</h3>
+          <div class="meta-r" id="lien-disbursed-meta">Last 7 days</div>
+        </div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Negotiator</th>
+              <th class="num">Days taken</th>
+              <th class="num">Disbursed</th>
+            </tr>
+          </thead>
+          <tbody id="lien-disbursed-body">
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+          <span id="lien-disbursed-count" style="color:var(--ink-3)">—</span>
+          <span style="font-size:11px;color:var(--green)">Fully closed</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sub-tab toggle -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2>Lien drill-down</h2>
+      </div>
+      <div class="chips" id="lien-subtabs">
+        <button class="chip on" data-sub="cases">Cases</button>
+        <button class="chip" data-sub="negotiators">Negotiators</button>
+        <button class="chip" data-sub="disb">Disbursement</button>
+      </div>
+    </div>
+
+    <!-- Filter / threshold bar -->
+    <div class="panel" id="lien-filter-bar" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Negotiator</span>
+        <select id="lien-f-neg" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Flag</span>
+        <select id="lien-f-flag" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+          <option value="">All</option>
+          <option value="Stuck">Stuck</option>
+          <option value="No Activity">No Activity</option>
+          <option value="High Lien Load">High Lien Load</option>
+          <option value="flagged">Any Flag</option>
+          <option value="clean">No Flags</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Search</span>
+        <input id="lien-f-search" type="text" placeholder="Case name…" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:200px;" />
+      </div>
+      <div style="flex:1"></div>
+      <details id="lien-thresh-disclosure" style="font-size:12px;">
+        <summary style="cursor:pointer;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;">Thresholds</summary>
+        <div style="display:flex;gap:14px;margin-top:8px;align-items:center;">
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Stuck&nbsp;&gt; <input id="lien-th-stuck" type="number" value="45" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Inactive&nbsp;&ge; <input id="lien-th-inactive" type="number" value="14" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">High Load&nbsp;&gt; <input id="lien-th-load" type="number" value="5" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> liens</label>
+        </div>
+      </details>
+    </div>
+
+    <!-- Cases pane -->
+    <div class="panel" id="lien-pane-cases" style="margin-top:12px;">
+      <div class="panel-head">
+        <h3 id="lien-cases-count">Cases · loading…</h3>
+      </div>
+      <table class="t" id="lien-cases-table">
+        <thead>
+          <tr>
+            <th style="width:32px"></th>
+            <th data-sort="caseName">Case</th>
+            <th data-sort="negotiator">Negotiator</th>
+            <th class="num has-bar" data-sort="lienCount">Liens</th>
+            <th class="num" data-sort="maxDays">Oldest Lien</th>
+            <th class="num" data-sort="daysSinceTouch">Days Since Activity</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody id="lien-cases-body">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Negotiators pane -->
+    <div class="panel" id="lien-pane-negotiators" style="margin-top:12px;display:none;">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Negotiator</th>
+            <th class="num has-bar">Liens</th>
+            <th class="num">Cases</th>
+            <th class="num">Avg Days</th>
+            <th class="num">Inactive</th>
+            <th class="num">Flagged Cases</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lien-neg-body">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Disbursement pane -->
+    <div class="panel" id="lien-pane-disb" style="margin-top:12px;display:none;">
+      <div class="panel-head">
+        <h3 id="lien-disb-count">Cases pending payout · loading…</h3>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Negotiator</th>
+            <th class="num">Days in Disb.</th>
+            <th class="num">Last Touched</th>
+            <th class="num">Pending Since</th>
+          </tr>
+        </thead>
+        <tbody id="disb-body">
+          <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+
+</div><!-- /.app -->
+
+<style>
+  #twk{
+    position:fixed; right:18px; bottom:18px; z-index:9999;
+    width:300px; max-height:calc(100vh - 36px);
+    display:none; flex-direction:column;
+    background:rgba(255,255,255,0.86);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border:1px solid rgba(0,0,0,0.08);
+    border-radius:14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.04);
+    font:13px/1.4 var(--ui); color:var(--ink);
+    overflow:hidden;
+  }
+  #twk.open{display:flex}
+  #twk .twk-hd{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 10px 11px 14px; cursor:move; user-select:none;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+  }
+  #twk .twk-hd b{font-size:13px;font-weight:600;letter-spacing:-0.005em}
+  #twk .twk-x{
+    appearance:none;border:0;background:transparent;color:var(--ink-3);
+    width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;
+  }
+  #twk .twk-x:hover{background:rgba(0,0,0,0.06);color:var(--ink)}
+  #twk .twk-body{
+    padding:10px 14px 14px;
+    display:flex;flex-direction:column;gap:14px;
+    overflow-y:auto;
+  }
+  #twk .twk-sect{
+    font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+    color:var(--ink-4); margin-top:4px;
+  }
+  #twk .twk-sect:first-child{margin-top:0}
+  #twk .twk-row{display:flex;flex-direction:column;gap:6px}
+  #twk .twk-lbl{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12px;color:var(--ink-2);font-weight:500;
+  }
+  #twk .twk-lbl .twk-hint{font-size:11px;color:var(--ink-4);font-weight:400}
+  #twk .twk-seg{
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:8px;padding:2px;gap:1px;
+  }
+  #twk .twk-seg button{
+    flex:1;border:0;background:transparent;padding:6px 10px;
+    font:inherit;font-size:11.5px;font-weight:500;color:var(--ink-3);
+    border-radius:6px;cursor:pointer;
+  }
+  #twk .twk-seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  #twk .twk-swatches{display:flex;gap:8px;flex-wrap:wrap}
+  #twk .twk-sw{
+    width:36px;height:36px;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+    position:relative;
+  }
+  #twk .twk-sw.on{border-color:var(--ink)}
+  #twk .twk-sw .twk-sw-name{
+    position:absolute;left:42px;top:50%;transform:translateY(-50%);
+    font-size:12px;color:var(--ink-2);white-space:nowrap;
+  }
+  #twk .twk-swatches.named{flex-direction:column;gap:6px}
+  #twk .twk-toggle{
+    width:36px;height:22px;border-radius:999px;background:rgba(0,0,0,0.18);
+    position:relative;cursor:pointer;transition:background .15s;
+    border:0; padding:0;
+  }
+  #twk .twk-toggle.on{background:var(--green-mark)}
+  #twk .twk-toggle::after{
+    content:""; position:absolute;top:2px;left:2px;
+    width:18px;height:18px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 2px rgba(0,0,0,.2); transition:transform .15s;
+  }
+  #twk .twk-toggle.on::after{transform:translateX(14px)}
+  #twk .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between}
+  #twk .twk-reset{
+    margin-top:4px;
+    appearance:none;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:500;
+    padding:7px 10px;border-radius:8px;cursor:pointer;
+  }
+  #twk .twk-reset:hover{background:var(--surface-3);color:var(--ink)}
+
+  /* ---- Live tweak effects ---- */
+  body[data-bg="snow"]      { background:#f5f5f7; }
+  body[data-bg="warm"]      { background:#f7f5f1; }
+  body[data-bg="cool"]      { background:#eef2f7; }
+  body[data-bg="ink"]       { background:#1d1d1f; color:#f5f5f7; }
+  body[data-bg="ink"] .topbar-wrap{ background:rgba(29,29,31,0.78); }
+
+  body[data-alert-dots="off"] .tab .alert-dot{ display:none !important; }
+  body[data-sparklines="off"] .kpi .spark{ display:none; }
+  body[data-briefing="off"] .briefing{ display:none; }
+</style>
+<div id="twk" role="dialog" aria-label="Tweaks">
+  <div class="twk-hd">
+    <b>Tweaks</b>
+    <button class="twk-x" id="twk-close" aria-label="Close">×</button>
+  </div>
+  <div class="twk-body">
+
+    <div class="twk-sect">Color</div>
+
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Background</span></div>
+      <div class="twk-swatches" id="twk-bg">
+        <div class="twk-sw" data-v="snow" style="background:#f5f5f7" title="Snow (default)"></div>
+        <div class="twk-sw" data-v="warm" style="background:#f7f5f1" title="Warm paper"></div>
+        <div class="twk-sw" data-v="cool" style="background:#eef2f7" title="Cool slate"></div>
+        <div class="twk-sw" data-v="ink"  style="background:#1d1d1f" title="Ink (dark)"></div>
+      </div>
+    </div>
+
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Color intensity</span><span class="twk-hint">how much accent</span></div>
+      <div class="twk-seg" id="twk-accent">
+        <button data-v="quiet">Quiet</button>
+        <button data-v="balanced">Balanced</button>
+        <button data-v="vivid">Vivid</button>
+      </div>
+    </div>
+
+    <div class="twk-sect">Density</div>
+    <div class="twk-row">
+      <div class="twk-lbl"><span>Row height</span><span class="twk-hint">cell padding + font</span></div>
+      <div class="twk-seg" id="twk-density">
+        <button data-v="cozy">Cozy</button>
+        <button data-v="comfy">Comfy</button>
+        <button data-v="compact">Compact</button>
+      </div>
+    </div>
+
+    <div class="twk-sect">Display</div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Today briefing</span></div>
+      <button class="twk-toggle" id="twk-briefing" aria-label="Toggle briefing"></button>
+    </div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Sparklines</span></div>
+      <button class="twk-toggle" id="twk-sparks" aria-label="Toggle sparklines"></button>
+    </div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl" style="display:block"><span>Tab alert dots</span></div>
+      <button class="twk-toggle" id="twk-dots" aria-label="Toggle alert dots"></button>
+    </div>
+
+    <button class="twk-reset" id="twk-reset">Reset to defaults</button>
+  </div>
+</div>
+
+
+
+<script>
+/* =========================================================
+   Live timestamp — runs immediately on load
+   ========================================================= */
+(function(){
+  var now = new Date();
+  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var h = now.getHours(), m = now.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  var h12 = h % 12 || 12;
+  var mStr = m < 10 ? '0'+m : String(m);
+  var timeStr = h12+':'+mStr+' '+ampm+' PT · '+days[now.getDay()]+' '+months[now.getMonth()]+' '+now.getDate();
+  var stampTime = h12+':'+mStr+' '+ampm+' PT';
+  var metaEl = document.getElementById('live-timestamp');
+  if(metaEl) metaEl.textContent = timeStr;
+  var metaEl2 = document.querySelector('.meta > div:first-child');
+  if(!metaEl && metaEl2) metaEl2.innerHTML = '<span class="dot"></span>'+timeStr;
+  var pipeStamp = document.getElementById('pipe-stamp');
+  if(pipeStamp) pipeStamp.innerHTML = '<b>'+days[now.getDay()]+' brief</b> updated '+stampTime;
+})();
+
+/* =========================================================
+   Tabs + density + period toggle
+
+/* Tweaks */
+  "briefing": true,
+  "sparklines": true,
+  "alertDots": true
+}/*EDITMODE-END*/;
+
+const twk = { ...TWEAK_DEFAULTS };
+const twkPanel = document.getElementById('twk');
+
+function applyTweaks(){
+  document.body.dataset.bg         = twk.bg;
+  document.body.dataset.accent     = twk.accent;
+  document.body.dataset.density    = twk.density;
+  document.body.dataset.briefing   = twk.briefing   ? 'on' : 'off';
+  document.body.dataset.sparklines = twk.sparklines ? 'on' : 'off';
+  document.body.dataset.alertDots  = twk.alertDots  ? 'on' : 'off';
+
+  // sync UI state
+  document.querySelectorAll('#twk-bg .twk-sw').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.bg));
+  document.querySelectorAll('#twk-accent button').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.accent));
+  document.querySelectorAll('#twk-density button').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === twk.density));
+  document.getElementById('twk-briefing').classList.toggle('on', twk.briefing);
+  document.getElementById('twk-sparks').classList.toggle('on', twk.sparklines);
+  document.getElementById('twk-dots').classList.toggle('on', twk.alertDots);
+}
+
+function setTweak(patch){
+  Object.assign(twk, patch);
+  applyTweaks();
+  try{
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits: patch}, '*');
+  }catch(_){}
+}
+
+// Wire controls
+document.querySelectorAll('#twk-bg .twk-sw').forEach(el =>
+  el.addEventListener('click', () => setTweak({bg: el.dataset.v})));
+document.querySelectorAll('#twk-accent button').forEach(el =>
+  el.addEventListener('click', () => setTweak({accent: el.dataset.v})));
+document.querySelectorAll('#twk-density button').forEach(el =>
+  el.addEventListener('click', () => setTweak({density: el.dataset.v})));
+document.getElementById('twk-briefing').addEventListener('click', () =>
+  setTweak({briefing: !twk.briefing}));
+document.getElementById('twk-sparks').addEventListener('click', () =>
+  setTweak({sparklines: !twk.sparklines}));
+document.getElementById('twk-dots').addEventListener('click', () =>
+  setTweak({alertDots: !twk.alertDots}));
+document.getElementById('twk-reset').addEventListener('click', () =>
+  setTweak({...TWEAK_DEFAULTS}));
+
+// Drag header
+(function(){
+  const hd = twkPanel.querySelector('.twk-hd');
+  let drag = null;
+  hd.addEventListener('mousedown', e => {
+    if(e.target.closest('.twk-x')) return;
+    const r = twkPanel.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if(!drag) return;
+    twkPanel.style.left = (e.clientX - drag.dx) + 'px';
+    twkPanel.style.top  = (e.clientY - drag.dy) + 'px';
+    twkPanel.style.right = 'auto';
+    twkPanel.style.bottom = 'auto';
+  });
+  window.addEventListener('mouseup', () => drag = null);
+})();
+
+// Host protocol
+window.addEventListener('message', e => {
+  const d = e.data || {};
+  if(d.type === '__activate_edit_mode')   twkPanel.classList.add('open');
+  if(d.type === '__deactivate_edit_mode') twkPanel.classList.remove('open');
+});
+document.getElementById('twk-close').addEventListener('click', () => {
+  twkPanel.classList.remove('open');
+  try{ window.parent.postMessage({type:'__edit_mode_dismissed'}, '*'); }catch(_){}
+});
+try{ window.parent.postMessage({type:'__edit_mode_available'}, '*'); }catch(_){}
+
+applyTweaks();
+
+// CM period toggle
+const segBtns = document.querySelectorAll('#cm-seg button');
+segBtns.forEach(b => b.addEventListener('click', () => {
+  segBtns.forEach(x => x.classList.toggle('on', x===b));
+  const is2026 = b.dataset.period === '2026';
+  document.getElementById('cm-2026').style.display      = is2026 ? '' : 'none';
+  document.getElementById('cm-2026-note').style.display = is2026 ? '' : 'none';
+  document.getElementById('cm-2025').style.display      = is2026 ? 'none' : '';
+  document.getElementById('cm-2025-note').style.display = is2026 ? 'none' : '';
+  document.getElementById('cm-title').textContent = is2026 ? 'CM output · 2026 YTD' : 'CM output · 2025 full year';
+}));
+
+// Filter chips (visual only — no real filter)
+document.querySelectorAll('.chips').forEach(group => {
+  group.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      group.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c===chip));
+    });
+  });
+});
+
+/* =========================================================
+   Sparklines
+   ========================================================= */
+const colorMap = {
+  'ink-3':'#6e6e73', 'amber':'#f5a524', 'red':'#d70015',
+  'green':'#34c759', 'blue':'#0071e3', 'purple':'#7e5bd1'
+};
+function renderSpark(el){
+
+/* Sparklines */
+function renderSpark(el){
+  const data = el.dataset.spark.split(',').map(Number);
+  const isBars = el.dataset.bars === '1';
+  const color = colorMap[el.dataset.color] || '#6e6e73';
+  const w = 100, h = 28;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = (max-min) || 1;
+
+  if(isBars){
+    const bw = w / data.length - 2;
+    let bars = '';
+    data.forEach((v,i) => {
+      const bh = ((v - min) / range) * (h - 4) + 4;
+      const x = i * (w/data.length);
+      bars += `<rect x="${x}" y="${h-bh}" width="${bw}" height="${bh}" fill="${color}" opacity="0.6" rx="1"/>`;
+    });
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+    return;
+  }
+
+  const pts = data.map((v,i) => {
+    const x = (i / (data.length-1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return [x,y];
+  });
+  const linePath = pts.map((p,i) => (i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  const areaPath = `${linePath} L${w} ${h} L0 ${h} Z`;
+  const last = pts[pts.length-1];
+  el.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${areaPath}" fill="${color}" opacity="0.12"/>
+      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="2" fill="${color}"/>
+    </svg>`;
+}
+document.querySelectorAll('.spark').forEach(renderSpark);
+
+/* =========================================================
+   Shared helpers (used by Pipeline, Settlements, CM, DQ)
+
+/* Shared helpers */
+function _parseDate(str){
+  if(!str||typeof str!=='string') return null;
+  var p=str.trim().split('/'); if(p.length!==3) return null;
+  var d=new Date(parseInt(p[2],10),parseInt(p[0],10)-1,parseInt(p[1],10));
+  return isNaN(d.getTime())?null:d;
+}
+function _parseLimit(str){
+  if(!str) return null;
+  var m=str.match(/(\d+)k/i); return m?parseInt(m[1],10)*1000:null;
+}
+function _fmtCurrency(n){
+  if(n==null||isNaN(n)) return '—';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return '$'+Math.round(n/1e3)+'K';
+  return '$'+Math.round(n).toLocaleString();
+}
+function _esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(String(s==null?'':s)));return d.innerHTML;}
+
+/* =========================================================
+
+/* Railway — flags, notes, contacts */
+var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+var _FLAG_OPTIONS = ['Pre-Lit','Lit','Arb','Referred','Drop'];
+var _FLAG_COLORS = {
+  'Pre-Lit': 'gray',
+  'Lit':     'indigo',
+  'Arb':     'blue',
+  'Referred':'amber',
+  'Drop':    'red'
+};
+
+// In-memory cache — loaded from Railway at startup
+var _flagCache = {};
+
+function _loadFlags(){
+  return fetch(_RAILWAY_URL + '/flags')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _flagCache = data || {};
+      console.log('Flags loaded from Railway:', Object.keys(_flagCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load flags from Railway:', e.message);
+      _flagCache = {};
+    });
+}
+
+function _setFlag(caseName, flag){
+  _flagCache[caseName] = flag;
+  fetch(_RAILWAY_URL + '/flags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName, flag: flag })
+  }).catch(function(e){ console.warn('Flag save failed:', e.message); });
+}
+
+function _clearFlag(caseName){
+  delete _flagCache[caseName];
+  fetch(_RAILWAY_URL + '/flags', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName })
+  }).catch(function(e){ console.warn('Flag clear failed:', e.message); });
+}
+
+function _getFlag(caseName){
+  return _flagCache[caseName] || null;
+}
+
+// --- Case notes (Railway) ---
+var _noteCache = {};
+
+function _loadNotes(){
+  return fetch(_RAILWAY_URL + '/notes')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _noteCache = data || {};
+      console.log('Notes loaded from Railway:', Object.keys(_noteCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load notes from Railway:', e.message);
+      _noteCache = {};
+    });
+}
+
+function _setNote(caseName, note){
+  _noteCache[caseName] = note;
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName, note: note })
+  }).catch(function(e){ console.warn('Note save failed:', e.message); });
+}
+
+function _clearNote(caseName){
+  delete _noteCache[caseName];
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: caseName })
+  }).catch(function(e){ console.warn('Note clear failed:', e.message); });
+}
+
+function _getNote(caseName){
+  return _noteCache[caseName] || null;
+}
+
+// --- Case contacts: adjuster email + claim number (Railway) ---
+var _contactCache = {};
+
+function _loadContacts(){
+  return fetch(_RAILWAY_URL + '/contacts')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _contactCache = data || {};
+      console.log('Contacts loaded from Railway:', Object.keys(_contactCache).length);
+    })
+    .catch(function(e){
+      console.warn('Could not load contacts from Railway:', e.message);
+      _contactCache = {};
+    });
+}
+
+function _setContact(caseName, fields){
+  if(!_contactCache[caseName]) _contactCache[caseName] = {};
+  Object.assign(_contactCache[caseName], fields);
+  fetch(_RAILWAY_URL + '/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
+  }).catch(function(e){ console.warn('Contact save failed:', e.message); });
+}
+
+function _getContact(caseName){
+  return _contactCache[caseName] || {};
+}
+
+// Build a mailto: URL from template number + case data
+var _demandDataMap = {};
+function _openEmailTemplate(tmpl, caseName){
+  var d = _demandDataMap[caseName] || {};
+  var contact = _getContact(caseName);
+  var to = contact.adjusterEmail || '';
+  var claimNum = contact.claimNumber || '';
+  var claimStr = claimNum ? ' — Claim ' + claimNum : '';
+  var carrier = d.insurance || '';
+  var demandDate = d.datesent || '';
+  var expiryDate = d.dateexpires || '';
+  var policyLimit = d.insurance_policy || '';
+  var offerAmt = d.offer_amount ? '$' + parseFloat(d.offer_amount).toLocaleString() : '';
+  var subj, body;
+  if(tmpl === 1){
+    subj = 'Demand Submitted — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI wanted to confirm that our demand package was submitted on ' + demandDate + ' for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ' + expiryDate + '.\n\n';
+  } else if(tmpl === 2){
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI wanted to follow up on our demand submitted on ' + demandDate + '. If you’ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n';
+  } else if(tmpl === 3){
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nI am following up on our demand submitted on ' + demandDate + '. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n';
+  } else {
+    subj = 'Re: Settlement Offer — ' + caseName + claimStr;
+    body = 'Dear [Adjuster],\n\nThank you for your offer of ' + (offerAmt||'[offer amount]') + ' on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n';
+  }
+  // Open Outlook Web compose — avoids triggering system default mail app
+  var owcBase = 'https://outlook.office.com/mail/deeplink/compose';
+  var params = '?to=' + encodeURIComponent(to) + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  window.open(owcBase + params, '_blank');
+}
+
+// Dropdown — shown near the clicked element
+var _flagDropdown = null;
+function _showFlagDropdown(anchorEl, caseName, onSelect){
+  _closeFlagDropdown();
+  var dd = document.createElement('div');
+  dd.id = '_flag_dd';
+  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
+  var rect = anchorEl.getBoundingClientRect();
+  dd.style.top  = (rect.bottom + 4) + 'px';
+  dd.style.left = rect.left + 'px';
+  // Clear option at top
+  var clearItem = document.createElement('div');
+  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
+  clearItem.textContent = '— Clear status';
+  clearItem.addEventListener('mouseenter', function(){ clearItem.style.background='var(--surface-3)'; });
+  clearItem.addEventListener('mouseleave', function(){ clearItem.style.background=''; });
+  clearItem.addEventListener('click', function(e){
+    e.stopPropagation();
+    _clearFlag(caseName);
+    onSelect(null);
+    _closeFlagDropdown();
+  });
+  dd.appendChild(clearItem);
+
+  _FLAG_OPTIONS.forEach(function(opt){
+    var item = document.createElement('div');
+    var cls = _FLAG_COLORS[opt] || 'gray';
+    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
+    item.innerHTML = '<span class="flag '+cls+'" style="pointer-events:none">'+opt+'</span>';
+    item.addEventListener('mouseenter', function(){ item.style.background='var(--surface-3)'; });
+    item.addEventListener('mouseleave', function(){ item.style.background=''; });
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      _setFlag(caseName, opt);
+      onSelect(opt);
+      _closeFlagDropdown();
+    });
+    dd.appendChild(item);
+  });
+  document.body.appendChild(dd);
+  _flagDropdown = dd;
+  // Close on outside click
+  setTimeout(function(){
+    document.addEventListener('click', _closeFlagDropdown, {once:true});
+  }, 0);
+}
+function _closeFlagDropdown(){
+  if(_flagDropdown){ _flagDropdown.remove(); _flagDropdown = null; }
+}
+var _settleDepositDays = 7;
+
+function _depositsInDays(deposits, days){
+
+/* Lien activity feed */
+var _lienActivityDays = 7;
+
+function _dateInDays(dateStr, days){
+  if(!dateStr) return false;
+  var p = dateStr.split('/');
+  if(p.length !== 3) return false;
+  var dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
+  var cutoff = new Date(Date.now() - days * 86400000);
+  return dt >= cutoff;
+}
+
+function renderLienActivityFeed(disbursement, days){
+  var cleared = (disbursement||[]).filter(function(r){
+    return r.casestatus === 'Disbursement' && _dateInDays(r.pending_disbursement_date, days);
+  }).sort(function(a,b){
+    var pa=a.pending_disbursement_date?a.pending_disbursement_date.split('/'):[0,0,0];
+    var pb=b.pending_disbursement_date?b.pending_disbursement_date.split('/'):[0,0,0];
+    return new Date(parseInt(pb[2]),parseInt(pb[0])-1,parseInt(pb[1])) - new Date(parseInt(pa[2]),parseInt(pa[0])-1,parseInt(pa[1]));
+  });
+
+  var disbursed = (disbursement||[]).filter(function(r){
+    return r.casestatus === 'Disbursed' && _dateInDays(r.disbursed_date, days);
+  }).sort(function(a,b){
+    var pa=a.disbursed_date?a.disbursed_date.split('/'):[0,0,0];
+    var pb=b.disbursed_date?b.disbursed_date.split('/'):[0,0,0];
+    return new Date(parseInt(pb[2]),parseInt(pb[0])-1,parseInt(pb[1])) - new Date(parseInt(pa[2]),parseInt(pa[0])-1,parseInt(pa[1]));
+  });
+
+  // Update cleared panel
+  var clearedMeta  = document.getElementById('lien-cleared-meta');
+  var clearedCount = document.getElementById('lien-cleared-count');
+  var clearedBody  = document.getElementById('lien-cleared-body');
+  if(clearedMeta)  clearedMeta.textContent  = 'Last '+days+' days';
+  if(clearedCount) clearedCount.textContent = cleared.length+' cases cleared liens';
+  if(clearedBody){
+    if(!cleared.length){
+      clearedBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">None in last '+days+' days.</td></tr>';
+    } else {
+      clearedBody.innerHTML = cleared.map(function(r){
+        var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
+        var rowCls = r.days_in_disbursement >= 90 ? 'row-warn' : '';
+        return '<tr class="'+rowCls+'">'+
+          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
+          '<td class="num">'+daysDisp+'</td>'+
+          '<td class="num" style="color:var(--ink-3)">'+_esc(r.pending_disbursement_date||'—')+'</td>'+
+          '</tr>';
+      }).join('');
+    }
+  }
+
+  // Update disbursed panel
+  var disbursedMeta  = document.getElementById('lien-disbursed-meta');
+  var disbursedCount = document.getElementById('lien-disbursed-count');
+  var disbursedBody  = document.getElementById('lien-disbursed-body');
+  if(disbursedMeta)  disbursedMeta.textContent  = 'Last '+days+' days';
+  if(disbursedCount) disbursedCount.textContent = disbursed.length+' cases fully closed';
+  if(disbursedBody){
+    if(!disbursed.length){
+      disbursedBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">None in last '+days+' days.</td></tr>';
+    } else {
+      disbursedBody.innerHTML = disbursed.map(function(r){
+        var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
+        var rowCls = r.days_in_disbursement >= 120 ? 'row-warn' : 'row-good';
+        return '<tr class="'+rowCls+'">'+
+          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
+          '<td class="num">'+daysDisp+'</td>'+
+          '<td class="num" style="color:var(--green);font-weight:600">'+_esc(r.disbursed_date||'—')+'</td>'+
+          '</tr>';
+      }).join('');
+    }
+  }
+}
+
+function bindLienActivityToggle(disbursement){
+  var seg = document.getElementById('lien-activity-seg');
+  if(!seg) return;
+  seg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      seg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _lienActivityDays = parseInt(btn.getAttribute('data-days'),10);
+      renderLienActivityFeed(disbursement, _lienActivityDays);
+    });
+  });
+}
+
+var _solView = '30';
+
+
+/* Lien Operations IIFE */
+  async function fetchAll(baseUrl){
+    var all=[], page=1, hasMore=true, guard=0;
+    var base = (state.baseUrl || '');
+    while(hasMore && guard++ < 200){
+      var sep = baseUrl.indexOf('?')>=0 ? '&' : '?';
+      var url = base + baseUrl + sep + 'page=' + page;
+      var resp = await fetch(url, {credentials:'include', mode:'cors'});
+      if(!resp.ok) throw new Error('HTTP '+resp.status+' on '+url);
+      var json = await resp.json();
+      if(json && json.results) all = all.concat(json.results);
+      else if(Array.isArray(json)) { all = all.concat(json); hasMore=false; break; }
+      hasMore = !!(json && json.next);
+      page++;
+    }
+    return all;
+  }
+
+  // ---- State ----
+  var state = {
+    baseUrl: '',
+    raw:{ lienMgmt:[], lienOverview:[], disbursement:[] },
+    valid:[], cases:[], excludedCount:0,
+    sort:{ col:'maxDays', dir:'desc' },
+    expanded:{},
+    refDate: new Date(),
+    sub:'cases'
+  };
+
+  function getThresholds(){
+    return {
+      stuck: parseInt(document.getElementById('lien-th-stuck').value,10)||45,
+      inactive: parseInt(document.getElementById('lien-th-inactive').value,10)||14,
+      load: parseInt(document.getElementById('lien-th-load').value,10)||5
+    };
+  }
+
+  // ---- Process raw lienMgmt into valid liens + case rollups ----
+  function processData(){
+    var rows = state.raw.lienMgmt;
+    var valid=[], excluded=0;
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i] || {};
+      var caseObj = r.case || {};
+      var stats = r.case_stats || {};
+      var payee = (r.payee||'').trim();
+      var bill = parseFloat(stats.original_bill);
+      if(!payee){ excluded++; continue; }
+      if(isNaN(bill) || bill<=0){ excluded++; continue; }
+      if(isPlaceholder(payee)){ excluded++; continue; }
+      var lastTouched = parseDate(caseObj.last_touched_lien_negotiator);
+      var clientComm = parseDate(caseObj.last_communication);
+      valid.push({
+        caseId: caseObj.id,
+        caseName: (caseObj._casename||'').trim(),
+        payee: payee,
+        negotiator: (caseObj.lien_negotiator||'').trim(),
+        leadAttorney: (caseObj.lead_attorney||'').trim(),
+        lienType: (r.lien_type||'').trim(),
+        originalBill: bill,
+        daysInLiens: parseInt(caseObj.days_in_liens,10)||0,
+        lastTouched: lastTouched,
+        daysSinceTouch: daysBetween(lastTouched, state.refDate),
+        clientComm: clientComm,
+        settlementTotal: parseFloat(stats.settlement_total)||0
+      });
+    }
+    state.valid = valid;
+    state.excludedCount = excluded;
+
+    // Case rollups
+    var map = {};
+    for(var j=0;j<valid.length;j++){
+      var l = valid[j];
+      if(!map[l.caseName]) map[l.caseName] = { caseName:l.caseName, negSet:{}, liens:[], settlementTotal:0, caseId:l.caseId };
+      map[l.caseName].liens.push(l);
+      if(l.negotiator) map[l.caseName].negSet[l.negotiator]=true;
+      if(l.settlementTotal > map[l.caseName].settlementTotal) map[l.caseName].settlementTotal = l.settlementTotal;
+    }
+    var cases=[]; var keys=Object.keys(map);
+    for(var k=0;k<keys.length;k++){
+      var c = map[keys[k]];
+      var maxDays=0, total=0, bestTouch=null;
+      for(var m=0;m<c.liens.length;m++){
+        var ll=c.liens[m];
+        if(ll.daysInLiens>maxDays) maxDays=ll.daysInLiens;
+        total+=ll.daysInLiens;
+        if(ll.lastTouched && (!bestTouch || ll.lastTouched>bestTouch)) bestTouch=ll.lastTouched;
+      }
+      cases.push({
+        caseName:c.caseName,
+        negotiator:Object.keys(c.negSet).sort().join(', ')||'—',
+        lienCount:c.liens.length,
+        maxDays:maxDays,
+        avgDays:Math.round(total/c.liens.length),
+        lastTouched:bestTouch,
+        daysSinceTouch:daysBetween(bestTouch,state.refDate),
+        settlementTotal:c.settlementTotal,
+        liens:c.liens
+      });
+    }
+    state.cases = cases;
+
+    // Populate negotiator filter
+    var sel = document.getElementById('lien-f-neg');
+    var negSet={}; for(var n=0;n<valid.length;n++){ if(valid[n].negotiator) negSet[valid[n].negotiator]=true; }
+    var negList = Object.keys(negSet).sort();
+    sel.innerHTML = '<option value="">All</option>';
+    for(var p=0;p<negList.length;p++){
+      var opt=document.createElement('option'); opt.value=negList[p]; opt.textContent=negList[p];
+      sel.appendChild(opt);
+    }
+  }
+
+  function getFlags(c){
+    var t = getThresholds();
+    var f=[];
+    if(c.maxDays > t.stuck) f.push('Stuck');
+    if(c.daysSinceTouch!=null && c.daysSinceTouch >= t.inactive) f.push('No Activity');
+    if(c.lienCount > t.load) f.push('High Lien Load');
+    return f;
+  }
+
+  function flagBadges(flags){
+    var html='';
+    for(var i=0;i<flags.length;i++){
+      var f=flags[i];
+      var cls = f==='Stuck' ? 'red' : (f==='No Activity' ? 'amber' : 'amber');
+      html += '<span class="flag '+cls+'">'+esc(f)+'</span>';
+    }
+    return html;
+  }
+
+  // ---- Filter + sort ----
+  function getFiltered(){
+    var neg = document.getElementById('lien-f-neg').value;
+    var flag = document.getElementById('lien-f-flag').value;
+    var search = document.getElementById('lien-f-search').value.toLowerCase().trim();
+    var out=[];
+    for(var i=0;i<state.cases.length;i++){
+      var c=state.cases[i];
+      if(neg && c.negotiator.indexOf(neg)<0) continue;
+      if(search && c.caseName.toLowerCase().indexOf(search)<0) continue;
+      var fl = getFlags(c);
+      if(flag==='flagged' && fl.length===0) continue;
+      if(flag==='clean' && fl.length>0) continue;
+      if(flag && flag!=='flagged' && flag!=='clean' && fl.indexOf(flag)<0) continue;
+      out.push(c);
+    }
+    return out;
+  }
+  function sortCases(arr){
+    var col=state.sort.col, mult=state.sort.dir==='asc'?1:-1;
+    return arr.slice().sort(function(a,b){
+      var va=a[col], vb=b[col];
+      if(typeof va==='string') va=va.toLowerCase();
+      if(typeof vb==='string') vb=vb.toLowerCase();
+      if(va==null) return 1;
+      if(vb==null) return -1;
+      if(va<vb) return -1*mult;
+      if(va>vb) return 1*mult;
+      return 0;
+    });
+  }
+
+  // ---- Renderers ----
+  function renderKPIs(){
+    var t = getThresholds();
+    var inactive=0;
+    for(var i=0;i<state.valid.length;i++){
+      if(state.valid[i].daysSinceTouch!=null && state.valid[i].daysSinceTouch>=t.inactive) inactive++;
+    }
+    document.getElementById('lien-kpi-active').textContent = state.valid.length;
+    document.getElementById('lien-kpi-active-sub').textContent = state.excludedCount>0
+      ? state.excludedCount+' rows excluded · '+inactive+' inactive '+t.inactive+'d+'
+      : inactive+' inactive '+t.inactive+'d+';
+    document.getElementById('lien-kpi-cases').textContent = (state.raw.lienOverview||[]).length;
+    document.getElementById('lien-kpi-cases-sub').textContent = 'In lien-negotiations stage';
+    document.getElementById('lien-kpi-disb').textContent = (state.raw.disbursement||[]).length;
+    document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
+    // Settled value: sum unique-case settlement_total where >0
+    var seen={}, total=0, count=0;
+    for(var j=0;j<state.cases.length;j++){
+      if(state.cases[j].settlementTotal>0 && !seen[state.cases[j].caseName]){
+        seen[state.cases[j].caseName]=true;
+        total += state.cases[j].settlementTotal;
+        count++;
+      }
+    }
+    document.getElementById('lien-kpi-settled').textContent = fmtCurrency(total);
+    document.getElementById('lien-kpi-settled-sub').textContent = 'Across '+count+' cases';
+  }
+
+  function renderBriefing(){
+    var t = getThresholds();
+    var cases = state.cases;
+    // Compute negotiator stats for briefing
+    var byNeg={};
+    for(var i=0;i<state.valid.length;i++){
+      var l=state.valid[i]; var n=l.negotiator||'Unassigned';
+      if(!byNeg[n]) byNeg[n]={ totalDays:0, count:0, inactive:0 };
+      byNeg[n].totalDays+=l.daysInLiens; byNeg[n].count++;
+      if(l.daysSinceTouch!=null && l.daysSinceTouch>=t.inactive) byNeg[n].inactive++;
+    }
+    var negs=[]; var keys=Object.keys(byNeg);
+    for(var k=0;k<keys.length;k++){
+      negs.push({ name:keys[k], avg:Math.round(byNeg[keys[k]].totalDays/byNeg[keys[k]].count), count:byNeg[keys[k]].count, inactive:byNeg[keys[k]].inactive });
+    }
+    negs.sort(function(a,b){ return b.avg - a.avg; });
+
+    var stuck=0, inactiveCases=0;
+    for(var c=0;c<cases.length;c++){
+      var f = getFlags(cases[c]);
+      if(f.indexOf('Stuck')>=0) stuck++;
+      if(f.indexOf('No Activity')>=0) inactiveCases++;
+    }
+
+    var head = document.querySelector('#lien-briefing .head');
+    head.innerHTML = '<span class="pulse"></span>Lien Ops · live from CasePeer';
+
+    var items = document.getElementById('lien-briefing-items');
+    items.innerHTML = '';
+    if(negs[0]){
+      items.insertAdjacentHTML('beforeend','<div class="item red"><span class="marker">'+negs[0].avg+'d</span><span>'+esc(negs[0].name)+'\'s average lien-negotiation time.</span></div>');
+    }
+    items.insertAdjacentHTML('beforeend','<div class="item amber"><span class="marker">'+stuck+'</span><span>cases stuck &gt; '+t.stuck+' days.</span></div>');
+    items.insertAdjacentHTML('beforeend','<div class="item blue"><span class="marker">'+(state.raw.disbursement||[]).length+'</span><span>cases in disbursement awaiting payout.</span></div>');
+
+    document.getElementById('lien-stamp-title').textContent = 'Lien team status';
+    document.getElementById('lien-stamp-meta').textContent = negs.length+' negotiators · live';
+  }
+
+  function renderCases(){
+    var arr = sortCases(getFiltered());
+    var tbody = document.getElementById('lien-cases-body');
+    document.getElementById('lien-cases-count').textContent = 'Cases · '+arr.length+' shown of '+state.cases.length;
+
+    // sort arrows
+    var ths = document.querySelectorAll('#lien-cases-table th[data-sort]');
+    for(var h=0;h<ths.length;h++){
+      var col = ths[h].getAttribute('data-sort');
+      var base = ths[h].getAttribute('data-baselabel') || ths[h].textContent.replace(/\s*[▲▼]\s*$/,'').trim();
+      ths[h].setAttribute('data-baselabel', base);
+      ths[h].textContent = base + (col===state.sort.col ? (state.sort.dir==='asc'?' ▲':' ▼') : '');
+    }
+
+    if(arr.length===0){
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
+      return;
+    }
+    var html='';
+    for(var i=0;i<arr.length;i++){
+      var c = arr[i];
+      var fl = getFlags(c);
+      var rowCls = fl.length ? (fl.indexOf('Stuck')>=0 ? 'row-alert' : 'row-warn') : '';
+      var exp = !!state.expanded[c.caseName];
+      var dst = c.daysSinceTouch!=null ? c.daysSinceTouch+'d' : '—';
+      html += '<tr class="'+rowCls+'" data-case="'+esc(c.caseName)+'">';
+      html += '<td><button class="chip" data-expand="'+esc(c.caseName)+'" style="padding:1px 8px;font-size:13px;line-height:1;">'+(exp?'−':'+')+'</button></td>';
+      html += '<td class="name">'+esc(c.caseName)+'</td>';
+      html += '<td>'+esc(c.negotiator)+'</td>';
+      html += '<td class="num">'+c.lienCount+'</td>';
+      html += '<td class="num">'+c.maxDays+'d</td>';
+      html += '<td class="num">'+dst+'</td>';
+      html += '<td class="flagcol"><div class="stack">'+flagBadges(fl)+'</div></td>';
+      html += '</tr>';
+      if(exp) html += renderSubRows(c);
+    }
+    tbody.innerHTML = html;
+
+    // Bind expand
+    var btns = tbody.querySelectorAll('button[data-expand]');
+    for(var b=0;b<btns.length;b++){
+      btns[b].addEventListener('click', function(){
+        var name = this.getAttribute('data-expand');
+        if(state.expanded[name]) delete state.expanded[name]; else state.expanded[name]=true;
+        renderCases();
+      });
+    }
+  }
+
+  function renderSubRows(c){
+    var t = getThresholds();
+    var sorted = c.liens.slice().sort(function(a,b){ return b.daysInLiens - a.daysInLiens; });
+    var hdr = 'font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);';
+    var html = '';
+    html += '<tr style="background:var(--surface-2);">';
+    html += '<td></td>';
+    html += '<td style="'+hdr+'padding-left:24px;">Payee</td>';
+    html += '<td style="'+hdr+'">Lien Type</td>';
+    html += '<td class="num" style="'+hdr+'">Days</td>';
+    html += '<td class="num" style="'+hdr+'">Last Touched</td>';
+    html += '<td class="num" style="'+hdr+'">Days Since</td>';
+    html += '<td style="'+hdr+'">Client Comm</td>';
+    html += '</tr>';
+    for(var i=0;i<sorted.length;i++){
+      var l=sorted[i];
+      var inactive = l.daysSinceTouch!=null && l.daysSinceTouch>=t.inactive;
+      var rowStyle = 'background:var(--surface-2);'+(inactive?'color:var(--amber);':'color:var(--ink-2);');
+      html += '<tr style="'+rowStyle+'">';
+      html += '<td></td>';
+      html += '<td style="padding-left:24px;font-size:12.5px;">'+esc(l.payee)+'</td>';
+      html += '<td style="font-size:12.5px;">'+esc(l.lienType||'—')+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+l.daysInLiens+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+fmtDate(l.lastTouched)+'</td>';
+      html += '<td class="num" style="font-size:12.5px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
+      html += '<td style="font-size:12.5px;">'+fmtDate(l.clientComm)+'</td>';
+      html += '</tr>';
+    }
+    return html;
+  }
+
+  function renderNegotiators(){
+    var t = getThresholds();
+    var byNeg={};
+    for(var i=0;i<state.valid.length;i++){
+      var l=state.valid[i]; var n=l.negotiator||'Unassigned';
+      if(!byNeg[n]) byNeg[n]={ name:n, liens:[], caseSet:{} };
+      byNeg[n].liens.push(l); byNeg[n].caseSet[l.caseName]=true;
+    }
+    var arr=[]; var keys=Object.keys(byNeg);
+    for(var k=0;k<keys.length;k++){
+      var d=byNeg[keys[k]]; var sumD=0, inact=0;
+      for(var j=0;j<d.liens.length;j++){
+        sumD+=d.liens[j].daysInLiens;
+        if(d.liens[j].daysSinceTouch!=null && d.liens[j].daysSinceTouch>=t.inactive) inact++;
+      }
+      var flagged=0;
+      for(var c=0;c<state.cases.length;c++){
+        if(state.cases[c].negotiator.indexOf(d.name)>=0 && getFlags(state.cases[c]).length>0) flagged++;
+      }
+      arr.push({ name:d.name, total:d.liens.length, cases:Object.keys(d.caseSet).length, avg:Math.round(sumD/d.liens.length), inactive:inact, flagged:flagged });
+    }
+    arr.sort(function(a,b){ return b.total - a.total; });
+    var maxL = Math.max.apply(null, arr.map(function(x){ return x.total; }).concat([1]));
+    var tbody = document.getElementById('lien-neg-body');
+    var html='';
+    for(var p=0;p<arr.length;p++){
+      var n=arr[p];
+      var cls = n.flagged>0 ? 'row-alert' : (n.inactive>0 ? 'row-warn' : 'row-good');
+      var pct = Math.round(n.total/maxL*100);
+      var status = n.flagged>0 ? '<span class="flag red">'+n.flagged+' flagged</span>'
+                  : n.inactive>0 ? '<span class="flag amber">'+n.inactive+' inactive</span>'
+                  : '<span class="flag green">Current</span>';
+      html += '<tr class="'+cls+'">';
+      html += '<td class="name">'+esc(n.name)+'</td>';
+      html += '<td class="num"><span class="bic amber"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+n.total+'</span></span></td>';
+      html += '<td class="num">'+n.cases+'</td>';
+      html += '<td class="num">'+n.avg+'</td>';
+      html += '<td class="num">'+n.inactive+'</td>';
+      html += '<td class="num">'+n.flagged+'</td>';
+      html += '<td class="flagcol"><div class="stack">'+status+'</div></td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No negotiators yet.</td></tr>';
+  }
+
+  function renderDisbursement(){
+    var rows = (state.raw.disbursement||[]).slice();
+    rows.sort(function(a,b){ return (b.days_in_disbursement||0)-(a.days_in_disbursement||0); });
+    var tbody = document.getElementById('disb-body');
+    document.getElementById('lien-disb-count').textContent = 'Cases pending payout · '+rows.length;
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursement cases.</td></tr>'; return; }
+    var maxD = Math.max.apply(null, rows.map(function(r){ return r.days_in_disbursement||0; }).concat([1]));
+    var html='';
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i] || {};
+      var d = r.days_in_disbursement||0;
+      var pct = Math.round(d/maxD*100);
+      var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
+      var barCls = d>=120 ? 'amber' : 'blue';
+      html += '<tr class="'+rowCls+'">';
+      html += '<td class="case-cell"><div class="case-name">'+esc(r._casename||'—')+'</div></td>';
+      html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
+      html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
+      html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
+      html += '<td class="num">'+esc(r.pending_disbursement_date||'—')+'</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function renderAll(){
+    renderKPIs();
+    renderBriefing();
+    renderCases();
+    renderNegotiators();
+    renderDisbursement();
+  }
+
+  function setSubtab(name){
+    state.sub = name;
+    var chips = document.querySelectorAll('#lien-subtabs .chip');
+    for(var i=0;i<chips.length;i++){ chips[i].classList.toggle('on', chips[i].getAttribute('data-sub')===name); }
+    document.getElementById('lien-pane-cases').style.display = name==='cases'?'':'none';
+    document.getElementById('lien-pane-negotiators').style.display = name==='negotiators'?'':'none';
+    document.getElementById('lien-pane-disb').style.display = name==='disb'?'':'none';
+    document.getElementById('lien-filter-bar').style.display = name==='cases'?'':'none';
+  }
+
+  function bindEvents(){
+    var subs = document.querySelectorAll('#lien-subtabs .chip');
+    for(var i=0;i<subs.length;i++){
+      subs[i].addEventListener('click', function(){ setSubtab(this.getAttribute('data-sub')); });
+    }
+    document.getElementById('lien-f-neg').addEventListener('change', renderCases);
+    document.getElementById('lien-f-flag').addEventListener('change', renderCases);
+    document.getElementById('lien-f-search').addEventListener('input', renderCases);
+    ['lien-th-stuck','lien-th-inactive','lien-th-load'].forEach(function(id){
+      document.getElementById(id).addEventListener('change', function(){ renderAll(); });
+    });
+    var ths = document.querySelectorAll('#lien-cases-table th[data-sort]');
+    for(var h=0;h<ths.length;h++){
+      ths[h].style.cursor='pointer';
+      ths[h].addEventListener('click', function(){
+        var col = this.getAttribute('data-sort');
+        if(state.sort.col===col) state.sort.dir = state.sort.dir==='asc'?'desc':'asc';
+        else { state.sort.col=col; state.sort.dir = (col==='caseName'||col==='negotiator')?'asc':'desc'; }
+        renderCases();
+      });
+    }
+  }
+
+  function showError(msg){
+    var head = document.querySelector('#lien-briefing .head');
+    if(head) head.innerHTML = '<span class="pulse" style="background:var(--red-mark);"></span>Lien Ops · '+esc(msg);
+    var ids = ['lien-cases-body','lien-neg-body','disb-body'];
+    for(var i=0;i<ids.length;i++){
+      var el=document.getElementById(ids[i]);
+      if(el) el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--red);">'+esc(msg)+'</td></tr>';
+    }
+  }
+
+  function showOffHostBanner(msg){
+    // Replace every briefing head across all tabs with the message
+    document.querySelectorAll('.briefing .head').forEach(function(el){
+      el.innerHTML = '<span class="pulse" style="background:var(--amber)"></span>'+msg;
+    });
+    // Wipe all hardcoded KPI values so stale numbers don't show
+    document.querySelectorAll('.kpi .value').forEach(function(el){
+      if(!el.id) el.textContent = '—';
+    });
+    document.querySelectorAll('.kpi .sub').forEach(function(el){
+      if(!el.id) el.textContent = '';
+    });
+    // Wipe pipeline bar counts
+    document.querySelectorAll('.pipeseg .pcount').forEach(function(el){ el.textContent = '—'; });
+    var totalEl = document.querySelector('.pipeline-head .total');
+    if(totalEl) totalEl.innerHTML = '<b>—</b> open cases · deploy to my.casepeer.com';
+    // Wipe action table counts in Settlements
+    document.querySelectorAll('[data-page="settlements"] .panel table.t tbody .num').forEach(function(el){
+      el.textContent = '—';
+    });
+    // Wipe carriers
+    var carriers = document.getElementById('carriers');
+    if(carriers) carriers.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+    // Wipe CM tables
+    ['cm-2026-body','cm-2025-body'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+    });
+    // Wipe DQ completeness table
+    var dqTbody = document.querySelector('[data-page="dq"] .panel table.t tbody');
+    if(dqTbody) dqTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+  }
+
+
+  async function init(){
+    bindEvents();
+    setSubtab('cases');
+
+    await _loadFlags();
+    await _loadNotes();
+    await _loadContacts();
+
+    var host = window.location.hostname;
+    state.baseUrl = (host === 'my.casepeer.com' || host.indexOf('casepeer') >= 0) ? '' : 'https://my.casepeer.com';
+
+    try {
+      var results = await Promise.all([
+        fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
+        fetchAll('/api/v1/case/lien-negotiations-overview/'),
+        fetchAll('/api/v1/case/disbursement-overview/')
+      ]);
+      var lienMgmt     = results[0];
+      var lienOverview = results[1];
+      var disbursement = results[2];
+
+      state.raw.lienMgmt     = lienMgmt;
+      state.raw.lienOverview = lienOverview;
+      state.raw.disbursement = disbursement;
+
+      processData();
+      renderAll();
+      renderLienActivityFeed(disbursement, _lienActivityDays);
+      bindLienActivityToggle(disbursement);
+
+    } catch(err){
+      var msg = err && err.message || 'unknown error';
+      var hint = msg.toLowerCase().indexOf('failed to fetch') >= 0
+        ? 'CORS blocked — must be opened from my.casepeer.com.'
+        : msg.indexOf('401') >= 0 || msg.indexOf('403') >= 0
+          ? 'Auth error — log into my.casepeer.com first, then reload.'
+          : msg;
+      console.warn('[KAL Lien Ops] fetch failed:', msg);
+      showOffHostBanner('CasePeer fetch failed · ' + hint);
+      showError(hint);
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+</script>
+</body>
+</html>
