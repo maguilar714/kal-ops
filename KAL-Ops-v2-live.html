@@ -1839,48 +1839,64 @@ function setTweak(patch){
   var btn=document.getElementById('help-toggle');
   if(!btn) return;
 
-  // Create floating tooltip div appended to body
   var tip=document.createElement('div');
   tip.id='kal-help-tip';
   document.body.appendChild(tip);
 
   var active=false;
+  var bound=[];
 
-  function showTip(el, e){
-    var txt=el.getAttribute('data-tip');
+  function showTip(txt,e){
     if(!txt) return;
     tip.textContent=txt;
     tip.style.display='block';
-    moveTip(e);
+    positionTip(e);
   }
-  function moveTip(e){
-    var x=e.clientX+14, y=e.clientY-10;
-    var tw=tip.offsetWidth, th=tip.offsetHeight;
-    if(x+tw>window.innerWidth-10) x=e.clientX-tw-14;
-    if(y+th>window.innerHeight-10) y=e.clientY-th-10;
+  function positionTip(e){
+    var x=e.clientX+16, y=e.clientY-8;
     tip.style.left=x+'px';
     tip.style.top=y+'px';
   }
   function hideTip(){ tip.style.display='none'; }
 
-  document.addEventListener('mouseover',function(e){
-    if(!active) return;
-    var el=e.target.closest('[data-tip]');
-    if(el) showTip(el,e); else hideTip();
-  });
-  document.addEventListener('mousemove',function(e){
-    if(!active||tip.style.display==='none') return;
-    moveTip(e);
-  });
-  document.addEventListener('mouseout',function(e){
-    if(!active) return;
-    if(!e.relatedTarget||!e.relatedTarget.closest('[data-tip]')) hideTip();
-  });
+  function activate(){
+    active=true;
+    btn.style.background='#0071e3';
+    btn.style.color='#fff';
+    btn.style.borderColor='#0071e3';
+    btn.textContent='✓ Help ON';
+    document.body.classList.add('help-mode');
+    var els=document.querySelectorAll('[data-tip]');
+    els.forEach(function(el){
+      var txt=el.getAttribute('data-tip');
+      var onEnter=function(e){ showTip(txt,e); };
+      var onMove =function(e){ positionTip(e); };
+      var onLeave=function(){ hideTip(); };
+      el.addEventListener('mouseenter',onEnter);
+      el.addEventListener('mousemove', onMove);
+      el.addEventListener('mouseleave',onLeave);
+      bound.push({el:el,onEnter:onEnter,onMove:onMove,onLeave:onLeave});
+    });
+  }
+
+  function deactivate(){
+    active=false;
+    btn.style.background='';
+    btn.style.color='';
+    btn.style.borderColor='';
+    btn.textContent='? Help';
+    document.body.classList.remove('help-mode');
+    hideTip();
+    bound.forEach(function(b){
+      b.el.removeEventListener('mouseenter',b.onEnter);
+      b.el.removeEventListener('mousemove', b.onMove);
+      b.el.removeEventListener('mouseleave',b.onLeave);
+    });
+    bound=[];
+  }
 
   btn.addEventListener('click',function(){
-    active=!active;
-    document.body.classList.toggle('help-mode',active);
-    hideTip();
+    active ? deactivate() : activate();
   });
 })();
   try{
