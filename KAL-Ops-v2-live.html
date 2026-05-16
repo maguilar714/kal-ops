@@ -607,19 +607,12 @@
 
   /* ── Help mode ── */
   body.help-mode #help-toggle{background:var(--blue-soft,#e8f0fe);color:var(--blue,#0071e3);border-color:var(--blue,#0071e3);}
-  body.help-mode [data-tip]{position:relative;cursor:help;}
-  body.help-mode [data-tip]:hover::after{
-    content:attr(data-tip);
-    position:absolute;z-index:9999;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
-    background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.5;padding:8px 12px;
-    border-radius:7px;white-space:pre-wrap;max-width:300px;pointer-events:none;
-    box-shadow:0 4px 16px rgba(0,0,0,.22);font-family:Inter,sans-serif;font-weight:400;
+  body.help-mode [data-tip]{cursor:help;outline:1px dashed rgba(0,113,227,.35);outline-offset:2px;}
+  #kal-help-tip{
+    position:fixed;z-index:99999;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.5;
+    padding:8px 12px;border-radius:7px;white-space:pre-wrap;max-width:300px;pointer-events:none;
+    box-shadow:0 4px 16px rgba(0,0,0,.22);font-family:Inter,sans-serif;font-weight:400;display:none;
   }
-  body.help-mode [data-tip]:hover::before{
-    content:'';position:absolute;z-index:9998;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);
-    border:5px solid transparent;border-top-color:#1d1d1f;pointer-events:none;
-  }
-  body.help-mode [data-tip]{outline:1px dashed rgba(0,113,227,.35);outline-offset:2px;}
 </style>
 </head>
 <body data-density="comfy" data-accent="balanced" data-alert-dots="on" data-sparklines="on" data-briefing="on" data-bg="snow">
@@ -1845,8 +1838,49 @@ function setTweak(patch){
 (function(){
   var btn=document.getElementById('help-toggle');
   if(!btn) return;
+
+  // Create floating tooltip div appended to body
+  var tip=document.createElement('div');
+  tip.id='kal-help-tip';
+  document.body.appendChild(tip);
+
+  var active=false;
+
+  function showTip(el, e){
+    var txt=el.getAttribute('data-tip');
+    if(!txt) return;
+    tip.textContent=txt;
+    tip.style.display='block';
+    moveTip(e);
+  }
+  function moveTip(e){
+    var x=e.clientX+14, y=e.clientY-10;
+    var tw=tip.offsetWidth, th=tip.offsetHeight;
+    if(x+tw>window.innerWidth-10) x=e.clientX-tw-14;
+    if(y+th>window.innerHeight-10) y=e.clientY-th-10;
+    tip.style.left=x+'px';
+    tip.style.top=y+'px';
+  }
+  function hideTip(){ tip.style.display='none'; }
+
+  document.addEventListener('mouseover',function(e){
+    if(!active) return;
+    var el=e.target.closest('[data-tip]');
+    if(el) showTip(el,e); else hideTip();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!active||tip.style.display==='none') return;
+    moveTip(e);
+  });
+  document.addEventListener('mouseout',function(e){
+    if(!active) return;
+    if(!e.relatedTarget||!e.relatedTarget.closest('[data-tip]')) hideTip();
+  });
+
   btn.addEventListener('click',function(){
-    document.body.classList.toggle('help-mode');
+    active=!active;
+    document.body.classList.toggle('help-mode',active);
+    hideTip();
   });
 })();
   try{
@@ -3666,7 +3700,7 @@ function renderDataQuality(raw){
     if(!byCM[cm]) byCM[cm]={total:0,hasPolicy:0,missing:[]};
     byCM[cm].total++;
     if(d.insurance_policy){ byCM[cm].hasPolicy++; }
-    else { byCM[cm].missing.push({name:d.casename||d.case_name||d._casename||'Unknown',date:d.datesent||''}); }
+    else { byCM[cm].missing.push({name:(d.case&&d.case._casename)||d._casename||d.casename||'—',date:d.datesent||''}); }
   });
   var cmArr=Object.keys(byCM).map(function(k){
     var pct=Math.round(byCM[k].hasPolicy/byCM[k].total*100);
