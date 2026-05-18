@@ -10,9 +10,8 @@ const pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorize
 async function initDb() {
   await pool.query(`CREATE TABLE IF NOT EXISTS case_flags (case_name TEXT PRIMARY KEY, flag TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_notes (case_name TEXT PRIMARY KEY, note TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS case_contacts (case_name TEXT PRIMARY KEY, adjuster_email TEXT, claim_number TEXT, email_log TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
-  // Add email_log column if upgrading from earlier schema
-  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS email_log TEXT`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS case_contacts (case_name TEXT PRIMARY KEY, adjuster_email TEXT, claim_number TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   console.log('DB ready');
 }
 
@@ -94,39 +93,28 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // CONTACTS
+  // CONTACTS (adjuster email + claim number)
   if (req.method === 'GET' && url === '/contacts') {
     try {
-      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, email_log FROM case_contacts');
+      const result = await pool.query('SELECT case_name, adjuster_email, claim_number FROM case_contacts');
       const contacts = {};
-      result.rows.forEach(r => {
-        contacts[r.case_name] = {
-          adjusterEmail: r.adjuster_email,
-          claimNumber: r.claim_number,
-          emailLog: r.email_log ? JSON.parse(r.email_log) : null
-        };
-      });
+      result.rows.forEach(r => { contacts[r.case_name] = { adjusterEmail: r.adjuster_email, claimNumber: r.claim_number }; });
       res.writeHead(200); res.end(JSON.stringify(contacts));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
   }
   if (req.method === 'POST' && url === '/contacts') {
     try {
-      const { caseName, adjusterEmail, claimNumber, emailLog } = await readBody(req);
+      const { caseName, adjusterEmail, claimNumber } = await readBody(req);
       if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
-      const emailLogStr = emailLog !== undefined ? JSON.stringify(emailLog) : null;
       await pool.query(`
-        INSERT INTO case_contacts (case_name, adjuster_email, claim_number, email_log, updated_at)
-        VALUES ($1, $2, $3, $4, NOW())
+        INSERT INTO case_contacts (case_name, adjuster_email, claim_number, updated_at)
+        VALUES ($1, $2, $3, NOW())
         ON CONFLICT (case_name) DO UPDATE SET
           adjuster_email = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE case_contacts.adjuster_email END,
           claim_number   = CASE WHEN $3::text IS NOT NULL THEN $3::text ELSE case_contacts.claim_number END,
-          email_log      = CASE WHEN $4::text IS NOT NULL THEN $4::text ELSE case_contacts.email_log END,
           updated_at = NOW()
-      `, [caseName,
-          adjusterEmail !== undefined ? adjusterEmail : null,
-          claimNumber !== undefined ? claimNumber : null,
-          emailLogStr]);
+      `, [caseName, adjusterEmail !== undefined ? adjusterEmail : null, claimNumber !== undefined ? claimNumber : null]);
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
@@ -136,6 +124,50 @@ const server = http.createServer(async (req, res) => {
       const { caseName } = await readBody(req);
       if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
       await pool.query('DELETE FROM case_contacts WHERE case_name=$1', [caseName]);
+      res.writeHead(200); res.end(JSON.stringify({ ok: true }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+
+  // JUNIOR FIELDS (liability, health_insurance, policy_3p, uim)
+  if (req.method === 'GET' && url === '/junior') {
+    try {
+      const result = await pool.query('SELECT case_name, liability, health_insurance, policy_3p, uim FROM case_junior');
+      const data = {};
+      result.rows.forEach(r => {
+        data[r.case_name] = { liability: r.liability, healthInsurance: r.health_insurance, policy3p: r.policy_3p, uim: r.uim };
+      });
+      res.writeHead(200); res.end(JSON.stringify(data));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+  if (req.method === 'POST' && url === '/junior') {
+    try {
+      const { caseName, liability, healthInsurance, policy3p, uim } = await readBody(req);
+      if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
+      await pool.query(`
+        INSERT INTO case_junior (case_name, liability, health_insurance, policy_3p, uim, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW())
+        ON CONFLICT (case_name) DO UPDATE SET
+          liability       = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE case_junior.liability END,
+          health_insurance= CASE WHEN $3::text IS NOT NULL THEN $3::text ELSE case_junior.health_insurance END,
+          policy_3p       = CASE WHEN $4::text IS NOT NULL THEN $4::text ELSE case_junior.policy_3p END,
+          uim             = CASE WHEN $5::text IS NOT NULL THEN $5::text ELSE case_junior.uim END,
+          updated_at = NOW()
+      `, [caseName,
+          liability !== undefined ? liability : null,
+          healthInsurance !== undefined ? healthInsurance : null,
+          policy3p !== undefined ? policy3p : null,
+          uim !== undefined ? uim : null]);
+      res.writeHead(200); res.end(JSON.stringify({ ok: true }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+  if (req.method === 'DELETE' && url === '/junior') {
+    try {
+      const { caseName } = await readBody(req);
+      if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
+      await pool.query('DELETE FROM case_junior WHERE case_name=$1', [caseName]);
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
