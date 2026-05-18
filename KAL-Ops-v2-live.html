@@ -576,6 +576,23 @@
   .case-cell .case-name{font-weight:500;color:var(--ink)}
   .case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
 
+  /* ── Case Care tab: dropdowns ── */
+  .jdrop{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-family:var(--ui);font-size:11.5px;padding:3px 6px;border-radius:5px;cursor:pointer;min-width:118px;outline:none;transition:border-color .12s,color .12s}
+  .jdrop:focus{border-color:var(--blue)}
+  .jdrop.set{color:var(--ink);font-weight:500}
+  .jdrop[data-field="liability"][data-val="Accepted"]{color:var(--green);border-color:var(--green-mark)}
+  .jdrop[data-field="liability"][data-val="Denied"],.jdrop[data-field="liability"][data-val="No Coverage"]{color:var(--red);border-color:var(--red-mark)}
+  .jdrop[data-field="liability"][data-val="Pending"],.jdrop[data-field="liability"][data-val="Under Investigation"]{color:var(--amber);border-color:var(--amber-mark)}
+  .jdrop[data-field="liability"][data-val="Comparative Fault"]{color:var(--indigo)}
+  .jdrop[data-field="hi"][data-val="None"]{color:var(--red)}
+  .jdrop[data-field="hi"][data-val="Medicare"],.jdrop[data-field="hi"][data-val="Medi-Cal"],.jdrop[data-field="hi"][data-val="Kaiser"]{color:var(--amber)}
+  .jdrop[data-field="hi"][data-val="Private"],.jdrop[data-field="hi"][data-val="ERISA / Employer"]{color:var(--green)}
+  .jdrop[data-field="policy3p"][data-val="Uninsured / Prop 213"]{color:var(--red);font-weight:600}
+  .jdrop[data-field="policy3p"][data-val="15/30"],.jdrop[data-field="policy3p"][data-val="30/60"]{color:var(--amber)}
+  .jdrop[data-field="policy3p"][data-val="250k–1M"],.jdrop[data-field="policy3p"][data-val="1M+"]{color:var(--green)}
+  .jdrop[data-field="uim"][data-val="None"]{color:var(--red)}
+  .jdrop[data-field="uim"][data-val="250k–1M"],.jdrop[data-field="uim"][data-val="1M+"]{color:var(--green)}
+
   /* flag stack column — vertical so column edge stays clean */
   td.flagcol{white-space:normal}
   td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
@@ -631,6 +648,7 @@
       <button class="tab" data-tab="lien" data-alerts="1"><span>Lien Operations</span><span class="alert-dot"></span></button>
       <button class="tab" data-tab="sol" id="sol-tab"><span>SOL</span><span class="alert-dot" style="display:none"></span></button>
       <button class="tab" data-tab="dq">Data Quality</button>
+      <button class="tab" data-tab="casecare">Case Care</button>
     </nav>
 
     <div class="meta">
@@ -1436,6 +1454,73 @@
           <tr class="row-alert"><td class="name">Rashel Prieto</td><td class="num">4</td><td class="num">1</td><td class="num"><span class="bic amber"><span class="barfill" style="width:25%"></span><span class="barlbl">25%</span></span></td><td><span class="flag red">3 missing</span></td></tr>
         </tbody>
       </table>
+    </div>
+
+  </section>
+
+  <!-- ===========================================================
+       TAB 7 — CASE CARE (Junior)
+       =========================================================== -->
+  <section class="page" data-page="casecare" style="--accent:#5e5ce6">
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)">
+        <span style="font-weight:500">Assignment window</span>
+        <div class="seg" id="cc-window-seg">
+          <button class="on" data-days="7">7 days</button>
+          <button data-days="14">14 days</button>
+          <button data-days="30">30 days</button>
+        </div>
+      </div>
+      <div style="width:1px;height:20px;background:var(--line)"></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)">
+        <span style="font-weight:500">Stale threshold</span>
+        <div class="seg" id="cc-stale-seg">
+          <button data-stale="7">7d</button>
+          <button class="on" data-stale="14">14d</button>
+          <button data-stale="21">21d</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Briefing -->
+    <div class="briefing" id="cc-briefing" style="display:none;--accent:var(--indigo)">
+      <div class="head" style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);white-space:nowrap;border-right:1px solid var(--line);padding-right:16px">Case Care</div>
+      <div class="items" id="cc-briefing-items"></div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" style="margin-bottom:20px">
+      <div class="kpi"><div class="label">New Intakes</div><div class="value" id="cc-kv-intakes">—</div><div class="sub" id="cc-ks-intakes">within window</div></div>
+      <div class="kpi"><div class="label">In Treatment</div><div class="value" id="cc-kv-treating">—</div><div class="sub">active treating cases</div></div>
+      <div class="kpi" id="cc-kpi-stale"><div class="label">Stale Cases</div><div class="value" id="cc-kv-stale">—</div><div class="sub" id="cc-ks-stale">no activity</div></div>
+      <div class="kpi" id="cc-kpi-noliab"><div class="label">No Liability Set</div><div class="value" id="cc-kv-noliab">—</div><div class="sub">31+ day cases</div></div>
+    </div>
+
+    <!-- New Intakes -->
+    <div class="section-title">
+      <div><div class="accent-rule"></div><h2>New Intakes</h2></div>
+      <span style="font-size:11.5px;color:var(--ink-4)" id="cc-intakes-meta"></span>
+    </div>
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-head"><h3>Recently Assigned Cases</h3><div class="meta-r" id="cc-intakes-count"></div></div>
+      <div id="cc-intakes-body"><div style="text-align:center;padding:32px;color:var(--ink-4)">Loading…</div></div>
+    </div>
+
+    <!-- Treating Cases -->
+    <div class="section-title">
+      <div><div class="accent-rule" style="background:var(--indigo)"></div><h2>Treating Cases</h2></div>
+      <div class="seg" id="cc-bucket-tabs" style="background:rgba(0,0,0,.05);border-radius:9px;padding:3px;gap:2px">
+        <button class="seg on" data-bucket="0" style="border-radius:6px;padding:5px 14px;font-size:12px">0–30<span id="cc-bc0" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
+        <button class="seg" data-bucket="1" style="border-radius:6px;padding:5px 14px;font-size:12px">31–60<span id="cc-bc1" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
+        <button class="seg" data-bucket="2" style="border-radius:6px;padding:5px 14px;font-size:12px">61–90<span id="cc-bc2" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
+        <button class="seg" data-bucket="3" style="border-radius:6px;padding:5px 14px;font-size:12px">90+<span id="cc-bc3" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3 id="cc-treating-title">0–30 Days</h3><div class="meta-r" id="cc-treating-count"></div></div>
+      <div id="cc-treating-body"><div style="text-align:center;padding:32px;color:var(--ink-4)">Loading…</div></div>
     </div>
 
   </section>
@@ -3665,6 +3750,226 @@ function renderCMPerformance(raw){
 /* =========================================================
    renderDataQuality() -- Data Quality tab
    ========================================================= */
+// ── CASE CARE TAB ─────────────────────────────────────────────────
+var _ccCfg = { assignWindow: 7, staleThreshold: 14, activeBucket: 0 };
+var _ccJuniorCache = {};
+var _ccNotesMap = {};
+var _ccSolMap = {};
+var _CC_LIABILITY_OPTS=['','Pending','Under Investigation','Accepted','Comparative Fault','Denied','No Coverage'];
+var _CC_HI_OPTS=['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only'];
+var _CC_POLICY_OPTS=['','Uninsured / Prop 213','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
+var _CC_UIM_OPTS=['','None','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
+var _CC_POLICY_RANK={'15/30':1,'30/60':2,'50/100':3,'100/300':4,'250/500':5,'250k–1M':6,'1M+':7};
+var _ccToday=new Date(); _ccToday.setHours(0,0,0,0);
+
+function _ccParseDate(s){if(!s||typeof s!=='string')return null;var p=s.trim().split('/');if(p.length!==3)return null;var d=new Date(parseInt(p[2]),parseInt(p[0])-1,parseInt(p[1]));d.setHours(0,0,0,0);return isNaN(d.getTime())?null:d;}
+function _ccDaysAgo(s){var d=_ccParseDate(s);if(!d)return null;return Math.floor((_ccToday-d)/86400000);}
+function _ccDaysUntil(s){var d=_ccParseDate(s);if(!d)return null;return Math.floor((d-_ccToday)/86400000);}
+function _ccFmtMoney(v){var n=parseFloat(v)||0;if(!n)return '—';return n>=1000?'$'+Math.round(n/1000)+'k':'$'+Math.round(n);}
+function _ccBucket(age){if(age<=30)return 0;if(age<=60)return 1;if(age<=90)return 2;return 3;}
+function _ccStack(p3,uim){if(!p3||!uim||uim==='None')return false;var pr=_CC_POLICY_RANK[p3]||0,ur=_CC_POLICY_RANK[uim]||0;return ur>pr&&pr>0&&ur>0;}
+function _ccDaysAgoHtml(n,thr){if(n===null||n===undefined)return '<span style="color:var(--ink-4)">—</span>';var s=n>=thr?'color:var(--red);font-weight:600':n>=(thr*.7)?'color:var(--amber)':'';return '<span style="'+s+'">'+(n===0?'Today':n+'d ago')+'</span>';}
+
+function _ccSetJunior(cn,field,val){
+  if(!_ccJuniorCache[cn])_ccJuniorCache[cn]={};
+  _ccJuniorCache[cn][field]=val;
+  var b={caseName:cn};b[field]=val;
+  fetch(_RAILWAY_URL+'/junior',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).catch(function(){});
+}
+function _ccGetJunior(cn){return _ccJuniorCache[cn]||{};}
+
+function _ccDropHtml(cn,field,opts,lbl){
+  var cur=_ccGetJunior(cn)[field]||'';
+  var html='<select class="jdrop'+(cur?' set':'')+'" data-field="'+field+'" data-val="'+_esc(cur)+'" title="'+lbl+'" onchange="__ccDropChange(this,\''+_esc(cn)+'\')">';
+  opts.forEach(function(o){html+='<option value="'+_esc(o)+'"'+(o===cur?' selected':'')+'>'+(_esc(o)||'— '+lbl+' —')+'</option>';});
+  return html+'</select>';
+}
+window.__ccDropChange=function(el,cn){
+  var field=el.getAttribute('data-field'),val=el.value;
+  el.setAttribute('data-val',val);
+  el.className='jdrop'+(val?' set':'');
+  _ccSetJunior(cn,field,val||null);
+  _ccUpdateKPIs(window.__ccRaw);
+};
+
+function _ccNotesPill(cn){var nm=_ccNotesMap[cn]||{count:0};return '<span style="font-family:var(--num);font-size:11.5px;font-weight:600;color:'+(nm.count>0?'var(--ink-2)':'var(--ink-4)')+'">'+nm.count+'</span>';}
+
+function _ccBuildFlags(t,bucket,jf){
+  var flags=[];
+  var touched=_ccDaysAgo(t.last_touched);
+  if(touched!==null&&touched>=_ccCfg.staleThreshold) flags.push('<span class="flag red">Stale '+touched+'d</span>');
+  if(bucket>0&&(!jf.liability||jf.liability==='')) flags.push('<span class="flag amber">No Liability</span>');
+  if(bucket>=1&&(parseFloat(t.total_meds)||0)===0) flags.push('<span class="flag red">No Specials</span>');
+  if(bucket>=1){var s=parseFloat(t.total_meds)||0;if((bucket===1&&s>0&&s<1000)||(bucket===2&&s>0&&s<2500))flags.push('<span class="flag amber">Low Specials</span>');}
+  if(bucket>=1&&_ccStack(jf.policy3p,jf.uim)) flags.push('<span class="flag" style="background:var(--indigo-soft);color:var(--indigo)">UIM Stack</span>');
+  if(bucket===3){var sol=_ccSolMap[t._casename];if(sol){var du=_ccDaysUntil(sol);if(du!==null&&du<=365)flags.push('<span class="flag red">SOL '+(du<0?'PAST':du+'d')+'</span>');}}
+  return flags;
+}
+
+function _ccUpdateKPIs(raw){
+  if(!raw) return;
+  var treating=raw.treating||[];
+  var win=_ccCfg.assignWindow;
+  var intakeN=treating.filter(function(t){if(!t.retainref_date)return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&d<=win;}).length;
+  var treatingN=treating.filter(function(t){return t.casestatus==='Treating';}).length;
+  var staleN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;var d=_ccDaysAgo(t.last_touched);return d!==null&&d>=_ccCfg.staleThreshold;}).length;
+  var noliabN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;if((t.case_age||0)<=30)return false;var jf=_ccGetJunior(t._casename);return!jf.liability||jf.liability==='';}).length;
+
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  set('cc-kv-intakes',intakeN); set('cc-ks-intakes','in past '+win+'d');
+  set('cc-kv-treating',treatingN);
+  set('cc-kv-stale',staleN); set('cc-ks-stale',_ccCfg.staleThreshold+'+ day threshold');
+  set('cc-kv-noliab',noliabN);
+
+  var staleKpi=document.getElementById('cc-kpi-stale');
+  if(staleKpi) staleKpi.className='kpi'+(staleN>0?' warn':'');
+  var noliabKpi=document.getElementById('cc-kpi-noliab');
+  if(noliabKpi) noliabKpi.className='kpi'+(noliabN>5?' warn':noliabN>0?'':' good');
+
+  var items=[];
+  if(staleN) items.push('<div class="item amber"><span class="marker">'+staleN+'</span><span>stale '+_ccCfg.staleThreshold+'+ days</span></div>');
+  if(noliabN) items.push('<div class="item amber"><span class="marker">'+noliabN+'</span><span>31+ day cases — no liability set</span></div>');
+  var stackN=treating.filter(function(t){var jf=_ccGetJunior(t._casename);return _ccStack(jf.policy3p,jf.uim);}).length;
+  if(stackN) items.push('<div class="item blue"><span class="marker">'+stackN+'</span><span>UIM stacking opportunities</span></div>');
+
+  var bar=document.getElementById('cc-briefing');
+  var itemsEl=document.getElementById('cc-briefing-items');
+  if(itemsEl) itemsEl.innerHTML=items.join('');
+  if(bar) bar.style.display=items.length?'':'none';
+}
+
+function _ccRenderIntakes(raw){
+  var treating=raw.treating||[];
+  var win=_ccCfg.assignWindow;
+  var rows=treating.filter(function(t){if(!t.retainref_date)return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&d<=win;});
+  rows.sort(function(a,b){return(b.case_age||0)-(a.case_age||0);});
+  var cnt=document.getElementById('cc-intakes-count');
+  if(cnt) cnt.textContent=rows.length+' cases';
+  var body=document.getElementById('cc-intakes-body'); if(!body) return;
+  if(!rows.length){body.innerHTML='<div style="text-align:center;padding:28px;color:var(--ink-4)">No cases retained in past '+win+' days</div>';return;}
+  var html='<table class="t"><thead><tr><th>Case</th><th>Assigned</th><th>Liability</th><th>Health Ins.</th><th class="num">Notes</th><th>Last Touched</th><th>3P Policy</th><th>UIM</th><th>Flags</th></tr></thead><tbody>';
+  rows.forEach(function(t){
+    var jf=_ccGetJunior(t._casename);
+    var flags=_ccBuildFlags(t,0,jf);
+    var rowCls=flags.some(function(f){return f.indexOf('flag red')>=0;})?'row-alert':flags.length?'row-warn':'';
+    html+='<tr class="'+rowCls+'">'
+      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
+      +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.retainref_date),win)+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'liability',_CC_LIABILITY_OPTS,'Liability')+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'healthInsurance',_CC_HI_OPTS,'Health Ins.')+'</td>'
+      +'<td class="num">'+_ccNotesPill(t._casename)+'</td>'
+      +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.last_touched),_ccCfg.staleThreshold)+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'policy3p',_CC_POLICY_OPTS,'3P Policy')+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'uim',_CC_UIM_OPTS,'UIM')+'</td>'
+      +'<td><div class="flag-stack" style="display:flex;flex-direction:column;gap:3px">'+flags.join('')+'</div></td>'
+      +'</tr>';
+  });
+  body.innerHTML=html+'</tbody></table>';
+}
+
+function _ccRenderTreating(raw,bucketIdx){
+  _ccCfg.activeBucket=bucketIdx;
+  var treating=raw.treating||[];
+  var labels=['0–30 Days','31–60 Days','61–90 Days','90+ Days'];
+  var rows=treating.filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===bucketIdx;});
+  rows.sort(function(a,b){return(b.case_age||0)-(a.case_age||0);});
+
+  [0,1,2,3].forEach(function(b){
+    var n=treating.filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===b;}).length;
+    var el=document.getElementById('cc-bc'+b); if(el) el.textContent=n?' ('+n+')':'';
+  });
+  var title=document.getElementById('cc-treating-title'); if(title) title.textContent=labels[bucketIdx];
+  var cnt=document.getElementById('cc-treating-count'); if(cnt) cnt.textContent=rows.length+' cases';
+  var body=document.getElementById('cc-treating-body'); if(!body) return;
+  if(!rows.length){body.innerHTML='<div style="text-align:center;padding:28px;color:var(--ink-4)">No treating cases in this bucket</div>';return;}
+
+  var showHI=bucketIdx===0,showPolicy=bucketIdx>=1,showUIM=bucketIdx>=1,showSol=bucketIdx===3;
+  var html='<table class="t"><thead><tr><th>Case</th><th class="num">Age</th><th class="num">Specials</th><th>Last Touched</th><th class="num">Notes</th><th>Liability</th>'
+    +(showHI?'<th>Health Ins.</th>':'')+(showPolicy?'<th>3P Policy</th>':'')+(showUIM?'<th>UIM</th>':'')+(showSol?'<th>SOL</th>':'')
+    +'<th>Flags</th></tr></thead><tbody>';
+
+  rows.forEach(function(t){
+    var jf=_ccGetJunior(t._casename);
+    var flags=_ccBuildFlags(t,bucketIdx,jf);
+    var rowCls=flags.some(function(f){return f.indexOf('flag red')>=0;})?'row-alert':flags.length?'row-warn':'';
+    var solHtml='';
+    if(showSol){
+      var sd=_ccSolMap[t._casename];
+      if(sd){var du=_ccDaysUntil(sd);var sc=du!==null&&du<=180?'color:var(--red);font-weight:600':du!==null&&du<=365?'color:var(--amber)':'color:var(--ink-3)';solHtml='<span style="font-family:var(--num);font-size:11.5px;'+sc+'">'+(du===null?'—':du<0?'PAST':du+'d')+'</span>';}
+      else solHtml='<span style="color:var(--ink-4)">—</span>';
+    }
+    html+='<tr class="'+rowCls+'">'
+      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
+      +'<td class="num" style="font-family:var(--num);font-weight:600">'+(t.case_age||'—')+'d</td>'
+      +'<td class="num">'+_ccFmtMoney(t.total_meds)+'</td>'
+      +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.last_touched),_ccCfg.staleThreshold)+'</td>'
+      +'<td class="num">'+_ccNotesPill(t._casename)+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'liability',_CC_LIABILITY_OPTS,'Liability')+'</td>'
+      +(showHI?'<td>'+_ccDropHtml(t._casename,'healthInsurance',_CC_HI_OPTS,'Health Ins.')+'</td>':'')
+      +(showPolicy?'<td>'+_ccDropHtml(t._casename,'policy3p',_CC_POLICY_OPTS,'3P Policy')+'</td>':'')
+      +(showUIM?'<td>'+_ccDropHtml(t._casename,'uim',_CC_UIM_OPTS,'UIM')+'</td>':'')
+      +(showSol?'<td>'+solHtml+'</td>':'')
+      +'<td><div class="flag-stack" style="display:flex;flex-direction:column;gap:3px">'+flags.join('')+'</div></td>'
+      +'</tr>';
+  });
+  body.innerHTML=html+'</tbody></table>';
+}
+
+function renderCaseCare(raw, juniorFields){
+  _ccJuniorCache = juniorFields || {};
+  window.__ccRaw = raw;
+
+  // Build notes map
+  var notes = raw.notes || [];
+  notes.forEach(function(n){
+    var cn=n.casename||''; if(!_ccNotesMap[cn]) _ccNotesMap[cn]={count:0}; _ccNotesMap[cn].count++;
+  });
+
+  // Build SOL map
+  var settlement = raw.settlement || [];
+  settlement.forEach(function(r){ if(r._casename&&r.statutedate) _ccSolMap[r._casename]=r.statutedate; });
+
+  _ccUpdateKPIs(raw);
+  _ccRenderIntakes(raw);
+  _ccRenderTreating(raw, 0);
+  [0,1,2,3].forEach(function(b){
+    var n=(raw.treating||[]).filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===b;}).length;
+    var el=document.getElementById('cc-bc'+b); if(el) el.textContent=n?' ('+n+')':'';
+  });
+
+  // Wire controls
+  var winSeg=document.getElementById('cc-window-seg');
+  if(winSeg && !winSeg._wired){ winSeg._wired=true;
+    winSeg.addEventListener('click',function(e){
+      var btn=e.target.closest('button[data-days]');if(!btn)return;
+      winSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _ccCfg.assignWindow=parseInt(btn.getAttribute('data-days'));
+      _ccRenderIntakes(raw); _ccUpdateKPIs(raw);
+    });
+  }
+  var staleSeg=document.getElementById('cc-stale-seg');
+  if(staleSeg && !staleSeg._wired){ staleSeg._wired=true;
+    staleSeg.addEventListener('click',function(e){
+      var btn=e.target.closest('button[data-stale]');if(!btn)return;
+      staleSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _ccCfg.staleThreshold=parseInt(btn.getAttribute('data-stale'));
+      _ccRenderIntakes(raw); _ccRenderTreating(raw,_ccCfg.activeBucket); _ccUpdateKPIs(raw);
+    });
+  }
+  var bucketSeg=document.getElementById('cc-bucket-tabs');
+  if(bucketSeg && !bucketSeg._wired){ bucketSeg._wired=true;
+    bucketSeg.addEventListener('click',function(e){
+      var btn=e.target.closest('button[data-bucket]');if(!btn)return;
+      bucketSeg.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _ccRenderTreating(raw,parseInt(btn.getAttribute('data-bucket')));
+    });
+  }
+}
+// ── END CASE CARE ──────────────────────────────────────────────────
+
 function renderDataQuality(raw){
   var demands=raw.demands||[];
   var lienMgmt=raw.lienMgmt||[];
@@ -4274,10 +4579,14 @@ function renderDataQuality(raw){
     bindEvents();
     setSubtab('cases');
 
-    // Load shared flags, notes, and contacts from Railway
+    // Load shared flags, notes, contacts, and junior fields from Railway
     await _loadFlags();
     await _loadNotes();
     await _loadContacts();
+    // Load junior fields (Case Care tab) — non-blocking, graceful on failure
+    var _juniorFields = {};
+    try { var _jRes = await fetch(_RAILWAY_URL+'/junior'); _juniorFields = await _jRes.json(); } catch(e) {}
+
 
     // Detect host — if not on CasePeer, use full URL with credentials
     var host = window.location.hostname;
@@ -4296,7 +4605,8 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31'),
         fetchAll('/api/v1/case/treating-overview/'),
         fetchAll('/api/v1/case/calendar/'),
-        fetchAll('/api/v1/case/litigation-overview/')
+        fetchAll('/api/v1/case/litigation-overview/'),
+        fetchAll('/api/v1/case/notes/')
       ]);
       var lienMgmt     = results[0];
       var lienOverview = results[1];
@@ -4307,6 +4617,7 @@ function renderDataQuality(raw){
       var treating     = results[6];
       var calendar     = results[7];
       var litOverview  = results[8];
+      var cpNotes      = results[9] || [];
 
       state.raw.lienMgmt    = lienMgmt;
       state.raw.lienOverview = lienOverview;
@@ -4339,6 +4650,7 @@ function renderDataQuality(raw){
       renderCMPerformance(raw);
       renderDataQuality(raw);
       renderLienActivityFeed(disbursement, _lienActivityDays);
+      renderCaseCare(Object.assign({}, raw, { notes: cpNotes }), _juniorFields);
       bindLienActivityToggle(disbursement);
       renderSOL(raw);
 
