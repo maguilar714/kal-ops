@@ -1508,6 +1508,20 @@
       <div id="cc-intakes-body"><div style="text-align:center;padding:32px;color:var(--ink-4)">Loading…</div></div>
     </div>
 
+    <!-- Flag legend -->
+    <div style="font-size:11.5px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="color:var(--ink-2);font-weight:600;white-space:nowrap">Flag key</b>
+      <span class="flag red" style="font-size:10px">Stale</span><span>No activity past threshold</span>
+      <span style="color:var(--line-strong)">·</span>
+      <span class="flag red" style="font-size:10px">No Specials</span><span>Zero specials 30+ days</span>
+      <span style="color:var(--line-strong)">·</span>
+      <span class="flag amber" style="font-size:10px">No Liability</span><span>Not set on 31+ day case</span>
+      <span style="color:var(--line-strong)">·</span>
+      <span class="flag amber" style="font-size:10px">Low Specials</span><span>Below expected for age</span>
+      <span style="color:var(--line-strong)">·</span>
+      <span class="flag" style="background:var(--indigo-soft);color:var(--indigo);display:inline-flex;align-items:center;padding:2px 7px;font-size:10px;font-weight:600;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">UIM Stack</span><span>UIM exceeds 3P policy</span>
+    </div>
+
     <!-- Treating Cases -->
     <div class="section-title">
       <div><div class="accent-rule" style="background:var(--indigo)"></div><h2>Treating Cases</h2></div>
@@ -3796,6 +3810,7 @@ function _ccNotesPill(cn){var nm=_ccNotesMap[cn]||{count:0};return '<span style=
 
 function _ccBuildFlags(t,bucket,jf){
   var flags=[];
+  var retainDays=_ccDaysAgo(t.retainref_date)||0;
   var touched=_ccDaysAgo(t.last_touched);
   if(touched!==null&&touched>=_ccCfg.staleThreshold) flags.push('<span class="flag red">Stale '+touched+'d</span>');
   if(bucket>0&&(!jf.liability||jf.liability==='')) flags.push('<span class="flag amber">No Liability</span>');
@@ -3812,8 +3827,8 @@ function _ccUpdateKPIs(raw){
   var win=_ccCfg.assignWindow;
   var intakeN=treating.filter(function(t){if(!t.retainref_date)return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&d<=win;}).length;
   var treatingN=treating.filter(function(t){return t.casestatus==='Treating';}).length;
-  var staleN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;var d=_ccDaysAgo(t.last_touched);return d!==null&&d>=_ccCfg.staleThreshold;}).length;
-  var noliabN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;if((t.case_age||0)<=30)return false;var jf=_ccGetJunior(t._casename);return!jf.liability||jf.liability==='';}).length;
+  var staleN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;var retainDays=_ccDaysAgo(t.retainref_date)||0;var d=_ccDaysAgo(t.last_touched);return d!==null&&d>=_ccCfg.staleThreshold;}).length;
+  var noliabN=treating.filter(function(t){if(t.casestatus!=='Treating')return false;if((_ccDaysAgo(t.retainref_date)||0)<=30)return false;var jf=_ccGetJunior(t._casename);return!jf.liability||jf.liability==='';}).length;
 
   var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   set('cc-kv-intakes',intakeN); set('cc-ks-intakes','in past '+win+'d');
@@ -3842,7 +3857,7 @@ function _ccRenderIntakes(raw){
   var treating=raw.treating||[];
   var win=_ccCfg.assignWindow;
   var rows=treating.filter(function(t){if(!t.retainref_date)return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&d<=win;});
-  rows.sort(function(a,b){return(b.case_age||0)-(a.case_age||0);});
+  rows.sort(function(a,b){return(_ccDaysAgo(b.retainref_date)||0)-(_ccDaysAgo(a.retainref_date)||0);});
   var cnt=document.getElementById('cc-intakes-count');
   if(cnt) cnt.textContent=rows.length+' cases';
   var body=document.getElementById('cc-intakes-body'); if(!body) return;
@@ -3871,11 +3886,11 @@ function _ccRenderTreating(raw,bucketIdx){
   _ccCfg.activeBucket=bucketIdx;
   var treating=raw.treating||[];
   var labels=['0–30 Days','31–60 Days','61–90 Days','90+ Days'];
-  var rows=treating.filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===bucketIdx;});
-  rows.sort(function(a,b){return(b.case_age||0)-(a.case_age||0);});
+  var rows=treating.filter(function(t){return t.casestatus==='Treating'&&(function(){var d=_ccDaysAgo(t.retainref_date);return d!==null&&_ccBucket(d)===bucketIdx;})();});
+  rows.sort(function(a,b){return(_ccDaysAgo(b.retainref_date)||0)-(_ccDaysAgo(a.retainref_date)||0);});
 
   [0,1,2,3].forEach(function(b){
-    var n=treating.filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===b;}).length;
+    var n=treating.filter(function(t){return (function(){if(t.casestatus!=='Treating')return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&_ccBucket(d)===b;})();}).length;
     var el=document.getElementById('cc-bc'+b); if(el) el.textContent=n?' ('+n+')':'';
   });
   var title=document.getElementById('cc-treating-title'); if(title) title.textContent=labels[bucketIdx];
@@ -3900,7 +3915,7 @@ function _ccRenderTreating(raw,bucketIdx){
     }
     html+='<tr class="'+rowCls+'">'
       +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
-      +'<td class="num" style="font-family:var(--num);font-weight:600">'+(t.case_age||'—')+'d</td>'
+      +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_ccDaysAgo(t.retainref_date)!==null?_ccDaysAgo(t.retainref_date)+'d':'—')+'</td>'
       +'<td class="num">'+_ccFmtMoney(t.total_meds)+'</td>'
       +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.last_touched),_ccCfg.staleThreshold)+'</td>'
       +'<td class="num">'+_ccNotesPill(t._casename)+'</td>'
@@ -3933,7 +3948,7 @@ function renderCaseCare(raw, juniorFields){
   _ccRenderIntakes(raw);
   _ccRenderTreating(raw, 0);
   [0,1,2,3].forEach(function(b){
-    var n=(raw.treating||[]).filter(function(t){return t.casestatus==='Treating'&&_ccBucket(t.case_age||0)===b;}).length;
+    var n=(raw.treating||[]).filter(function(t){return (function(){if(t.casestatus!=='Treating')return false;var d=_ccDaysAgo(t.retainref_date);return d!==null&&_ccBucket(d)===b;})();}).length;
     var el=document.getElementById('cc-bc'+b); if(el) el.textContent=n?' ('+n+')':'';
   });
 
