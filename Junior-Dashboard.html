@@ -659,7 +659,7 @@ function _renderTreating(bucketIdx){
     html+='<tr class="'+rowClass+'">'
       +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div>'
       +'<div class="case-cm">'+_esc(t.case_manager||'Unassigned')+(t.casetype?' · '+_esc(t.casetype):'')+'</div></div></td>'
-      +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_daysAgo(t.retainref_date)!==null?_daysAgo(t.retainref_date)+'d':'—')+'</td>
+      +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_daysAgo(t.retainref_date)!==null?_daysAgo(t.retainref_date)+'d':'—')+'</td>'
       +'<td class="num">'+_fmtMoney(specials)+'</td>'
       +'<td>'+_daysAgoHtml(touched,_cfg.staleThreshold)+'</td>'
       +'<td class="num">'+_notesPill(t._casename)+'</td>'
