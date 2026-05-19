@@ -737,15 +737,7 @@ document.getElementById('window-seg').addEventListener('click',function(e){
   _updateKPIs();
 });
 
-document.getElementById('stale-seg').addEventListener('click',function(e){
-  var btn=e.target.closest('button[data-stale]'); if(!btn) return;
-  document.querySelectorAll('#stale-seg button').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  _cfg.staleThreshold=parseInt(btn.getAttribute('data-stale'));
-  _renderNewIntakes();
-  _renderTreating(_activeBucket);
-  _updateKPIs();
-});
+// stale-threshold control removed (inline in future version)
 
 document.getElementById('bucket-tabs').addEventListener('click',function(e){
   var btn=e.target.closest('button[data-bucket]'); if(!btn) return;
