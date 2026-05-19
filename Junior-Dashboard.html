@@ -205,6 +205,16 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
 .loading{text-align:center;padding:40px;color:var(--ink-3);font-size:13px}
 .empty{text-align:center;padding:32px;color:var(--ink-4);font-size:12.5px}
 
+/* ── Note / legend ──────────────────────────────────── */
+.note{
+  font-size:12px;color:var(--ink-3);
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:10px;padding:11px 16px;margin-bottom:16px;line-height:1.6;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.note b{color:var(--ink-2);font-weight:600}
+.note .flag{font-size:10px}
+
 /* ── Briefing bar ───────────────────────────────────── */
 .briefing{
   background:var(--surface);border:1px solid var(--line);
@@ -282,6 +292,22 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
       <div class="value" id="kv-noliab">—</div>
       <div class="sub" id="ks-noliab">treating cases 31+ days</div>
     </div>
+  </div>
+
+  <!-- FLAG LEGEND -->
+  <div class="note">
+    <b>Flag key</b>
+    <span class="flag red">Stale</span><span>No CM activity past threshold</span>
+    <span style="color:var(--line-strong)">·</span>
+    <span class="flag red">No Specials</span><span>Zero specials after 30+ days</span>
+    <span style="color:var(--line-strong)">·</span>
+    <span class="flag amber">No Liability</span><span>Liability status not set (31+ days)</span>
+    <span style="color:var(--line-strong)">·</span>
+    <span class="flag amber">Low Specials</span><span>Specials low for case age</span>
+    <span style="color:var(--line-strong)">·</span>
+    <span class="flag" style="background:var(--indigo-soft);color:var(--indigo)">UIM Stack</span><span>UIM limits exceed 3P policy</span>
+    <span style="color:var(--line-strong)">·</span>
+    <span class="flag red">SOL Xd</span><span>Statute within 365 days (90+ bucket)</span>
   </div>
 
   <!-- NEW INTAKES PANEL -->
