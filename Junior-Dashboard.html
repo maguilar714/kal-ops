@@ -368,6 +368,21 @@ var _activeBucket = 0;
 // ── Raw data ─────────────────────────────────────────
 var _raw = { treating: [], notes: [], settlement: [], demands: [] };
 var _juniorCache = {};
+var _quoCallsCache = {};  // { phone → { cm, date, duration_sec } }
+var _clientPhoneMap = {}; // { casename → client_phone }
+
+function _loadQuoCalls(){
+  return fetch(_RAILWAY+'/quo-calls')
+    .then(function(r){return r.json();})
+    .then(function(d){ _quoCallsCache=d||{}; })
+    .catch(function(){ _quoCallsCache={}; });
+}
+
+function _getLastCall(caseName){
+  var phone = _clientPhoneMap[caseName];
+  if(!phone) return null;
+  return _quoCallsCache[phone] || null;
+}
 
 // ── Derived maps ─────────────────────────────────────
 var _notesMap = {};   // casename → { count, cats: Set }
@@ -577,7 +592,7 @@ function _renderNewIntakes(){
 
   var html='<table class="t"><thead><tr>'
     +'<th>Case</th>'
-    +'<th>Assigned</th>'
+    +'<th>Assigned</th>'+'<th>Intro Call</th>'
     +'<th>Liability</th>'
     +'<th>Health Ins.</th>'
     +'<th class="num">Notes</th>'
@@ -599,6 +614,15 @@ function _renderNewIntakes(){
       +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div>'
       +'<div class="case-cm">'+_esc(t.case_manager||'Unassigned')+(t.casetype?' · '+_esc(t.casetype):'')+'</div></div></td>'
       +'<td>'+_daysAgoHtml(assigned,win)+'</td>'
+      +(function(){
+        var call=_getLastCall(t._casename);
+        if(!call||!call.date) return '<td style="color:var(--ink-4);font-size:11.5px">—</td>';
+        var d=_daysAgo(call.date.replace(/-/g,'/').replace(/(\d{4})\/(\d{2})\/(\d{2})/,'$2/$3/$1'));
+        var dStr=d===0?'Today':d===null?call.date:d+'d ago';
+        var mins=call.duration_sec?Math.round(call.duration_sec/60)+'m':'';
+        var col=d!==null&&d<=7?'var(--green)':d!==null&&d<=14?'var(--amber)':'var(--ink-3)';
+        return '<td style="font-size:11.5px;white-space:nowrap"><span style="color:'+col+';font-weight:500">'+dStr+'</span>'+(mins?' <span style="color:var(--ink-4)">·</span> <span style="color:var(--ink-3)">'+_esc(call.cm)+' '+mins+'</span>':'')+'</td>';
+      })()
       +'<td>'+_dropHtml(t._casename,'liability',_LIABILITY_OPTS,'Liability')+'</td>'
       +'<td>'+_dropHtml(t._casename,'healthInsurance',_HI_OPTS,'Health Insurance')+'</td>'
       +'<td class="num">'+_notesPill(t._casename)+'</td>'
@@ -787,13 +811,20 @@ async function init(){
   try {
     // Parallel: CasePeer + Railway
     // Load core data first — render immediately without waiting for notes
-    var [treating, settlement] = await Promise.all([
+    var [treating, settlement, clients] = await Promise.all([
       fetchAll('/api/v1/case/treating-overview/'),
-      fetchAll('/api/v1/case/settlement-overview/')
+      fetchAll('/api/v1/case/settlement-overview/'),
+      fetchAll('/api/v1/case/clients/')
     ]);
 
-    // Load junior fields (Railway) — non-blocking
+    // Build client phone map
+    clients.forEach(function(c){
+      if(c.casename && c.client_phone) _clientPhoneMap[c.casename] = c.client_phone;
+    });
+
+    // Load junior fields + quo-calls (Railway) — non-blocking
     _loadJuniorFields();
+    _loadQuoCalls();
 
     _raw.treating   = treating;
     _raw.settlement = settlement;
