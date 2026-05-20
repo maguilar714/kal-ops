@@ -4418,20 +4418,30 @@ function renderDataQuality(raw){
     var disbPending = (state.raw.disbursement||[]).filter(function(r){ return r.casestatus==='Disbursement'; });
     document.getElementById('lien-kpi-disb').textContent = disbPending.length;
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
-    // MTD attorney fee tracker
+    // MTD attorney fee tracker — anchored to disbursed_date, not deposit date
     var now = state.refDate;
     var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
     var deposits = state.raw.deposits || [];
-    var mtdFee = 0, mtdCases = 0, mtdSeen = {};
+    var disbursement = state.raw.disbursement || [];
+    // Step 1: cases fully disbursed this month
+    var disbursedThisMonth = {};
+    for(var d0=0;d0<disbursement.length;d0++){
+      var dr = disbursement[d0] || {};
+      if(dr.casestatus !== 'Disbursed') continue;
+      var dd = parseDate(dr.disbursed_date);
+      if(!dd || dd < mtdStart || dd > now) continue;
+      disbursedThisMonth[dr.id] = dr;
+    }
+    // Step 2: sum all deposits for those cases × fee rate
+    var mtdFee = 0, mtdCases = Object.keys(disbursedThisMonth).length;
     for(var j=0;j<deposits.length;j++){
       var dep = deposits[j] || {};
-      var depDate = parseDate(dep.check_date);
-      if(!depDate || depDate < mtdStart || depDate > now) continue;
+      var depCaseId = dep.case && dep.case.id;
+      if(!depCaseId || !disbursedThisMonth[depCaseId]) continue;
       var depCaseName = (dep.case && dep.case._casename) || '';
       var contact = (typeof _getContact === 'function') ? _getContact(depCaseName) : {};
       var feeRate = contact && parseFloat(contact.feeRate) > 0 ? parseFloat(contact.feeRate) : 0.33;
       mtdFee += (parseFloat(dep.amount)||0) * feeRate;
-      if(!mtdSeen[depCaseName]){ mtdSeen[depCaseName]=true; mtdCases++; }
     }
     var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
