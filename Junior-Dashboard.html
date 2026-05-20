@@ -425,6 +425,11 @@ function _esc(s){
   d.appendChild(document.createTextNode(String(s||'')));
   return d.innerHTML;
 }
+function _caseLink(name, id){
+  var label = _esc(name||'—');
+  if(!id) return label;
+  return '<a href="https://my.casepeer.com/case/'+id+'/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;text-decoration-color:var(--ink-4)" onmouseover="this.style.textDecorationColor=\'var(--blue)\'" onmouseout="this.style.textDecorationColor=\'var(--ink-4)\'">'+label+'</a>';
+}
 function _daysAgoHtml(n, threshold){
   if(n===null||n===undefined) return '<span style="color:var(--ink-4)">—</span>';
   var cls = n>=threshold?'stale':n>=(threshold*0.7)?'warn':'';
@@ -611,7 +616,7 @@ function _renderNewIntakes(){
       :flags.length>0?'row-warn':'';
 
     html+='<tr class="'+rowClass+'">'
-      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div>'
+      +'<td><div class="case-cell"><div class="case-name">'+_caseLink(t._casename.split(' - ')[0], t.id||null)+'</div>'
       +'<div class="case-cm">'+_esc(t.case_manager||'Unassigned')+(t.casetype?' · '+_esc(t.casetype):'')+'</div></div></td>'
       +'<td>'+_daysAgoHtml(assigned,win)+'</td>'
       +(function(){
@@ -707,7 +712,7 @@ function _renderTreating(bucketIdx){
     }
 
     html+='<tr class="'+rowClass+'">'
-      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div>'
+      +'<td><div class="case-cell"><div class="case-name">'+_caseLink(t._casename.split(' - ')[0], t.id||null)+'</div>'
       +'<div class="case-cm">'+_esc(t.case_manager||'Unassigned')+(t.casetype?' · '+_esc(t.casetype):'')+'</div></div></td>'
       +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_daysAgo(t.retainref_date)!==null?_daysAgo(t.retainref_date)+'d':'—')+'</td>'
       +'<td class="num">'+_fmtMoney(specials)+'</td>'
