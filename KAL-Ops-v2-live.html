@@ -1170,13 +1170,32 @@
         </div>
         <div class="sub" id="lien-kpi-disb-sub">loading…</div>
       </div>
-      <div class="kpi" data-tip="Sum of settlement_total across unique cases with settled value.">
-        <div class="label">Settled Value · Lien Cases</div>
-        <div class="row-v">
-          <div class="value" id="lien-kpi-settled">—</div>
+      <div class="kpi" data-tip="MTD attorney fees = sum of check deposits this month x per-case fee rate (default 33%). Click goal to edit.">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+          <div class="label" style="margin:0;">Atty Fees · MTD</div>
+          <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:3px;" title="Edit monthly goal">goal</span>
         </div>
-        <div class="sub" id="lien-kpi-settled-sub">loading…</div>
+        <div class="row-v">
+          <div class="value" id="lien-kpi-fee">—</div>
+        </div>
+        <div style="margin:5px 0 3px;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;">
+          <div id="lien-fee-bar" style="height:100%;background:var(--blue);width:0%;transition:width .5s ease;border-radius:2px;"></div>
+        </div>
+        <div class="sub" id="lien-kpi-fee-sub">loading…</div>
       </div>
+    </div>
+
+    <!-- Color legend -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px;padding:8px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;align-items:center;">
+      <span style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:4px;">Legend</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--red-bg);border:1px solid var(--red-mark);"></span>Stuck case</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--amber-bg,#fff8ee);border:1px solid var(--amber,#f59e0b);"></span>Flagged case (no activity / high load)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span class="flag red" style="font-size:10px;padding:1px 5px;">Stuck</span>Days in liens &gt; threshold</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span class="flag amber" style="font-size:10px;padding:1px 5px;">No Activity</span>No lien touch since threshold</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="color:var(--amber);font-weight:600;font-size:11px;">Amber text</span>Inactive lien in drill-down</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--blue);opacity:.8;"></span>Normal (disb. &lt;60d)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--amber);opacity:.8;"></span>Slow (disb. 60–119d)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--red);opacity:.8;"></span>Overdue (disb. 120d+)</span>
     </div>
 
     <!-- Lien Activity Feed — moved above drill-down -->
@@ -1308,11 +1327,13 @@
             <th class="num has-bar" data-sort="lienCount">Liens</th>
             <th class="num" data-sort="maxDays">Oldest Lien</th>
             <th class="num" data-sort="daysSinceTouch">Days Since Activity</th>
+            <th class="num" data-sort="settlementTotal">Settlement</th>
+            <th class="num">Fee</th>
             <th>Flags</th>
           </tr>
         </thead>
         <tbody id="lien-cases-body">
-          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+          <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1339,6 +1360,8 @@
 
     <!-- Disbursement pane -->
     <div class="panel" id="lien-pane-disb" style="margin-top:12px;display:none;">
+
+      <!-- Pending payout -->
       <div class="panel-head">
         <h3 id="lien-disb-count">Cases pending payout · loading…</h3>
       </div>
@@ -1356,6 +1379,26 @@
           <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
         </tbody>
       </table>
+
+      <!-- Already disbursed -->
+      <div class="panel-head" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
+        <h3 id="lien-disb-closed-count" style="color:var(--ink-3);">Already disbursed · loading…</h3>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Negotiator</th>
+            <th class="num">Days taken</th>
+            <th class="num">Disbursed</th>
+            <th class="num">Last Touched</th>
+          </tr>
+        </thead>
+        <tbody id="disb-body-closed">
+          <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+        </tbody>
+      </table>
+
     </div>
 
   </section>
@@ -4214,7 +4257,7 @@ function renderDataQuality(raw){
   // ---- State ----
   var state = {
     baseUrl: '',
-    raw:{ lienMgmt:[], lienOverview:[], disbursement:[] },
+    raw:{ lienMgmt:[], lienOverview:[], disbursement:[], deposits:[] },
     valid:[], cases:[], excludedCount:0,
     sort:{ col:'maxDays', dir:'desc' },
     expanded:{},
@@ -4372,19 +4415,31 @@ function renderDataQuality(raw){
       : inactive+' inactive '+t.inactive+'d+';
     document.getElementById('lien-kpi-cases').textContent = (state.raw.lienOverview||[]).length;
     document.getElementById('lien-kpi-cases-sub').textContent = 'In lien-negotiations stage';
-    document.getElementById('lien-kpi-disb').textContent = (state.raw.disbursement||[]).length;
+    var disbPending = (state.raw.disbursement||[]).filter(function(r){ return r.casestatus==='Disbursement'; });
+    document.getElementById('lien-kpi-disb').textContent = disbPending.length;
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
-    // Settled value: sum unique-case settlement_total where >0
-    var seen={}, total=0, count=0;
-    for(var j=0;j<state.cases.length;j++){
-      if(state.cases[j].settlementTotal>0 && !seen[state.cases[j].caseName]){
-        seen[state.cases[j].caseName]=true;
-        total += state.cases[j].settlementTotal;
-        count++;
-      }
+    // MTD attorney fee tracker
+    var now = state.refDate;
+    var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var deposits = state.raw.deposits || [];
+    var mtdFee = 0, mtdCases = 0, mtdSeen = {};
+    for(var j=0;j<deposits.length;j++){
+      var dep = deposits[j] || {};
+      var depDate = parseDate(dep.check_date);
+      if(!depDate || depDate < mtdStart || depDate > now) continue;
+      var depCaseName = (dep.case && dep.case._casename) || '';
+      var contact = (typeof _getContact === 'function') ? _getContact(depCaseName) : {};
+      var feeRate = contact && parseFloat(contact.feeRate) > 0 ? parseFloat(contact.feeRate) : 0.33;
+      mtdFee += (parseFloat(dep.amount)||0) * feeRate;
+      if(!mtdSeen[depCaseName]){ mtdSeen[depCaseName]=true; mtdCases++; }
     }
-    document.getElementById('lien-kpi-settled').textContent = fmtCurrency(total);
-    document.getElementById('lien-kpi-settled-sub').textContent = 'Across '+count+' cases';
+    var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
+    var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
+    var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
+    var barEl = document.getElementById('lien-fee-bar');
+    if(barEl){ barEl.style.width = feePct+'%'; barEl.style.background = barColor; }
+    document.getElementById('lien-kpi-fee').textContent = fmtCurrency(mtdFee);
+    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'%';
   }
 
   function renderBriefing(){
@@ -4441,7 +4496,7 @@ function renderDataQuality(raw){
     }
 
     if(arr.length===0){
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
       return;
     }
     var html='';
@@ -4451,6 +4506,10 @@ function renderDataQuality(raw){
       var rowCls = fl.length ? (fl.indexOf('Stuck')>=0 ? 'row-alert' : 'row-warn') : '';
       var exp = !!state.expanded[c.caseName];
       var dst = c.daysSinceTouch!=null ? c.daysSinceTouch+'d' : '—';
+      var contact = (typeof _getContact === 'function') ? _getContact(c.caseName) : {};
+      var feeRate = contact && parseFloat(contact.feeRate) > 0 ? parseFloat(contact.feeRate) : 0.33;
+      var feePctDisp = Math.round(feeRate * 100);
+      var estFee = c.settlementTotal > 0 ? c.settlementTotal * feeRate : null;
       html += '<tr class="'+rowCls+'" data-case="'+esc(c.caseName)+'">';
       html += '<td><button class="chip" data-expand="'+esc(c.caseName)+'" style="padding:1px 8px;font-size:13px;line-height:1;">'+(exp?'−':'+')+'</button></td>';
       html += '<td class="name">'+_caseLink(c.caseName, c.caseId)+'</td>';
@@ -4458,6 +4517,8 @@ function renderDataQuality(raw){
       html += '<td class="num">'+c.lienCount+'</td>';
       html += '<td class="num">'+c.maxDays+'d</td>';
       html += '<td class="num">'+dst+'</td>';
+      html += '<td class="num">'+(c.settlementTotal > 0 ? fmtCurrency(c.settlementTotal) : '—')+'</td>';
+      html += '<td class="num"><span data-action="edit-fee-rate" data-case="'+esc(c.caseName)+'" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;color:var(--ink-3);" title="Click to edit fee rate">'+feePctDisp+'%</span>'+(estFee ? ' <span style="color:var(--ink-2);font-size:11.5px;">'+fmtCurrency(estFee)+'</span>' : '')+'</td>';
       html += '<td class="flagcol"><div class="stack">'+flagBadges(fl)+'</div></td>';
       html += '</tr>';
       if(exp) html += renderSubRows(c);
@@ -4488,6 +4549,7 @@ function renderDataQuality(raw){
     html += '<td class="num" style="'+hdr+'">Last Touched</td>';
     html += '<td class="num" style="'+hdr+'">Days Since</td>';
     html += '<td style="'+hdr+'">Client Comm</td>';
+    html += '<td></td><td></td>';
     html += '</tr>';
     for(var i=0;i<sorted.length;i++){
       var l=sorted[i];
@@ -4501,6 +4563,7 @@ function renderDataQuality(raw){
       html += '<td class="num" style="font-size:12.5px;">'+fmtDate(l.lastTouched)+'</td>';
       html += '<td class="num" style="font-size:12.5px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
       html += '<td style="font-size:12.5px;">'+fmtDate(l.clientComm)+'</td>';
+      html += '<td></td><td></td>';
       html += '</tr>';
     }
     return html;
@@ -4552,28 +4615,56 @@ function renderDataQuality(raw){
   }
 
   function renderDisbursement(){
-    var rows = (state.raw.disbursement||[]).slice();
-    rows.sort(function(a,b){ return (b.days_in_disbursement||0)-(a.days_in_disbursement||0); });
+    var all = (state.raw.disbursement||[]).slice();
+    var pending = all.filter(function(r){ return r.casestatus === 'Disbursement'; });
+    var closed  = all.filter(function(r){ return r.casestatus !== 'Disbursement'; });
+    pending.sort(function(a,b){ return (b.days_in_disbursement||0)-(a.days_in_disbursement||0); });
+    closed.sort(function(a,b){ return (b.days_in_disbursement||0)-(a.days_in_disbursement||0); });
+
+    // Pending payout
     var tbody = document.getElementById('disb-body');
-    document.getElementById('lien-disb-count').textContent = 'Cases pending payout · '+rows.length;
-    if(!rows.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursement cases.</td></tr>'; return; }
-    var maxD = Math.max.apply(null, rows.map(function(r){ return r.days_in_disbursement||0; }).concat([1]));
-    var html='';
-    for(var i=0;i<rows.length;i++){
-      var r = rows[i] || {};
-      var d = r.days_in_disbursement||0;
-      var pct = Math.round(d/maxD*100);
-      var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
-      var barCls = d>=120 ? 'amber' : 'blue';
-      html += '<tr class="'+rowCls+'">';
-      html += '<td class="case-cell"><div class="case-name">'+_caseLink(r._casename||'—', r.id||null)+'</div></td>';
-      html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
-      html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
-      html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
-      html += '<td class="num">'+esc(r.pending_disbursement_date||'—')+'</td>';
-      html += '</tr>';
+    document.getElementById('lien-disb-count').textContent = 'Cases pending payout · '+pending.length;
+    if(!pending.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No cases pending payout.</td></tr>'; }
+    else {
+      var maxD = Math.max.apply(null, pending.map(function(r){ return r.days_in_disbursement||0; }).concat([1]));
+      var html='';
+      for(var i=0;i<pending.length;i++){
+        var r = pending[i] || {};
+        var d = r.days_in_disbursement||0;
+        var pct = Math.round(d/maxD*100);
+        var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
+        var barCls = d>=120 ? 'amber' : 'blue';
+        html += '<tr class="'+rowCls+'">';
+        html += '<td class="case-cell"><div class="case-name">'+_caseLink(r._casename||'—', r.id||null)+'</div></td>';
+        html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
+        html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
+        html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
+        html += '<td class="num">'+esc(r.pending_disbursement_date||'—')+'</td>';
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
     }
-    tbody.innerHTML = html;
+
+    // Already disbursed
+    var tbodyClosed = document.getElementById('disb-body-closed');
+    var closedCount = document.getElementById('lien-disb-closed-count');
+    if(closedCount) closedCount.textContent = 'Already disbursed · '+closed.length;
+    if(!closed.length){ if(tbodyClosed) tbodyClosed.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursed cases found.</td></tr>'; }
+    else {
+      var html2='';
+      for(var k=0;k<closed.length;k++){
+        var rc = closed[k] || {};
+        var dc = rc.days_in_disbursement||0;
+        html2 += '<tr class="row-good">';
+        html2 += '<td class="case-cell"><div class="case-name">'+_caseLink(rc._casename||'—', rc.id||null)+'</div></td>';
+        html2 += '<td>'+esc(rc.lien_negotiator||'—')+'</td>';
+        html2 += '<td class="num">'+dc+'d</td>';
+        html2 += '<td class="num">'+esc(rc.disbursed_date||'—')+'</td>';
+        html2 += '<td class="num">'+esc(rc.last_touched_lien_negotiator||'—')+'</td>';
+        html2 += '</tr>';
+      }
+      if(tbodyClosed) tbodyClosed.innerHTML = html2;
+    }
   }
 
   function renderAll(){
@@ -4615,15 +4706,50 @@ function renderDataQuality(raw){
         renderCases();
       });
     }
+
+    // Fee rate edit (per case row)
+    document.getElementById('lien-cases-body').addEventListener('click', function(e){
+      var el = e.target.closest('[data-action="edit-fee-rate"]');
+      if(!el) return;
+      var cn = el.getAttribute('data-case');
+      var contact = (typeof _getContact === 'function') ? _getContact(cn) : {};
+      var cur = contact && parseFloat(contact.feeRate) > 0 ? String(Math.round(parseFloat(contact.feeRate)*100)) : '33';
+      var val = prompt('Attorney fee rate for this case (%):', cur);
+      if(val !== null){
+        var num = parseFloat(val);
+        if(!isNaN(num) && num > 0 && num <= 100){
+          if(typeof _setContact === 'function') _setContact(cn, { feeRate: num/100 });
+          renderCases();
+          renderKPIs();
+        }
+      }
+    });
+
+    // Monthly goal edit
+    var goalBtn = document.getElementById('lien-fee-goal-edit');
+    if(goalBtn){
+      goalBtn.addEventListener('click', function(){
+        var cur = localStorage.getItem('lien_fee_goal') || '225000';
+        var val = prompt('Monthly attorney fee goal ($):', cur);
+        if(val !== null){
+          var num = parseFloat(String(val).replace(/[$,]/g,''));
+          if(!isNaN(num) && num > 0){
+            localStorage.setItem('lien_fee_goal', String(num));
+            renderKPIs();
+          }
+        }
+      });
+    }
   }
 
   function showError(msg){
     var head = document.querySelector('#lien-briefing .head');
     if(head) head.innerHTML = '<span class="pulse" style="background:var(--red-mark);"></span>Lien Ops · '+esc(msg);
-    var ids = ['lien-cases-body','lien-neg-body','disb-body'];
-    for(var i=0;i<ids.length;i++){
-      var el=document.getElementById(ids[i]);
-      if(el) el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--red);">'+esc(msg)+'</td></tr>';
+    var errColspan = {'lien-cases-body':9,'lien-neg-body':7,'disb-body':5,'disb-body-closed':5};
+    var errIds = Object.keys(errColspan);
+    for(var i=0;i<errIds.length;i++){
+      var el=document.getElementById(errIds[i]);
+      if(el) el.innerHTML='<tr><td colspan="'+errColspan[errIds[i]]+'" style="text-align:center;padding:24px;color:var(--red);">'+esc(msg)+'</td></tr>';
     }
   }
 
