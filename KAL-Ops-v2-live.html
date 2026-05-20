@@ -1876,7 +1876,7 @@ function activate(name){
 tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
 activate('pipeline');
 
-const order = ['pipeline','settlements','cm','lien','dq','sol'];
+const order = ['pipeline','casecare','settlements','cm','lien','sol','dq'];
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const n = parseInt(e.key,10);
@@ -2975,7 +2975,7 @@ function renderLienActivityFeed(disbursement, days){
         var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
         var rowCls = r.days_in_disbursement >= 90 ? 'row-warn' : '';
         return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
           '<td class="num">'+daysDisp+'</td>'+
           '<td class="num" style="color:var(--ink-3)">'+_esc(r.pending_disbursement_date||'—')+'</td>'+
@@ -2998,7 +2998,7 @@ function renderLienActivityFeed(disbursement, days){
         var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
         var rowCls = r.days_in_disbursement >= 120 ? 'row-warn' : 'row-good';
         return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
           '<td class="num">'+daysDisp+'</td>'+
           '<td class="num" style="color:var(--green);font-weight:600">'+_esc(r.disbursed_date||'—')+'</td>'+
@@ -3934,7 +3934,7 @@ function _ccRenderIntakes(raw){
     var flags=_ccBuildFlags(t,0,jf);
     var rowCls=flags.some(function(f){return f.indexOf('flag red')>=0;})?'row-alert':flags.length?'row-warn':'';
     html+='<tr class="'+rowCls+'">'
-      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
+      +'<td><div class="case-cell"><div class="case-name">'+_caseLink(t._casename.split(' - ')[0], t.id||null)+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
       +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.retainref_date),win)+'</td>'
       +(function(){
         var call=_ccGetLastCall(t._casename);
@@ -3989,7 +3989,7 @@ function _ccRenderTreating(raw,bucketIdx){
       else solHtml='<span style="color:var(--ink-4)">—</span>';
     }
     html+='<tr class="'+rowCls+'">'
-      +'<td><div class="case-cell"><div class="case-name">'+_esc(t._casename.split(' - ')[0])+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
+      +'<td><div class="case-cell"><div class="case-name">'+_caseLink(t._casename.split(' - ')[0], t.id||null)+'</div><div class="case-meta">'+_esc(t.case_manager||'Unassigned')+'</div></div></td>'
       +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_ccDaysAgo(t.retainref_date)!==null?_ccDaysAgo(t.retainref_date)+'d':'—')+'</td>'
       +'<td class="num">'+_ccFmtMoney(t.total_meds)+'</td>'
       +'<td>'+_ccDaysAgoHtml(_ccDaysAgo(t.last_touched),_ccCfg.staleThreshold)+'</td>'
@@ -4106,7 +4106,7 @@ function renderDataQuality(raw){
     if(!byCM[cm]) byCM[cm]={total:0,hasPolicy:0,missing:[]};
     byCM[cm].total++;
     if(d.insurance_policy){ byCM[cm].hasPolicy++; }
-    else { byCM[cm].missing.push({name:(d.case&&d.case._casename)||d._casename||d.casename||'—',date:d.datesent||''}); }
+    else { byCM[cm].missing.push({name:(d.case&&d.case._casename)||d._casename||d.casename||'—',date:d.datesent||'',id:(d.case&&d.case.id)||null}); }
   });
   var cmArr=Object.keys(byCM).map(function(k){
     var pct=Math.round(byCM[k].hasPolicy/byCM[k].total*100);
@@ -4138,7 +4138,7 @@ function renderDataQuality(raw){
       if(hasMissing){
         var subHtml=r.missing.map(function(m){
           return '<tr class="dq-sub" data-parent="'+expId+'" style="display:none;background:var(--surface-2);">'+
-            '<td style="padding:5px 12px 5px 36px;font-size:11px;color:var(--ink-2);" colspan="3">'+_esc(m.name)+'</td>'+
+            '<td style="padding:5px 12px 5px 36px;font-size:11px;color:var(--ink-2);" colspan="3">'+_caseLink(m.name, m.id)+'</td>'+
             '<td class="num" style="font-size:11px;color:var(--ink-3);">'+_esc(m.date)+'</td>'+
             '<td style="font-size:11px;color:var(--red);">No policy limit</td>'+
             '</tr>';
