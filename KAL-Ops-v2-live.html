@@ -2128,6 +2128,12 @@ function _fmtCurrency(n){
 }
 function _esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(String(s==null?'':s)));return d.innerHTML;}
 
+function _caseLink(name, id){
+  var label = _esc(name||'—');
+  if(!id) return label;
+  return '<a href="https://my.casepeer.com/case/'+id+'/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;text-decoration-color:var(--ink-4)" onmouseover="this.style.textDecorationColor=\'var(--blue)\'" onmouseout="this.style.textDecorationColor=\'var(--ink-4)\'">'+label+'</a>';
+}
+
 /* =========================================================
    Demand area chart -- live build from DATA.demands
    Called by renderPipeline() after fetch.
@@ -2388,18 +2394,20 @@ function _openEmailTemplate(tmpl, caseName){
   var policyLimit = d.insurance_policy || '';
   var offerAmt = d.offer_amount ? '$' + parseFloat(d.offer_amount).toLocaleString() : '';
   var subj, body;
+  var adjName = contact.adjusterName || ‘’;
+  var greeting = adjName ? ‘Dear ‘ + adjName + ‘,’ : ‘Dear Adjuster,’;
   if(tmpl === 1){
-    subj = 'Demand Submitted — ' + caseName + claimStr;
-    body = 'Dear [Adjuster],\n\nI wanted to confirm that our demand package was submitted on ' + demandDate + ' for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ' + expiryDate + '.\n\n';
+    subj = ‘Demand Submitted — ‘ + caseName + claimStr;
+    body = greeting + ‘\n\nI wanted to confirm that our demand package was submitted on ‘ + demandDate + ‘ for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ‘ + expiryDate + ‘.\n\n’;
   } else if(tmpl === 2){
-    subj = 'Following Up — ' + caseName + claimStr;
-    body = 'Dear [Adjuster],\n\nI wanted to follow up on our demand submitted on ' + demandDate + '. If you’ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n';
+    subj = ‘Following Up — ‘ + caseName + claimStr;
+    body = greeting + ‘\n\nI wanted to follow up on our demand submitted on ‘ + demandDate + ‘. If you’ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n’;
   } else if(tmpl === 3){
-    subj = 'Following Up — ' + caseName + claimStr;
-    body = 'Dear [Adjuster],\n\nI am following up on our demand submitted on ' + demandDate + '. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n';
+    subj = ‘Following Up — ‘ + caseName + claimStr;
+    body = greeting + ‘\n\nI am following up on our demand submitted on ‘ + demandDate + ‘. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n’;
   } else {
-    subj = 'Re: Settlement Offer — ' + caseName + claimStr;
-    body = 'Dear [Adjuster],\n\nThank you for your offer of ' + (offerAmt||'[offer amount]') + ' on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n';
+    subj = ‘Re: Settlement Offer — ‘ + caseName + claimStr;
+    body = greeting + ‘\n\nThank you for your offer of ‘ + (offerAmt||’[offer amount]’) + ‘ on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n’;
   }
   // Open Outlook Web compose — avoids triggering system default mail app
   var owcBase = 'https://outlook.office.com/mail/deeplink/compose';
@@ -2547,8 +2555,9 @@ function renderMoneyFeed(raw){
         var cm = (d.case&&d.case.case_manager)||'—';
         var cmShort = cm.split(' ');
         var cmDisp = cmShort.length>1 ? cmShort[0]+' '+cmShort[cmShort.length-1][0]+'.' : cm;
+        var _depCaseId = (d.case&&d.case.id)||null;
         return '<tr>'+
-          '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink((d.case&&d.case._casename)||'—', _depCaseId)+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
           '<td class="num" style="color:var(--green);font-weight:600">'+_fmtCurrency(parseFloat(d.amount)||0)+'</td>'+
           '<td style="color:var(--ink-3)">'+_fmtCheckDate(d.check_date)+'</td>'+
@@ -2577,8 +2586,9 @@ function renderMoneyFeed(raw){
         var expiresDisp = d.dateexpires ? _fmtCheckDate(d.dateexpires)+' <span style="color:var(--ink-4);font-size:11px">('+daysDisp+')</span>' : '—';
         var ins = (d.insurance||'—');
         var insShort = ins.length > 20 ? ins.substring(0,18)+'…' : ins;
+        var _offerCaseId = (d.case&&d.case.id)||null;
         return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink((d.case&&d.case._casename)||'—', _offerCaseId)+'</td>'+
           '<td style="color:var(--ink-3);font-size:11px">'+_esc(insShort)+'</td>'+
           '<td class="num" style="color:var(--amber);font-weight:600">'+_fmtCurrency(parseFloat(d.offer_amount)||0)+'</td>'+
           '<td style="font-size:11px">'+expiresDisp+'</td>'+
@@ -2795,6 +2805,8 @@ function renderSettleOffers(demands, view, settlementMap){
     // Contact data
     var contact = _getContact(caseName);
     var adjEmail = contact.adjusterEmail || '';
+    var adjName  = contact.adjusterName  || '';
+    var adjPhone = contact.adjusterPhone || '';
     var claimNum = contact.claimNumber || '';
     var colCount = 13;
 
@@ -2836,12 +2848,24 @@ function renderSettleOffers(demands, view, settlementMap){
     var expandRow = '<tr class="expand-row" data-expand-for="'+_esc(caseName)+'" style="display:none">'+
       '<td colspan="'+colCount+'" style="padding:0;border-bottom:1px solid var(--line)">'+
       '<div style="padding:12px 20px 14px;background:var(--surface-2)">'+
-      '<div style="display:flex;gap:32px;align-items:flex-end;margin-bottom:11px">'+
+      '<div style="display:flex;gap:32px;align-items:flex-end;flex-wrap:wrap;margin-bottom:11px">'+
         '<div>'+
           '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Claim #</div>'+
           (claimNum
             ? '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(claimNum)+'</span>'
             : '<span data-action="edit-claim" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Adj. Name</div>'+
+          (adjName
+            ? '<span data-action="edit-adj-name" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(adjName)+'</span>'
+            : '<span data-action="edit-adj-name" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Adj. Phone</div>'+
+          (adjPhone
+            ? '<span data-action="edit-adj-phone" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(adjPhone)+'</span>'
+            : '<span data-action="edit-adj-phone" data-case="'+_esc(caseName)+'" style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>')+
         '</div>'+
         '<div>'+
           '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Adj. Email</div>'+
@@ -2857,9 +2881,10 @@ function renderSettleOffers(demands, view, settlementMap){
       '</tr>';
 
 
+    var _caseId = (d.case && d.case.id) || null;
     return '<tr class="'+rowCls+'">'+
       '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
-      '<td class="name" style="font-size:12px">'+_esc(caseName)+'</td>'+
+      '<td class="name" style="font-size:12px">'+_caseLink(caseName, _caseId)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
       '<td class="num">'+polDisp+'</td>'+
@@ -3131,7 +3156,7 @@ function renderSOL(raw){
     var tag = _solSourceTag(e.manual);
     var daysDisp = e.daysOut<=0?'TODAY':e.daysOut+'d';
     var action = _solActionText(e.daysOut, e.casestatus);
-    return '<tr style="background:#fff5f4"><td style="box-shadow:inset 3px 0 0 #d70015;font-weight:500;font-size:12px">'+_esc(e.case)+tag+'</td>'+
+    return '<tr style="background:#fff5f4"><td style="box-shadow:inset 3px 0 0 #d70015;font-weight:500;font-size:12px">'+_caseLink(e.case, e.id)+tag+'</td>'+
       '<td class="num" style="font-weight:600;color:#b3261e">'+_esc(e.sol)+'</td>'+
       '<td class="num"><span class="flag red">'+daysDisp+'</span></td>'+
       '<td><span class="flag gray">'+_esc(e.casestatus)+'</span></td>'+
@@ -3140,7 +3165,7 @@ function renderSOL(raw){
 
   function solRow(e, rowCls, badgeCls){
     var tag = _solSourceTag(e.manual);
-    return '<tr class="'+rowCls+'"><td style="font-weight:500;font-size:12px">'+_esc(e.case)+tag+'</td>'+
+    return '<tr class="'+rowCls+'"><td style="font-weight:500;font-size:12px">'+_caseLink(e.case, e.id)+tag+'</td>'+
       '<td class="num" style="color:var(--ink-3)">'+_esc(e.sol)+'</td>'+
       '<td class="num"><span class="flag '+badgeCls+'">'+e.daysOut+'d</span></td>'+
       '<td><span class="flag gray">'+_esc(e.casestatus)+'</span></td>'+
@@ -3152,7 +3177,7 @@ function renderSOL(raw){
     var daysAgo = Math.abs(e.daysOut);
     var reason = e.filedStatus ? 'Filed — '+e.filedStatus+' ✓' : 'Verify court case number';
     var reasonColor = e.filedStatus ? 'var(--green)' : 'var(--red)';
-    return '<tr><td style="box-shadow:inset 3px 0 0 #888;font-weight:500;font-size:12px">'+_esc(e.case)+tag+'</td>'+
+    return '<tr><td style="box-shadow:inset 3px 0 0 #888;font-weight:500;font-size:12px">'+_caseLink(e.case, e.id)+tag+'</td>'+
       '<td class="num" style="color:var(--ink-3)">'+_esc(e.sol)+'</td>'+
       '<td class="num"><span class="flag gray">'+daysAgo+'d past</span></td>'+
       '<td><span class="flag gray">'+_esc(e.casestatus)+'</span></td>'+
@@ -3344,6 +3369,52 @@ function bindSettlePanelToggles(raw, settlementMap){
           emailEl.setAttribute('data-action','edit-adj-email');
         }
         inp.addEventListener('blur', saveEmail);
+        inp.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
+          if(ev.key==='Escape'){ inp.value=current; inp.blur(); }
+        });
+        return;
+      }
+      // Edit adjuster name
+      var adjNameEl = e.target.closest('[data-action="edit-adj-name"]');
+      if(adjNameEl){
+        var cn = adjNameEl.getAttribute('data-case');
+        var current = _getContact(cn).adjusterName || '';
+        adjNameEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="First Last" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:150px;outline:none;background:var(--surface);color:var(--ink)">';
+        var inp = adjNameEl.querySelector('input');
+        inp.focus(); inp.select();
+        function saveAdjName(){
+          var val = inp.value.trim();
+          if(val !== current) _setContact(cn, { adjusterName: val });
+          adjNameEl.innerHTML = val
+            ? '<span style="font-size:12px;cursor:pointer;color:var(--ink-2)" title="Click to edit">'+_esc(val)+'</span>'
+            : '<span style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>';
+          adjNameEl.setAttribute('data-action','edit-adj-name');
+        }
+        inp.addEventListener('blur', saveAdjName);
+        inp.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
+          if(ev.key==='Escape'){ inp.value=current; inp.blur(); }
+        });
+        return;
+      }
+      // Edit adjuster phone
+      var adjPhoneEl = e.target.closest('[data-action="edit-adj-phone"]');
+      if(adjPhoneEl){
+        var cn = adjPhoneEl.getAttribute('data-case');
+        var current = _getContact(cn).adjusterPhone || '';
+        adjPhoneEl.innerHTML = '<input type="tel" value="'+_esc(current)+'" placeholder="(xxx) xxx-xxxx" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:140px;outline:none;background:var(--surface);color:var(--ink)">';
+        var inp = adjPhoneEl.querySelector('input');
+        inp.focus(); inp.select();
+        function saveAdjPhone(){
+          var val = inp.value.trim();
+          if(val !== current) _setContact(cn, { adjusterPhone: val });
+          adjPhoneEl.innerHTML = val
+            ? '<span style="font-size:12px;cursor:pointer;color:var(--ink-2);font-family:var(--num)" title="Click to edit">'+_esc(val)+'</span>'
+            : '<span style="font-size:12px;cursor:pointer;color:var(--ink-4)">+ add</span>';
+          adjPhoneEl.setAttribute('data-action','edit-adj-phone');
+        }
+        inp.addEventListener('blur', saveAdjPhone);
         inp.addEventListener('keydown', function(ev){
           if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
           if(ev.key==='Escape'){ inp.value=current; inp.blur(); }
@@ -4213,6 +4284,7 @@ function renderDataQuality(raw){
       }
       cases.push({
         caseName:c.caseName,
+        caseId:c.caseId||null,
         negotiator:Object.keys(c.negSet).sort().join(', ')||'—',
         lienCount:c.liens.length,
         maxDays:maxDays,
@@ -4381,7 +4453,7 @@ function renderDataQuality(raw){
       var dst = c.daysSinceTouch!=null ? c.daysSinceTouch+'d' : '—';
       html += '<tr class="'+rowCls+'" data-case="'+esc(c.caseName)+'">';
       html += '<td><button class="chip" data-expand="'+esc(c.caseName)+'" style="padding:1px 8px;font-size:13px;line-height:1;">'+(exp?'−':'+')+'</button></td>';
-      html += '<td class="name">'+esc(c.caseName)+'</td>';
+      html += '<td class="name">'+_caseLink(c.caseName, c.caseId)+'</td>';
       html += '<td>'+esc(c.negotiator)+'</td>';
       html += '<td class="num">'+c.lienCount+'</td>';
       html += '<td class="num">'+c.maxDays+'d</td>';
@@ -4494,7 +4566,7 @@ function renderDataQuality(raw){
       var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
       var barCls = d>=120 ? 'amber' : 'blue';
       html += '<tr class="'+rowCls+'">';
-      html += '<td class="case-cell"><div class="case-name">'+esc(r._casename||'—')+'</div></td>';
+      html += '<td class="case-cell"><div class="case-name">'+_caseLink(r._casename||'—', r.id||null)+'</div></td>';
       html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
       html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
       html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
