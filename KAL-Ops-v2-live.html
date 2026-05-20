@@ -2394,20 +2394,20 @@ function _openEmailTemplate(tmpl, caseName){
   var policyLimit = d.insurance_policy || '';
   var offerAmt = d.offer_amount ? '$' + parseFloat(d.offer_amount).toLocaleString() : '';
   var subj, body;
-  var adjName = contact.adjusterName || ‘’;
-  var greeting = adjName ? ‘Dear ‘ + adjName + ‘,’ : ‘Dear Adjuster,’;
+  var adjName = contact.adjusterName || '';
+  var greeting = adjName ? 'Dear ' + adjName + ',' : 'Dear Adjuster,';
   if(tmpl === 1){
-    subj = ‘Demand Submitted — ‘ + caseName + claimStr;
-    body = greeting + ‘\n\nI wanted to confirm that our demand package was submitted on ‘ + demandDate + ‘ for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ‘ + expiryDate + ‘.\n\n’;
+    subj = 'Demand Submitted — ' + caseName + claimStr;
+    body = greeting + '\n\nI wanted to confirm that our demand package was submitted on ' + demandDate + ' for the above-referenced claim. Please confirm receipt at your earliest convenience.\n\nWe have calculated the response due date as ' + expiryDate + '.\n\n';
   } else if(tmpl === 2){
-    subj = ‘Following Up — ‘ + caseName + claimStr;
-    body = greeting + ‘\n\nI wanted to follow up on our demand submitted on ‘ + demandDate + ‘. If you’ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n’;
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = greeting + '\n\nI wanted to follow up on our demand submitted on ' + demandDate + '. If you\'ve had an opportunity to begin your review and would like to discuss, please let me know your availability and a direct number to reach you.\n\nWe look forward to hearing from you.\n\n';
   } else if(tmpl === 3){
-    subj = ‘Following Up — ‘ + caseName + claimStr;
-    body = greeting + ‘\n\nI am following up on our demand submitted on ‘ + demandDate + ‘. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n’;
+    subj = 'Following Up — ' + caseName + claimStr;
+    body = greeting + '\n\nI am following up on our demand submitted on ' + demandDate + '. The evaluation period has now expired. Are you available today to discuss the status of the claim?\n\n';
   } else {
-    subj = ‘Re: Settlement Offer — ‘ + caseName + claimStr;
-    body = greeting + ‘\n\nThank you for your offer of ‘ + (offerAmt||’[offer amount]’) + ‘ on the above claim. Before we can respond, we’d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n’;
+    subj = 'Re: Settlement Offer — ' + caseName + claimStr;
+    body = greeting + '\n\nThank you for your offer of ' + (offerAmt||'[offer amount]') + ' on the above claim. Before we can respond, we\'d appreciate a breakdown of your evaluation — specifically, how you arrived at general and special damages, any treatment or records you are not crediting, and any liability factors you are weighing.\n\nThis will help us present your position accurately to our client and work toward a resolution.\n\n';
   }
   // Open Outlook Web compose — avoids triggering system default mail app
   var owcBase = 'https://outlook.office.com/mail/deeplink/compose';
