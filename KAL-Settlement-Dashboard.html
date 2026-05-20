@@ -613,182 +613,180 @@
 
 <div class="app">
 
-  <!-- Settlement tab — standalone for Hernan Palacios -->
   <section class="page active" data-page="settlements" style="--accent:#0071e3">
 
     <div class="briefing">
-      <div class="head"><span class="pulse"></span>Settlements · 1 to act on</div>
-      <div class="items">
-        <div class="item red"><span class="marker">65</span><span>demands past 30-day window with no carrier offer.</span></div>
-        <div class="item amber"><span class="marker">2-person</span><span>team carrying 84 active negotiations.</span></div>
-        <div class="item blue"><span class="marker">19</span><span>settled — ready for handoff to lien team.</span></div>
-      </div>
-      <div class="stamp"><b>Settlement health</b>updated live</div>
-    </div>
-
-    <div class="kpi-grid">
-      <div class="kpi" data-tip="Total demands sent in 2026 to date.">
-        <div class="label">Demands Sent · 2026 YTD</div>
-        <div class="row-v">
-          <div class="value">44</div>
-          <div class="delta down">▼ pace</div>
+          <div class="head"><span class="pulse"></span>Settlements · 1 to act on</div>
+          <div class="items">
+            <div class="item red"><span class="marker">65</span><span>demands past 30-day window with no carrier offer.</span></div>
+            <div class="item amber"><span class="marker">2-person</span><span>team carrying 84 active negotiations.</span></div>
+            <div class="item blue"><span class="marker">19</span><span>settled — ready for handoff to lien team.</span></div>
+          </div>
+          <div class="stamp"><b>Settlement health</b>updated live</div>
         </div>
-        <div class="spark" data-spark="29,15" data-color="ink-3" data-bars="1"></div>
-        <div class="sub">Jan: 29 · Feb: 15</div>
-      </div>
-
-      <div class="kpi alert" data-tip="30-day window closed, no offer received.&#10;Mark &amp; Hernan own follow-up.">
-        <div class="accent">Action</div>
-        <div class="label">Expired · No Response</div>
-        <div class="row-v">
-          <div class="value">65</div>
-          <div class="delta down">▲ 4 wk</div>
+    
+        <div class="kpi-grid">
+          <div class="kpi" data-tip="Total demands sent in 2026 to date.">
+            <div class="label">Demands Sent · 2026 YTD</div>
+            <div class="row-v">
+              <div class="value">44</div>
+              <div class="delta down">▼ pace</div>
+            </div>
+            <div class="spark" data-spark="29,15" data-color="ink-3" data-bars="1"></div>
+            <div class="sub">Jan: 29 · Feb: 15</div>
+          </div>
+    
+          <div class="kpi alert" data-tip="30-day window closed, no offer received.&#10;Mark &amp; Hernan own follow-up.">
+            <div class="accent">Action</div>
+            <div class="label">Expired · No Response</div>
+            <div class="row-v">
+              <div class="value">65</div>
+              <div class="delta down">▲ 4 wk</div>
+            </div>
+            <div class="spark" data-spark="55,57,58,60,61,61,62,63,63,64,64,65,65,65" data-color="red"></div>
+            <div class="sub">Needs adjuster follow-up</div>
+          </div>
+    
+          <div class="kpi" data-tip="Still inside 30-day response window.">
+            <div class="label">Pending Response</div>
+            <div class="row-v">
+              <div class="value">4</div>
+              <div class="delta flat">— 0 wk</div>
+            </div>
+            <div class="spark" data-spark="6,5,5,4,4,5,5,4,4,5,4,4,4,4" data-color="ink-3"></div>
+            <div class="sub">Monitor only</div>
+          </div>
+    
+          <div class="kpi warn" data-tip="Offer received, in negotiation.">
+            <div class="accent">Active</div>
+            <div class="label">Active Negotiations</div>
+            <div class="row-v">
+              <div class="value">84</div>
+              <div class="delta down">▲ 6 wk</div>
+            </div>
+            <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
+            <div class="sub">Mark &amp; Hernan</div>
+          </div>
         </div>
-        <div class="spark" data-spark="55,57,58,60,61,61,62,63,63,64,64,65,65,65" data-color="red"></div>
-        <div class="sub">Needs adjuster follow-up</div>
-      </div>
-
-      <div class="kpi" data-tip="Still inside 30-day response window.">
-        <div class="label">Pending Response</div>
-        <div class="row-v">
-          <div class="value">4</div>
-          <div class="delta flat">— 0 wk</div>
+    
+        <div class="section-title">
+          <div class="left">
+            <div class="accent-rule"></div>
+            <h2>Demand pipeline · action required</h2>
+          </div>
         </div>
-        <div class="spark" data-spark="6,5,5,4,4,5,5,4,4,5,4,4,4,4" data-color="ink-3"></div>
-        <div class="sub">Monitor only</div>
-      </div>
-
-      <div class="kpi warn" data-tip="Offer received, in negotiation.">
-        <div class="accent">Active</div>
-        <div class="label">Active Negotiations</div>
-        <div class="row-v">
-          <div class="value">84</div>
-          <div class="delta down">▲ 6 wk</div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>By status</h3>
+            <div class="chips" data-filter="settle">
+              <button class="chip on" data-f="all">All owners</button>
+              <button class="chip" data-f="mark">Mark</button>
+              <button class="chip" data-f="hernan">Hernan</button>
+                </div>
+          </div>
+          <table class="t">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th class="num">Count</th>
+                <th>Meaning</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="row-alert">
+                <td><span class="stat-pill red"><span class="blip"></span>Expired · no offer</span></td>
+                <td class="num">65</td>
+                <td>30-day window closed, no carrier response.</td>
+                <td class="owner">Mark · Hernan</td>
+              </tr>
+              <tr>
+                <td><span class="stat-pill"><span class="blip"></span>Pending · in window</span></td>
+                <td class="num">4</td>
+                <td>Inside response window — monitor only.</td>
+                <td class="owner">—</td>
+              </tr>
+              <tr class="row-warn">
+                <td><span class="stat-pill amber"><span class="blip"></span>Negotiating</span></td>
+                <td class="num">84</td>
+                <td>Offer received, active negotiation.</td>
+                <td class="owner">Mark · Hernan</td>
+              </tr>
+              <tr class="row-good">
+                <td><span class="stat-pill green"><span class="blip"></span>Settled · move to liens</span></td>
+                <td class="num">19</td>
+                <td>Deal done — handoff to lien team.</td>
+                <td class="owner">Bianca</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
-        <div class="sub">Mark &amp; Hernan</div>
-      </div>
-    </div>
-
-    <div class="section-title">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Demand pipeline · action required</h2>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h3>By status</h3>
-        <div class="chips" data-filter="settle">
-          <button class="chip on" data-f="all">All owners</button>
-          <button class="chip" data-f="mark">Mark</button>
-          <button class="chip" data-f="hernan">Hernan</button>
-          <button class="chip" data-f="bianca">Bianca</button>
+    
+        <!-- Demand Tracker panel -->
+        <div class="section-title">
+          <div class="left">
+            <div class="accent-rule"></div>
+            <h2>Demand tracker · settlement stage</h2>
+          </div>
+          <div class="seg" id="settle-offer-seg">
+            <button class="on" data-view="expired">Expired</button>
+            <button data-view="pending">Pending</button>
+          </div>
         </div>
-      </div>
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th class="num">Count</th>
-            <th>Meaning</th>
-            <th>Owner</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="row-alert">
-            <td><span class="stat-pill red"><span class="blip"></span>Expired · no offer</span></td>
-            <td class="num">65</td>
-            <td>30-day window closed, no carrier response.</td>
-            <td class="owner">Mark · Hernan</td>
-          </tr>
-          <tr>
-            <td><span class="stat-pill"><span class="blip"></span>Pending · in window</span></td>
-            <td class="num">4</td>
-            <td>Inside response window — monitor only.</td>
-            <td class="owner">—</td>
-          </tr>
-          <tr class="row-warn">
-            <td><span class="stat-pill amber"><span class="blip"></span>Negotiating</span></td>
-            <td class="num">84</td>
-            <td>Offer received, active negotiation.</td>
-            <td class="owner">Mark · Hernan</td>
-          </tr>
-          <tr class="row-good">
-            <td><span class="stat-pill green"><span class="blip"></span>Settled · move to liens</span></td>
-            <td class="num">19</td>
-            <td>Deal done — handoff to lien team.</td>
-            <td class="owner">Bianca</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Demand Tracker panel -->
-    <div class="section-title">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Demand tracker · settlement stage</h2>
-      </div>
-      <div class="seg" id="settle-offer-seg">
-        <button class="on" data-view="expired">Expired</button>
-        <button data-view="pending">Pending</button>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h3 id="settle-offers-title">Expired demands — past 30-day window</h3>
-        <div class="meta-r" id="settle-offers-meta">—</div>
-      </div>
-      <table class="t" id="tracker-table">
-        <thead>
-          <tr id="tracker-thead">
-            <th style="width:28px;padding:10px 8px"></th>
-            <th data-sort="case" style="cursor:pointer;user-select:none">Case <span class="sort-ind"></span></th>
-            <th data-sort="cm" style="cursor:pointer;user-select:none">CM <span class="sort-ind"></span></th>
-            <th data-sort="carrier" style="cursor:pointer;user-select:none">Carrier <span class="sort-ind"></span></th>
-            <th class="num" data-sort="policy" style="cursor:pointer;user-select:none">Policy Limit <span class="sort-ind"></span></th>
-            <th class="num" data-sort="meds" style="cursor:pointer;user-select:none">Specials <span class="sort-ind"></span></th>
-            <th class="num" data-sort="offer" style="cursor:pointer;user-select:none">Offer <span class="sort-ind"></span></th>
-            <th data-sort="expires" style="cursor:pointer;user-select:none">Expires <span class="sort-ind"></span></th>
-            <th data-sort="touched" style="cursor:pointer;user-select:none">Last Touched <span class="sort-ind"></span></th>
-            <th style="width:160px;min-width:120px">Note</th>
-            <th data-sort="sol" style="cursor:pointer;user-select:none">SOL <span class="sort-ind"></span></th>
-            <th data-sort="type" style="cursor:pointer;user-select:none">Type <span class="sort-ind"></span></th>
-            <th data-sort="status" style="cursor:pointer;user-select:none">Status <span class="sort-ind"></span></th>
-          </tr>
-        </thead>
-        <tbody id="settle-offers-body">
-          <tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
-        </tbody>
-      </table>
-      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
-        <span id="settle-offers-urgency" style="color:var(--ink-3)">—</span>
-        <span id="settle-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
-      </div>
-    </div>
-
-    <div class="section-title">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Top insurance carriers · 2026 YTD</h2>
-      </div>
-      <div class="hint">Sorted by demand volume · bar shows volume share</div>
-    </div>
-    <div class="panel">
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Carrier</th>
-            <th class="num has-bar">Demands</th>
-            <th class="num">Pops</th>
-            <th class="num">Pop Rate</th>
-            <th class="num has-bar">Avg Offer</th>
-          </tr>
-        </thead>
-        <tbody id="carriers"></tbody>
-      </table>
-    </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3 id="settle-offers-title">Expired demands — past 30-day window</h3>
+            <div class="meta-r" id="settle-offers-meta">—</div>
+          </div>
+          <table class="t" id="tracker-table">
+            <thead>
+              <tr id="tracker-thead">
+                <th style="width:28px;padding:10px 8px"></th>
+                <th data-sort="case" style="cursor:pointer;user-select:none">Case <span class="sort-ind"></span></th>
+                <th data-sort="cm" style="cursor:pointer;user-select:none">CM <span class="sort-ind"></span></th>
+                <th data-sort="carrier" style="cursor:pointer;user-select:none">Carrier <span class="sort-ind"></span></th>
+                <th class="num" data-sort="policy" style="cursor:pointer;user-select:none">Policy Limit <span class="sort-ind"></span></th>
+                <th class="num" data-sort="meds" style="cursor:pointer;user-select:none">Specials <span class="sort-ind"></span></th>
+                <th class="num" data-sort="offer" style="cursor:pointer;user-select:none">Offer <span class="sort-ind"></span></th>
+                <th data-sort="expires" style="cursor:pointer;user-select:none">Expires <span class="sort-ind"></span></th>
+                <th data-sort="touched" style="cursor:pointer;user-select:none">Last Touched <span class="sort-ind"></span></th>
+                <th style="width:160px;min-width:120px">Note</th>
+                <th data-sort="sol" style="cursor:pointer;user-select:none">SOL <span class="sort-ind"></span></th>
+                <th data-sort="type" style="cursor:pointer;user-select:none">Type <span class="sort-ind"></span></th>
+                <th data-sort="status" style="cursor:pointer;user-select:none">Status <span class="sort-ind"></span></th>
+              </tr>
+            </thead>
+            <tbody id="settle-offers-body">
+              <tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr>
+            </tbody>
+          </table>
+          <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
+            <span id="settle-offers-urgency" style="color:var(--ink-3)">—</span>
+            <span id="settle-offers-total" style="font-weight:600;color:var(--amber);font-family:var(--num);font-variant-numeric:tabular-nums">—</span>
+          </div>
+        </div>
+    
+        <div class="section-title">
+          <div class="left">
+            <div class="accent-rule"></div>
+            <h2>Top insurance carriers · 2026 YTD</h2>
+          </div>
+          <div class="hint">Sorted by demand volume · bar shows volume share</div>
+        </div>
+        <div class="panel">
+          <table class="t">
+            <thead>
+              <tr>
+                <th>Carrier</th>
+                <th class="num has-bar">Demands</th>
+                <th class="num">Pops</th>
+                <th class="num">Pop Rate</th>
+                <th class="num has-bar">Avg Offer</th>
+              </tr>
+            </thead>
+            <tbody id="carriers"></tbody>
+          </table>
+        </div>
 
   </section>
 
@@ -826,7 +824,7 @@ function _caseLink(name, id){
 }
 
 /* =========================================================
-   Railway backend + flags/notes/contacts + money feed helpers
+   Railway + flags/notes/contacts + money feed helpers
    ========================================================= */
 var _moneyPeriodDays = 7;
 var _settleOfferView = 'expired';
@@ -1096,7 +1094,7 @@ function _fmtCheckDate(str){
 
 
 /* =========================================================
-   renderSettleOffers() — main demand tracker table
+   renderSettleOffers()
    ========================================================= */
 
 function renderSettleOffers(demands, view, settlementMap){
@@ -1414,7 +1412,7 @@ function renderSettleDeposits(deposits, days){
 
 
 /* =========================================================
-   renderSettlements() — KPIs + briefing + pipeline by status
+   renderSettlements()
    ========================================================= */
 
 function renderSettlements(raw){
@@ -1488,7 +1486,7 @@ function renderSettlements(raw){
 
 
 /* =========================================================
-   renderCarriers() — top carriers table
+   renderCarriers()
    ========================================================= */
 
 function renderCarriers(demands){
@@ -1538,7 +1536,7 @@ function renderCarriers(demands){
 
 
 /* =========================================================
-   bindSettlePanelToggles() — tab toggles + all event handlers
+   bindSettlePanelToggles() + event handlers
    ========================================================= */
 
 function bindSettlePanelToggles(raw, settlementMap){
@@ -1858,7 +1856,7 @@ function renderPipeline(raw){
 
 
 /* =========================================================
-   fetchAll() — paginated CasePeer API fetch
+   fetchAll()
    ========================================================= */
   async function fetchAll(baseUrl){
     var all=[], page=1, hasMore=true, guard=0;
@@ -1888,71 +1886,23 @@ function renderPipeline(raw){
   }
 
 /* =========================================================
-   Off-host / error banners
+   Off-host / error banner
    ========================================================= */
   function showOffHostBanner(msg){
-    // Replace every briefing head across all tabs with the message
     document.querySelectorAll('.briefing .head').forEach(function(el){
-      el.innerHTML = '<span class="pulse" style="background:var(--amber)"></span>'+msg;
+      el.innerHTML = '<span class="pulse" style="background:var(--amber)"></span>' + msg;
     });
-    // Wipe all hardcoded KPI values so stale numbers don't show
     document.querySelectorAll('.kpi .value').forEach(function(el){
       if(!el.id) el.textContent = '—';
     });
     document.querySelectorAll('.kpi .sub').forEach(function(el){
       if(!el.id) el.textContent = '';
     });
-    // Wipe pipeline bar counts
-    document.querySelectorAll('.pipeseg .pcount').forEach(function(el){ el.textContent = '—'; });
-    var totalEl = document.querySelector('.pipeline-head .total');
-    if(totalEl) totalEl.innerHTML = '<b>—</b> open cases · deploy to my.casepeer.com';
-    // Wipe action table counts in Settlements
-    document.querySelectorAll('[data-page="settlements"] .panel table.t tbody .num').forEach(function(el){
-      el.textContent = '—';
-    });
-    // Wipe carriers
     var carriers = document.getElementById('carriers');
-    if(carriers) carriers.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
-    // Wipe CM tables
-    ['cm-2026-body','cm-2025-body'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(el) el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
-    });
-    // Wipe DQ completeness table
-    var dqTbody = document.querySelector('[data-page="dq"] .panel table.t tbody');
-    if(dqTbody) dqTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">'+msg+'</td></tr>';
+    if(carriers) carriers.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">' + _esc(msg) + '</td></tr>';
+    var tbody = document.getElementById('settle-offers-body');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--amber);">' + _esc(msg) + '</td></tr>';
   }
-
-
-  async function init(){
-    bindEvents(); setSubtab('cases');
-    await _loadFlags(); await _loadNotes(); await _loadContacts();
-    var host=window.location.hostname;
-    state.baseUrl=(host==='my.casepeer.com'||host.indexOf('casepeer')>=0)?'':'https://my.casepeer.com';
-    try {
-      var results=await Promise.all([
-        fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
-        fetchAll('/api/v1/case/lien-negotiations-overview/'),
-        fetchAll('/api/v1/case/disbursement-overview/')
-      ]);
-      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2];
-      processData(); renderAll();
-      renderLienActivityFeed(results[2],_lienActivityDays);
-      bindLienActivityToggle(results[2]);
-    } catch(err){
-      var msg=err&&err.message||'unknown error';
-      var hint=msg.toLowerCase().indexOf('failed to fetch')>=0?'CORS blocked — must be opened from my.casepeer.com.':msg.indexOf('401')>=0||msg.indexOf('403')>=0?'Auth error — log into my.casepeer.com first.':msg;
-      console.warn('[KAL Lien Ops] fetch failed:',msg);
-      showOffHostBanner('CasePeer fetch failed · '+hint); showError(hint);
-    }
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
-  else init();
-})();
-</script>
-
-</body>
-</html>
 
 /* =========================================================
    Help mode tooltip
@@ -1996,20 +1946,9 @@ function renderPipeline(raw){
     setInterval(updateTimestamp, 60000);
     initHelp();
 
-    // Load Railway data (flags, notes, contacts)
     await _loadFlags();
     await _loadNotes();
     await _loadContacts();
-
-    // Detect host
-    var host = window.location.hostname;
-    var onCasePeer = host === 'my.casepeer.com' || host.indexOf('casepeer') >= 0;
-    var baseUrl = onCasePeer ? '' : 'https://my.casepeer.com';
-
-    // Override fetchAll base URL for off-host dev
-    if(!onCasePeer){
-      window._devBaseUrl = baseUrl;
-    }
 
     try {
       var results = await Promise.all([
@@ -2031,8 +1970,7 @@ function renderPipeline(raw){
         };
       });
 
-      var raw = { settlement: settlement, demands: demands, deposits: deposits };
-      renderSettlements(raw);
+      renderSettlements({ settlement: settlement, demands: demands, deposits: deposits });
 
     } catch(err){
       var msg = err && err.message || 'unknown error';
