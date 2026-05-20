@@ -796,6 +796,8 @@
 (function(){
 'use strict';
 
+var state = { baseUrl: '' };
+
 /* =========================================================
    Global helpers
    ========================================================= */
@@ -1949,6 +1951,10 @@ function renderPipeline(raw){
     await _loadFlags();
     await _loadNotes();
     await _loadContacts();
+
+    var host = window.location.hostname;
+    var onCasePeer = host === 'my.casepeer.com' || host.indexOf('casepeer') >= 0;
+    state.baseUrl = onCasePeer ? '' : 'https://my.casepeer.com';
 
     try {
       var results = await Promise.all([
