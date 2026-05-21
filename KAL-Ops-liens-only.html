@@ -901,11 +901,13 @@
             <th>Negotiator</th>
             <th class="num">Days taken</th>
             <th class="num">Disbursed</th>
+            <th class="num">Deposit</th>
+            <th class="num">Atty Fee</th>
             <th class="num">Last Touched</th>
           </tr>
         </thead>
         <tbody id="disb-body-closed">
-          <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
         </tbody>
       </table>
 
@@ -3299,6 +3301,44 @@ function renderDataQuality(raw){
     });
   }
 
+  // ---- Shared MTD fee computation (single source of truth) ----
+  function _computeMtdFees(){
+    var now = state.refDate;
+    var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var deposits = state.raw.deposits || [];
+    var disbursement = state.raw.disbursement || [];
+    var depByCaseId = {};
+    for(var j=0;j<deposits.length;j++){
+      var dep = deposits[j] || {};
+      var cid = dep.case && dep.case.id;
+      if(!cid) continue;
+      depByCaseId[cid] = (depByCaseId[cid]||0) + (parseFloat(dep.amount)||0);
+    }
+    var rows = [];
+    for(var d0=0;d0<disbursement.length;d0++){
+      var dr = disbursement[d0] || {};
+      if(dr.casestatus !== 'Disbursed') continue;
+      var dd = parseDate(dr.disbursed_date);
+      if(!dd || dd < mtdStart || dd > now) continue;
+      var depositTotal = depByCaseId[dr.id] || 0;
+      var contact = (typeof _getContact === 'function') ? _getContact(dr._casename||'') : {};
+      var hasOverride = contact && parseFloat(contact.feeAmount) > 0;
+      var feeAmount = hasOverride ? parseFloat(contact.feeAmount) : depositTotal * 0.33;
+      rows.push({
+        id: dr.id,
+        caseName: dr._casename || '—',
+        disbursedDate: dr.disbursed_date || '—',
+        negotiator: dr.lien_negotiator || '—',
+        depositTotal: depositTotal,
+        feeAmount: feeAmount,
+        hasOverride: hasOverride
+      });
+    }
+    var totalFee = 0;
+    for(var r=0;r<rows.length;r++) totalFee += rows[r].feeAmount;
+    return { rows: rows, totalFee: totalFee };
+  }
+
   // ---- Renderers ----
   function renderKPIs(){
     var t = getThresholds();
@@ -3315,31 +3355,9 @@ function renderDataQuality(raw){
     var disbPending = (state.raw.disbursement||[]).filter(function(r){ return r.casestatus==='Disbursement'; });
     document.getElementById('lien-kpi-disb').textContent = disbPending.length;
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
-    // MTD attorney fee tracker — anchored to disbursed_date, not deposit date
-    var now = state.refDate;
-    var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    var deposits = state.raw.deposits || [];
-    var disbursement = state.raw.disbursement || [];
-    // Step 1: cases fully disbursed this month
-    var disbursedThisMonth = {};
-    for(var d0=0;d0<disbursement.length;d0++){
-      var dr = disbursement[d0] || {};
-      if(dr.casestatus !== 'Disbursed') continue;
-      var dd = parseDate(dr.disbursed_date);
-      if(!dd || dd < mtdStart || dd > now) continue;
-      disbursedThisMonth[dr.id] = dr;
-    }
-    // Step 2: sum all deposits for those cases × fee rate
-    var mtdFee = 0, mtdCases = Object.keys(disbursedThisMonth).length;
-    for(var j=0;j<deposits.length;j++){
-      var dep = deposits[j] || {};
-      var depCaseId = dep.case && dep.case.id;
-      if(!depCaseId || !disbursedThisMonth[depCaseId]) continue;
-      var depCaseName = (dep.case && dep.case._casename) || '';
-      var contact = (typeof _getContact === 'function') ? _getContact(depCaseName) : {};
-      var feeRate = contact && parseFloat(contact.feeRate) > 0 ? parseFloat(contact.feeRate) : 0.33;
-      mtdFee += (parseFloat(dep.amount)||0) * feeRate;
-    }
+    // MTD fee — single source of truth via _computeMtdFees()
+    var mtd = _computeMtdFees();
+    var mtdFee = mtd.totalFee, mtdCases = mtd.rows.length;
     var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
     var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
@@ -3552,21 +3570,42 @@ function renderDataQuality(raw){
       tbody.innerHTML = html;
     }
 
-    // Already disbursed
+    // Already disbursed — build deposit lookup and MTD fee rows for inline display
+    var _depByCaseId = {};
+    var _allDeps = state.raw.deposits || [];
+    for(var di=0;di<_allDeps.length;di++){
+      var _d = _allDeps[di]||{}; var _cid = _d.case && _d.case.id;
+      if(_cid) _depByCaseId[_cid] = (_depByCaseId[_cid]||0) + (parseFloat(_d.amount)||0);
+    }
+    var now2 = state.refDate;
+    var mtdStart2 = new Date(now2.getFullYear(), now2.getMonth(), 1);
     var tbodyClosed = document.getElementById('disb-body-closed');
     var closedCount = document.getElementById('lien-disb-closed-count');
     if(closedCount) closedCount.textContent = 'Already disbursed · '+closed.length;
-    if(!closed.length){ if(tbodyClosed) tbodyClosed.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursed cases found.</td></tr>'; }
+    if(!closed.length){ if(tbodyClosed) tbodyClosed.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursed cases found.</td></tr>'; }
     else {
       var html2='';
       for(var k=0;k<closed.length;k++){
         var rc = closed[k] || {};
         var dc = rc.days_in_disbursement||0;
+        var depTotal = _depByCaseId[rc.id] || 0;
+        var contact2 = (typeof _getContact === 'function') ? _getContact(rc._casename||'') : {};
+        var hasOvr = contact2 && parseFloat(contact2.feeAmount) > 0;
+        var feeAmt = hasOvr ? parseFloat(contact2.feeAmount) : depTotal * 0.33;
+        var disbDt = parseDate(rc.disbursed_date);
+        var isMtd = disbDt && disbDt >= mtdStart2 && disbDt <= now2;
+        var feeStyle = isMtd ? 'color:var(--green);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;' : 'color:var(--ink-3);';
+        var feeTip = isMtd ? ' title="Click to override fee amount"' : '';
+        var feeAction = isMtd ? ' data-action="edit-fee-amount" data-case="'+esc(rc._casename||'')+'"' : '';
+        var feeLabel = feeAmt > 0 ? fmtCurrency(feeAmt) : '—';
+        if(isMtd && hasOvr) feeLabel += ' ✎';
         html2 += '<tr class="row-good">';
         html2 += '<td class="case-cell"><div class="case-name">'+esc(rc._casename||'—')+'</div></td>';
         html2 += '<td>'+esc(rc.lien_negotiator||'—')+'</td>';
         html2 += '<td class="num">'+dc+'d</td>';
         html2 += '<td class="num">'+esc(rc.disbursed_date||'—')+'</td>';
+        html2 += '<td class="num">'+(depTotal > 0 ? fmtCurrency(depTotal) : '—')+'</td>';
+        html2 += '<td class="num"><span style="'+feeStyle+'"'+feeTip+feeAction+'>'+feeLabel+'</span></td>';
         html2 += '<td class="num">'+esc(rc.last_touched_lien_negotiator||'—')+'</td>';
         html2 += '</tr>';
       }
@@ -3632,6 +3671,27 @@ function renderDataQuality(raw){
       }
     });
 
+    // Edit attorney fee amount per disbursed case (stored in Railway contacts as feeAmount)
+    document.getElementById('disb-body-closed').addEventListener('click', function(e){
+      var el = e.target.closest('[data-action="edit-fee-amount"]');
+      if(!el) return;
+      var cn = el.getAttribute('data-case');
+      var contact = (typeof _getContact === 'function') ? _getContact(cn) : {};
+      var cur = contact && parseFloat(contact.feeAmount) > 0 ? String(parseFloat(contact.feeAmount)) : '';
+      var val = prompt('Attorney fee for ' + cn + ' ($):\n(Leave blank to reset to 33% of deposit)', cur);
+      if(val === null) return;
+      val = val.replace(/[$,\s]/g,'');
+      if(val === ''){
+        if(typeof _setContact === 'function') _setContact(cn, { feeAmount: null });
+      } else {
+        var num = parseFloat(val);
+        if(isNaN(num) || num < 0){ alert('Enter a valid dollar amount.'); return; }
+        if(typeof _setContact === 'function') _setContact(cn, { feeAmount: num });
+      }
+      renderDisbursement();
+      renderKPIs();
+    });
+
     // Monthly goal edit
     var goalBtn = document.getElementById('lien-fee-goal-edit');
     if(goalBtn){
@@ -3652,7 +3712,7 @@ function renderDataQuality(raw){
   function showError(msg){
     var head = document.querySelector('#lien-briefing .head');
     if(head) head.innerHTML = '<span class="pulse" style="background:var(--red-mark);"></span>Lien Ops · '+esc(msg);
-    var errColspan = {'lien-cases-body':9,'lien-neg-body':7,'disb-body':5,'disb-body-closed':5};
+    var errColspan = {'lien-cases-body':9,'lien-neg-body':7,'disb-body':5,'disb-body-closed':7};
     var errIds = Object.keys(errColspan);
     for(var i=0;i<errIds.length;i++){
       var el=document.getElementById(errIds[i]);
