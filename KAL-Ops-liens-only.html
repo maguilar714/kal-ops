@@ -3763,9 +3763,10 @@ function renderDataQuality(raw){
       var results=await Promise.all([
         fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
         fetchAll('/api/v1/case/lien-negotiations-overview/'),
-        fetchAll('/api/v1/case/disbursement-overview/')
+        fetchAll('/api/v1/case/disbursement-overview/'),
+        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
       ]);
-      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2];
+      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3];
       processData(); renderAll();
       renderLienActivityFeed(results[2],_lienActivityDays);
       bindLienActivityToggle(results[2]);
