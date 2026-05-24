@@ -4067,6 +4067,7 @@ function _ccRenderTreating(raw,bucketIdx){
   var showHI=bucketIdx===0,showPolicy=bucketIdx>=1,showUIM=bucketIdx>=1,showSol=bucketIdx===3;
   var html='<table class="t"><thead><tr><th>Case</th><th class="num">Age</th><th class="num">Specials</th><th>Last Touched</th><th class="num">Notes</th><th>Liability</th>'
     +(showHI?'<th>Health Ins.</th>':'')+(showPolicy?'<th>3P Policy</th>':'')+(showUIM?'<th>UIM</th>':'')+(showSol?'<th>SOL</th>':'')
+    +'<th>Treatment</th><th>Main Tasks</th><th>Note</th>'
     +'<th>Flags</th></tr></thead><tbody>';
 
   rows.forEach(function(t){
@@ -4090,6 +4091,9 @@ function _ccRenderTreating(raw,bucketIdx){
       +(showPolicy?'<td>'+_ccDropHtml(t._casename,'policy3p',_CC_POLICY_OPTS,'3P Policy')+'</td>':'')
       +(showUIM?'<td>'+_ccDropHtml(t._casename,'uim',_CC_UIM_OPTS,'UIM')+'</td>':'')
       +(showSol?'<td>'+solHtml+'</td>':'')
+      +'<td>'+_ccDropHtml(t._casename,'treatment',_CC_TREATMENT_OPTS,'Treatment')+'</td>'
+      +'<td>'+_ccDropHtml(t._casename,'mainTasks',_CC_TASKS_OPTS,'Main Tasks')+'</td>'
+      +'<td>'+_ccNoteHtml(t._casename)+'</td>'
       +'<td><div class="flag-stack" style="display:flex;flex-direction:column;gap:3px">'+flags.join('')+'</div></td>'
       +'</tr>';
   });
