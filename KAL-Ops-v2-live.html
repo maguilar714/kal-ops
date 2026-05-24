@@ -3975,12 +3975,12 @@ window.__ccDropChange=function(el,cn){
 };
 
 function _ccNotesPill(cn){var nm=_ccNotesMap[cn]||{count:0};return '<span style="font-family:var(--num);font-size:11.5px;font-weight:600;color:'+(nm.count>0?'var(--ink-2)':'var(--ink-4)')+'">'+nm.count+'</span>';}
+function _ccNoteHtml(cn){var cur=_ccGetJunior(cn)['note']||'';return '<input type="text" class="jnote" data-case="'+_esc(cn)+'" value="'+_esc(cur)+'" placeholder="Add note…" onblur="__ccNoteChange(this)">';}
+window.__ccNoteChange=function(el){_ccSetJunior(el.getAttribute('data-case'),'note',el.value||null);};
 
 function _ccBuildFlags(t,bucket,jf){
   var flags=[];
-
-function _ccNoteHtml(cn){var cur=_ccGetJunior(cn)['note']||'';return '<input type="text" class="jnote" data-case="'+_esc(cn)+'" value="'+_esc(cur)+'" placeholder="Add note…" onblur="__ccNoteChange(this)">';}
-window.__ccNoteChange=function(el){_ccSetJunior(el.getAttribute('data-case'),'note',el.value||null);};  var retainDays=_ccDaysAgo(t.retainref_date)||0;
+  var retainDays=_ccDaysAgo(t.retainref_date)||0;
   var touched=_ccDaysAgo(t.last_touched);
   if(touched!==null&&touched>=_ccCfg.staleThreshold) flags.push('<span class="flag red">Stale '+touched+'d</span>');
   if(bucket>0&&(!jf.liability||jf.liability==='')) flags.push('<span class="flag amber">No Liability</span>');
