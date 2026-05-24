@@ -688,6 +688,9 @@ function _renderTreating(bucketIdx){
     +(showPolicy ? '<th>3P Policy</th>' : '')
     +(showUIM ? '<th>UIM</th>' : '')
     +(showSol ? '<th>SOL</th>' : '')
+    +'<th>Treatment</th>'
+    +'<th>Main Tasks</th>'
+    +'<th>Note</th>'
     +'<th>Flags</th>'
     +'</tr></thead><tbody>';
 
@@ -723,6 +726,9 @@ function _renderTreating(bucketIdx){
       +(showPolicy?'<td>'+_dropHtml(t._casename,'policy3p',_POLICY_OPTS,'3P Policy')+'</td>':'')
       +(showUIM?'<td>'+_dropHtml(t._casename,'uim',_UIM_OPTS,'UIM')+'</td>':'')
       +(showSol?'<td>'+solHtml+'</td>':'')
+      +'<td>'+_dropHtml(t._casename,'treatment',_TREATMENT_OPTS,'Treatment')+'</td>'
+      +'<td>'+_dropHtml(t._casename,'mainTasks',_TASKS_OPTS,'Main Tasks')+'</td>'
+      +'<td>'+_noteHtml(t._casename)+'</td>'
       +'<td class="flagcol"><div class="stack">'+flags.join('')+'</div></td>'
       +'</tr>';
   });
