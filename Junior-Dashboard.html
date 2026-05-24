@@ -192,6 +192,18 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
 /* UIM color coding */
 .jdrop[data-field="uim"][data-val="None"]{color:var(--red)}
 .jdrop[data-field="uim"][data-val="250k–1M"],.jdrop[data-field="uim"][data-val="1M+"]{color:var(--green)}
+/* Treatment color coding */
+.jdrop[data-field="treatment"][data-val="Strong"]{color:var(--green);border-color:var(--green-mark)}
+.jdrop[data-field="treatment"][data-val="On Track"]{color:var(--amber);border-color:var(--amber-mark)}
+.jdrop[data-field="treatment"][data-val="At Risk"]{color:var(--red);border-color:var(--red-mark)}
+/* Main Tasks color coding */
+.jdrop[data-field="mainTasks"][data-val="Completed"]{color:var(--green);border-color:var(--green-mark)}
+.jdrop[data-field="mainTasks"][data-val="Review"]{color:var(--amber);border-color:var(--amber-mark)}
+.jdrop[data-field="mainTasks"][data-val="Not Done"]{color:var(--red);border-color:var(--red-mark)}
+/* Note field */
+.jnote{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:11.5px;padding:4px 8px;border-radius:5px;width:210px;outline:none;transition:border-color .12s}
+.jnote:focus{border-color:var(--blue)}
+.jnote::placeholder{color:var(--ink-4)}
 
 /* ── Notes count pill ───────────────────────────────── */
 .notes-pill{
@@ -390,9 +402,11 @@ var _solMap = {};     // casename → Date
 
 // ── Dropdown options ─────────────────────────────────
 var _LIABILITY_OPTS = ['','Pending','Under Investigation','Accepted','Comparative Fault','Denied','No Coverage'];
-var _HI_OPTS        = ['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only'];
+var _HI_OPTS        = ['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only','Pending Request'];
 var _POLICY_OPTS    = ['','Uninsured / Prop 213','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
 var _UIM_OPTS       = ['','None','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
+var _TREATMENT_OPTS = ['','Strong','On Track','At Risk'];
+var _TASKS_OPTS     = ['','Completed','Review','Not Done'];
 
 // ── Policy limit ranking (for stacking calc) ─────────
 var _POLICY_RANK = {'15/30':1,'30/60':2,'50/100':3,'100/300':4,'250/500':5,'250k–1M':6,'1M+':7};
@@ -519,6 +533,13 @@ function _dropHtml(caseName, field, opts, label){
   html+='</select>';
   return html;
 }
+
+// ── Note field renderer ───────────────────────────────
+function _noteHtml(caseName){
+  var cur=_getJunior(caseName)['note']||'';
+  return '<input type="text" class="jnote" data-case="'+_esc(caseName)+'" value="'+_esc(cur)+'" placeholder="Add note…" onblur="__jNoteChange(this)">';
+}
+window.__jNoteChange=function(el){_setJuniorField(el.getAttribute('data-case'),'note',el.value||null);};
 
 // Global dropdown change handler
 window.__jDropChange=function(el){
