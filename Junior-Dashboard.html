@@ -175,20 +175,20 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
 }
 .jdrop:focus{border-color:var(--blue)}
 .jdrop.set{color:var(--ink);font-weight:500}
-.jdrop[data-field="liability"]{min-width:118px}
-.jdrop[data-field="hi"]{min-width:100px}
+.jdrop[data-field="liability"]{min-width:90px}
+.jdrop[data-field="hi"]{min-width:90px}
 /* Liability color coding */
 .jdrop[data-field="liability"][data-val="Accepted"]{color:var(--green);border-color:var(--green-mark)}
 .jdrop[data-field="liability"][data-val="Denied"]{color:var(--red);border-color:var(--red-mark)}
 .jdrop[data-field="liability"][data-val="No Coverage"]{color:var(--red)}
-.jdrop[data-field="liability"][data-val="Pending"],.jdrop[data-field="liability"][data-val="Under Investigation"]{color:var(--amber);border-color:var(--amber-mark)}
-.jdrop[data-field="liability"][data-val="Comparative Fault"]{color:var(--indigo)}
+.jdrop[data-field="liability"][data-val="Pending"],.jdrop[data-field="liability"][data-val="Investigating"]{color:var(--amber);border-color:var(--amber-mark)}
+.jdrop[data-field="liability"][data-val="Comp. Fault"]{color:var(--indigo)}
 /* HI color coding */
 .jdrop[data-field="hi"][data-val="None"]{color:var(--red)}
 .jdrop[data-field="hi"][data-val="Medicare"],.jdrop[data-field="hi"][data-val="Medi-Cal"],.jdrop[data-field="hi"][data-val="Kaiser"]{color:var(--amber)}
 .jdrop[data-field="hi"][data-val="Private"],.jdrop[data-field="hi"][data-val="ERISA / Employer"]{color:var(--green)}
 /* Policy color coding */
-.jdrop[data-field="policy3p"][data-val="Uninsured / Prop 213"]{color:var(--red);font-weight:600}
+.jdrop[data-field="policy3p"][data-val="Prop 213"]{color:var(--red);font-weight:600}
 .jdrop[data-field="policy3p"][data-val="15/30"],.jdrop[data-field="policy3p"][data-val="30/60"]{color:var(--amber)}
 .jdrop[data-field="policy3p"][data-val="250k–1M"],.jdrop[data-field="policy3p"][data-val="1M+"]{color:var(--green)}
 /* UIM color coding */
@@ -203,7 +203,7 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
 .jdrop[data-field="mainTasks"][data-val="Review"]{color:var(--amber);border-color:var(--amber-mark)}
 .jdrop[data-field="mainTasks"][data-val="Not Done"]{color:var(--red);border-color:var(--red-mark)}
 /* Note field */
-.jnote{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:11.5px;padding:4px 8px;border-radius:5px;width:210px;outline:none;transition:border-color .12s}
+.jnote{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:11.5px;padding:4px 8px;border-radius:5px;width:140px;outline:none;transition:border-color .12s}
 .jnote:focus{border-color:var(--blue)}
 .jnote::placeholder{color:var(--ink-4)}
 /* note tooltip wrapper */
@@ -406,9 +406,9 @@ var _notesMap = {};   // casename → { count, cats: Set }
 var _solMap = {};     // casename → Date
 
 // ── Dropdown options ─────────────────────────────────
-var _LIABILITY_OPTS = ['','Pending','Under Investigation','Accepted','Comparative Fault','Denied','No Coverage'];
+var _LIABILITY_OPTS = ['','Pending','Investigating','Accepted','Comp. Fault','Denied','No Coverage'];
 var _HI_OPTS        = ['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only','Pending Req'];
-var _POLICY_OPTS    = ['','Uninsured / Prop 213','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
+var _POLICY_OPTS    = ['','Prop 213','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
 var _UIM_OPTS       = ['','None','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
 var _TREATMENT_OPTS = ['','Strong','On Track','At Risk'];
 var _TASKS_OPTS     = ['','Completed','Review','Not Done'];
@@ -630,7 +630,6 @@ function _renderNewIntakes(){
     +'<th>Assigned</th>'+'<th>Intro Call</th>'
     +'<th>Liability</th>'
     +'<th>Health Ins.</th>'
-    +'<th class="num">Notes</th>'
     +'<th>Last Touched</th>'
     +'<th>3P Policy</th>'
     +'<th>UIM</th>'
@@ -660,7 +659,6 @@ function _renderNewIntakes(){
       })()
       +'<td>'+_dropHtml(t._casename,'liability',_LIABILITY_OPTS,'Liability')+'</td>'
       +'<td>'+_dropHtml(t._casename,'healthInsurance',_HI_OPTS,'Health Insurance')+'</td>'
-      +'<td class="num">'+_notesPill(t._casename)+'</td>'
       +'<td>'+_daysAgoHtml(touched,_cfg.staleThreshold)+'</td>'
       +'<td>'+_dropHtml(t._casename,'policy3p',_POLICY_OPTS,'3P Policy')+'</td>'
       +'<td>'+_dropHtml(t._casename,'uim',_UIM_OPTS,'UIM')+'</td>'
@@ -707,12 +705,11 @@ function _renderTreating(bucketIdx){
   var showUIM     = bucketIdx>=1;
   var showSol     = bucketIdx===3;
 
-  var html='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="t" style="width:max-content"><thead><tr>'
+  var html='<table class="t"><thead><tr>'
     +'<th>Case</th>'
     +'<th class="num">Age</th>'
     +'<th class="num">Specials</th>'
     +'<th>Last Touched</th>'
-    +'<th class="num">Notes</th>'
     +'<th>Liability</th>'
     +(showHI ? '<th>Health Ins.</th>' : '')
     +(showPolicy ? '<th>3P Policy</th>' : '')
@@ -750,7 +747,6 @@ function _renderTreating(bucketIdx){
       +'<td class="num" style="font-family:var(--num);font-weight:600">'+(_daysAgo(t.retainref_date)!==null?_daysAgo(t.retainref_date)+'d':'—')+'</td>'
       +'<td class="num">'+_fmtMoney(specials)+'</td>'
       +'<td>'+_daysAgoHtml(touched,_cfg.staleThreshold)+'</td>'
-      +'<td class="num">'+_notesPill(t._casename)+'</td>'
       +'<td>'+_dropHtml(t._casename,'liability',_LIABILITY_OPTS,'Liability')+'</td>'
       +(showHI?'<td>'+_dropHtml(t._casename,'healthInsurance',_HI_OPTS,'Health Ins.')+'</td>':'')
       +(showPolicy?'<td>'+_dropHtml(t._casename,'policy3p',_POLICY_OPTS,'3P Policy')+'</td>':'')
@@ -762,7 +758,7 @@ function _renderTreating(bucketIdx){
       +'<td class="flagcol"><div class="stack">'+flags.join('')+'</div></td>'
       +'</tr>';
   });
-  html+='</tbody></table></div>';
+  html+='</tbody></table>';
   document.getElementById('treating-body').innerHTML=html;
 }
 
