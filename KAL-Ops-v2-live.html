@@ -4087,7 +4087,7 @@ function _ccRenderTreating(raw,bucketIdx){
   if(!rows.length){body.innerHTML='<div style="text-align:center;padding:28px;color:var(--ink-4)">No treating cases in this bucket</div>';return;}
 
   var showHI=bucketIdx===0,showPolicy=bucketIdx>=1,showUIM=bucketIdx>=1,showSol=bucketIdx===3;
-  var html='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="t" style="min-width:max-content"><thead><tr><th>Case</th><th class="num">Age</th><th class="num">Specials</th><th>Last Touched</th><th class="num">Notes</th><th>Liability</th>'
+  var html='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="t" style="width:max-content"><thead><tr><th>Case</th><th class="num">Age</th><th class="num">Specials</th><th>Last Touched</th><th class="num">Notes</th><th>Liability</th>'
     +(showHI?'<th>Health Ins.</th>':'')+(showPolicy?'<th>3P Policy</th>':'')+(showUIM?'<th>UIM</th>':'')+(showSol?'<th>SOL</th>':'')
     +'<th>Treatment</th><th>Main Tasks</th><th>Note</th>'
     +'<th>Flags</th></tr></thead><tbody>';
