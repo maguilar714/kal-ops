@@ -550,6 +550,10 @@
   }
   .note b{color:var(--ink-2);font-weight:600}
 
+  /* note tooltip wrapper */
+  .note-wrap{position:relative;display:inline-block;max-width:100%}
+  .note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+
   /* case 2-line cell — fixed line-height to keep rows aligned */
   .case-cell{line-height:1.25}
   .case-cell .case-name{font-weight:500;color:var(--ink)}
@@ -1275,8 +1279,8 @@ function renderSettleOffers(demands, view, settlementMap){
     // Note
     var note = _getNote(caseName);
     var noteDisp = note
-      ? '<span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+_esc(note)+'" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(note)+'</span>'
-      : '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px" title="Click to add note">+ add</span>';
+      ? '<div class="note-wrap" data-tip="'+_esc(note)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(note)+'</span></div>'
+      : '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
 
     // Row class
     var rowCls = (!d.offer_amount && view==='expired') ? 'row-alert' : (solAlert ? 'row-warn' : '');
@@ -1776,9 +1780,9 @@ function bindSettlePanelToggles(raw, settlementMap){
         else if(!val && current){ _clearNote(caseName); }
         var saved = val || null;
         if(saved){
-          td.innerHTML = '<span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+_esc(saved)+'" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(saved)+'</span>';
+          td.innerHTML = '<div class="note-wrap" data-tip="'+_esc(saved)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" data-case="'+_esc(caseName)+'" data-action="edit-note">'+_esc(saved)+'</span></div>';
         } else {
-          td.innerHTML = '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px" title="Click to add note">+ add</span>';
+          td.innerHTML = '<span data-case="'+_esc(caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
         }
       }
       ta.addEventListener('blur', saveNote);
