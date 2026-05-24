@@ -170,11 +170,13 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
   border:1px solid var(--line);background:var(--surface);
   color:var(--ink-3);font-family:var(--ui);font-size:11.5px;
   padding:3px 6px;border-radius:5px;cursor:pointer;
-  min-width:118px;outline:none;
+  min-width:72px;max-width:100%;outline:none;
   transition:border-color .12s,color .12s;
 }
 .jdrop:focus{border-color:var(--blue)}
 .jdrop.set{color:var(--ink);font-weight:500}
+.jdrop[data-field="liability"]{min-width:118px}
+.jdrop[data-field="hi"]{min-width:100px}
 /* Liability color coding */
 .jdrop[data-field="liability"][data-val="Accepted"]{color:var(--green);border-color:var(--green-mark)}
 .jdrop[data-field="liability"][data-val="Denied"]{color:var(--red);border-color:var(--red-mark)}
@@ -402,7 +404,7 @@ var _solMap = {};     // casename → Date
 
 // ── Dropdown options ─────────────────────────────────
 var _LIABILITY_OPTS = ['','Pending','Under Investigation','Accepted','Comparative Fault','Denied','No Coverage'];
-var _HI_OPTS        = ['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only','Pending Request'];
+var _HI_OPTS        = ['','None','Private','Medicare','Medi-Cal','Kaiser','ERISA / Employer','MedPay Only','Pending Req'];
 var _POLICY_OPTS    = ['','Uninsured / Prop 213','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
 var _UIM_OPTS       = ['','None','15/30','30/60','50/100','100/300','250/500','250k–1M','1M+'];
 var _TREATMENT_OPTS = ['','Strong','On Track','At Risk'];
