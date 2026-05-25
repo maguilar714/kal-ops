@@ -830,22 +830,35 @@
       <div class="panel-head">
         <h3 id="lien-cases-count">Cases · loading…</h3>
       </div>
-      <table class="t" id="lien-cases-table">
+      <table class="t" id="lien-cases-table" style="table-layout:fixed">
+        <colgroup>
+          <col style="width:32px">
+          <col>
+          <col style="width:90px">
+          <col style="width:60px">
+          <col style="width:50px">
+          <col style="width:50px">
+          <col style="width:80px">
+          <col style="width:100px">
+          <col style="width:130px">
+          <col>
+        </colgroup>
         <thead>
           <tr>
             <th style="width:32px"></th>
             <th data-sort="caseName">Case</th>
             <th data-sort="negotiator">Negotiator</th>
-            <th class="num has-bar" data-sort="lienCount">Liens</th>
-            <th class="num" data-sort="maxDays">Oldest Lien</th>
-            <th class="num" data-sort="daysSinceTouch">Days Since Activity</th>
-            <th class="num" data-sort="settlementTotal">Settlement</th>
+            <th class="num" data-sort="lienCount">Liens</th>
+            <th class="num" data-sort="maxDays">Age</th>
+            <th class="num" data-sort="daysSinceTouch">Idle</th>
+            <th class="num" data-sort="settlementTotal">Gross</th>
             <th class="num">Fee</th>
+            <th>Notes</th>
             <th>Flags</th>
           </tr>
         </thead>
         <tbody id="lien-cases-body">
-          <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
+          <tr><td colspan="10" style="text-align:center;padding:24px;color:var(--ink-3);">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1589,6 +1602,29 @@ function _clearNote(caseName){
 
 function _getNote(caseName){
   return _noteCache[caseName] || null;
+}
+
+// --- Lien-level notes (keyed as lien::caseName::payee) ---
+function _getLienNote(caseName, payee){
+  return _noteCache['lien::'+caseName+'::'+payee] || null;
+}
+function _setLienNote(caseName, payee, note){
+  var k = 'lien::'+caseName+'::'+payee;
+  _noteCache[k] = note;
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: k, note: note })
+  }).catch(function(e){ console.warn('Lien note save failed:', e.message); });
+}
+function _clearLienNote(caseName, payee){
+  var k = 'lien::'+caseName+'::'+payee;
+  delete _noteCache[k];
+  fetch(_RAILWAY_URL + '/notes', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caseName: k })
+  }).catch(function(e){ console.warn('Lien note clear failed:', e.message); });
 }
 
 // --- Case contacts: adjuster email + claim number (Railway) ---
@@ -3467,7 +3503,7 @@ function renderDataQuality(raw){
     }
 
     if(arr.length===0){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--ink-3);">No cases match the current filters.</td></tr>';
       return;
     }
     var html='';
@@ -3490,6 +3526,11 @@ function renderDataQuality(raw){
       html += '<td class="num">'+dst+'</td>';
       html += '<td class="num">'+(c.settlementTotal > 0 ? fmtCurrency(c.settlementTotal) : '—')+'</td>';
       html += '<td class="num"><span data-action="edit-fee-rate" data-case="'+esc(c.caseName)+'" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;color:var(--ink-3);" title="Click to edit fee rate">'+feePctDisp+'%</span>'+(estFee ? ' <span style="color:var(--ink-2);font-size:11.5px;">'+fmtCurrency(estFee)+'</span>' : '')+'</td>';
+      var _caseNote = (typeof _getNote === 'function') ? _getNote(c.caseName) : null;
+      var _caseNoteDisp = _caseNote
+        ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+esc(_caseNote)+'" data-case="'+esc(c.caseName)+'" data-action="edit-note">'+esc(_caseNote)+'</span>'
+        : '<span data-case="'+esc(c.caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
+      html += '<td>'+_caseNoteDisp+'</td>';
       html += '<td class="flagcol"><div class="stack">'+flagBadges(fl)+'</div></td>';
       html += '</tr>';
       if(exp) html += renderSubRows(c);
@@ -3514,27 +3555,33 @@ function renderDataQuality(raw){
     var html = '';
     html += '<tr style="background:var(--surface-2);">';
     html += '<td></td>';
-    html += '<td style="'+hdr+'padding-left:24px;">Payee</td>';
-    html += '<td style="'+hdr+'">Lien Type</td>';
-    html += '<td class="num" style="'+hdr+'">Days</td>';
-    html += '<td class="num" style="'+hdr+'">Last Touched</td>';
-    html += '<td class="num" style="'+hdr+'">Days Since</td>';
-    html += '<td style="'+hdr+'">Client Comm</td>';
-    html += '<td></td><td></td>';
+    html += '<td style="'+hdr+'padding-left:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">Payee</td>';
+    html += '<td style="'+hdr+'width:70px;">Type</td>';
+    html += '<td class="num" style="'+hdr+'width:75px;">Touched</td>';
+    html += '<td class="num" style="'+hdr+'width:45px;">Idle</td>';
+    html += '<td style="'+hdr+'width:75px;">Client Comm</td>';
+    html += '<td></td>';
+    html += '<td style="'+hdr+'width:130px;">Notes</td>';
+    html += '<td></td>';
     html += '</tr>';
     for(var i=0;i<sorted.length;i++){
       var l=sorted[i];
       var inactive = l.daysSinceTouch!=null && l.daysSinceTouch>=t.inactive;
       var rowStyle = 'background:var(--surface-2);'+(inactive?'color:var(--amber);':'color:var(--ink-2);');
+      var _lienNote = (typeof _getLienNote === 'function') ? _getLienNote(c.caseName, l.payee) : null;
+      var _lienNoteDisp = _lienNote
+        ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" title="'+esc(_lienNote)+'" data-case="'+esc(c.caseName)+'" data-payee="'+esc(l.payee)+'" data-action="edit-lien-note">'+esc(_lienNote)+'</span>'
+        : '<span data-case="'+esc(c.caseName)+'" data-payee="'+esc(l.payee)+'" data-action="edit-lien-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
       html += '<tr style="'+rowStyle+'">';
       html += '<td></td>';
-      html += '<td style="padding-left:24px;font-size:12.5px;">'+esc(l.payee)+'</td>';
-      html += '<td style="font-size:12.5px;">'+esc(l.lienType||'—')+'</td>';
-      html += '<td class="num" style="font-size:12.5px;">'+l.daysInLiens+'</td>';
-      html += '<td class="num" style="font-size:12.5px;">'+fmtDate(l.lastTouched)+'</td>';
-      html += '<td class="num" style="font-size:12.5px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
-      html += '<td style="font-size:12.5px;">'+fmtDate(l.clientComm)+'</td>';
-      html += '<td></td><td></td>';
+      html += '<td style="padding-left:24px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;" title="'+esc(l.payee)+'">'+esc(l.payee)+'</td>';
+      html += '<td style="font-size:12.5px;width:70px;">'+esc(l.lienType||'—')+'</td>';
+      html += '<td class="num" style="font-size:12.5px;width:75px;">'+fmtDate(l.lastTouched)+'</td>';
+      html += '<td class="num" style="font-size:12.5px;width:45px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
+      html += '<td style="font-size:12.5px;width:75px;">'+fmtDate(l.clientComm)+'</td>';
+      html += '<td></td>';
+      html += '<td style="width:130px;">'+_lienNoteDisp+'</td>';
+      html += '<td></td>';
       html += '</tr>';
     }
     return html;
@@ -3699,21 +3746,79 @@ function renderDataQuality(raw){
       });
     }
 
-    // Fee rate edit (per case row)
+    // Fee rate edit, case-level note edit, and lien-level note edit
     document.getElementById('lien-cases-body').addEventListener('click', function(e){
-      var el = e.target.closest('[data-action="edit-fee-rate"]');
-      if(!el) return;
-      var cn = el.getAttribute('data-case');
-      var contact = (typeof _getContact === 'function') ? _getContact(cn) : {};
-      var cur = contact && parseFloat(contact.feeRate) > 0 ? String(Math.round(parseFloat(contact.feeRate)*100)) : '33';
-      var val = prompt('Attorney fee rate for this case (%):', cur);
-      if(val !== null){
-        var num = parseFloat(val);
-        if(!isNaN(num) && num > 0 && num <= 100){
-          if(typeof _setContact === 'function') _setContact(cn, { feeRate: num/100 });
-          renderCases();
-          renderKPIs();
+      // Fee rate edit
+      var feeEl = e.target.closest('[data-action="edit-fee-rate"]');
+      if(feeEl){
+        var cn = feeEl.getAttribute('data-case');
+        var contact = (typeof _getContact === 'function') ? _getContact(cn) : {};
+        var cur = contact && parseFloat(contact.feeRate) > 0 ? String(Math.round(parseFloat(contact.feeRate)*100)) : '33';
+        var val = prompt('Attorney fee rate for this case (%):', cur);
+        if(val !== null){
+          var num = parseFloat(val);
+          if(!isNaN(num) && num > 0 && num <= 100){
+            if(typeof _setContact === 'function') _setContact(cn, { feeRate: num/100 });
+            renderCases();
+            renderKPIs();
+          }
         }
+        return;
+      }
+      // Case-level note edit (inline textarea)
+      var noteEl = e.target.closest('[data-action="edit-note"]');
+      if(noteEl){
+        e.stopPropagation();
+        var cn = noteEl.getAttribute('data-case');
+        var td = noteEl.closest('td');
+        if(!td || td.querySelector('textarea')) return;
+        var current = (typeof _getNote === 'function') ? (_getNote(cn) || '') : '';
+        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
+        var ta = td.querySelector('textarea');
+        ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+        function saveCaseNote(){
+          var val = ta.value.trim();
+          if(val && val !== current && typeof _setNote === 'function'){ _setNote(cn, val); }
+          else if(!val && current && typeof _clearNote === 'function'){ _clearNote(cn); }
+          var saved = val || null;
+          td.innerHTML = saved
+            ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+esc(saved)+'" data-case="'+esc(cn)+'" data-action="edit-note">'+esc(saved)+'</span>'
+            : '<span data-case="'+esc(cn)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
+        }
+        ta.addEventListener('blur', saveCaseNote);
+        ta.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'&&!ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+          if(ev.key==='Escape'){ ta.value=current; ta.blur(); }
+        });
+        return;
+      }
+      // Lien-level note edit (inline textarea)
+      var lienNoteEl = e.target.closest('[data-action="edit-lien-note"]');
+      if(lienNoteEl){
+        e.stopPropagation();
+        var cn = lienNoteEl.getAttribute('data-case');
+        var payee = lienNoteEl.getAttribute('data-payee');
+        var td = lienNoteEl.closest('td');
+        if(!td || td.querySelector('textarea')) return;
+        var current = (typeof _getLienNote === 'function') ? (_getLienNote(cn, payee) || '') : '';
+        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
+        var ta = td.querySelector('textarea');
+        ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+        function saveLienNote(){
+          var val = ta.value.trim();
+          if(val && val !== current && typeof _setLienNote === 'function'){ _setLienNote(cn, payee, val); }
+          else if(!val && current && typeof _clearLienNote === 'function'){ _clearLienNote(cn, payee); }
+          var saved = val || null;
+          td.innerHTML = saved
+            ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" title="'+esc(saved)+'" data-case="'+esc(cn)+'" data-payee="'+esc(payee)+'" data-action="edit-lien-note">'+esc(saved)+'</span>'
+            : '<span data-case="'+esc(cn)+'" data-payee="'+esc(payee)+'" data-action="edit-lien-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
+        }
+        ta.addEventListener('blur', saveLienNote);
+        ta.addEventListener('keydown', function(ev){
+          if(ev.key==='Enter'&&!ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+          if(ev.key==='Escape'){ ta.value=current; ta.blur(); }
+        });
+        return;
       }
     });
 
@@ -3758,7 +3863,7 @@ function renderDataQuality(raw){
   function showError(msg){
     var head = document.querySelector('#lien-briefing .head');
     if(head) head.innerHTML = '<span class="pulse" style="background:var(--red-mark);"></span>Lien Ops · '+esc(msg);
-    var errColspan = {'lien-cases-body':9,'lien-neg-body':7,'disb-body':5,'disb-body-closed':7};
+    var errColspan = {'lien-cases-body':10,'lien-neg-body':7,'disb-body':5,'disb-body-closed':7};
     var errIds = Object.keys(errColspan);
     for(var i=0;i<errIds.length;i++){
       var el=document.getElementById(errIds[i]);
