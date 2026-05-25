@@ -3528,7 +3528,7 @@ function renderDataQuality(raw){
       html += '<td><div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;"><span data-action="edit-fee-rate" data-case="'+esc(c.caseName)+'" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;color:var(--ink-3);font-family:var(--num);font-variant-numeric:tabular-nums;" title="Click to edit fee rate">'+feePctDisp+'%</span><span style="color:var(--ink-2);font-size:11.5px;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:32px;text-align:right;">'+(estFee ? fmtCurrency(estFee) : '')+'</span></div></td>';
       var _caseNote = (typeof _getNote === 'function') ? _getNote(c.caseName) : null;
       var _caseNoteDisp = _caseNote
-        ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+esc(_caseNote)+'" data-case="'+esc(c.caseName)+'" data-action="edit-note">'+esc(_caseNote)+'</span>'
+        ? '<div class="note-wrap" data-tip="'+esc(_caseNote)+'"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" data-case="'+esc(c.caseName)+'" data-action="edit-note">'+esc(_caseNote)+'</span></div>'
         : '<span data-case="'+esc(c.caseName)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
       html += '<td>'+_caseNoteDisp+'</td>';
       html += '<td class="flagcol"><div class="stack">'+flagBadges(fl)+'</div></td>';
@@ -3569,14 +3569,13 @@ function renderDataQuality(raw){
       var rowStyle = 'background:var(--surface-2);'+(inactive?'color:var(--amber);':'color:var(--ink-2);');
       var _lienNote = (typeof _getLienNote === 'function') ? _getLienNote(c.caseName, l.payee) : null;
       var _lienNoteDisp = _lienNote
-        ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" title="'+esc(_lienNote)+'" data-case="'+esc(c.caseName)+'" data-payee="'+esc(l.payee)+'" data-action="edit-lien-note">'+esc(_lienNote)+'</span>'
+        ? '<div class="note-wrap" data-tip="'+esc(_lienNote)+'"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" data-case="'+esc(c.caseName)+'" data-payee="'+esc(l.payee)+'" data-action="edit-lien-note">'+esc(_lienNote)+'</span></div>'
         : '<span data-case="'+esc(c.caseName)+'" data-payee="'+esc(l.payee)+'" data-action="edit-lien-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
       html += '<tr style="'+rowStyle+'">';
       html += '<td></td>';
       html += '<td style="padding-left:24px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;" title="'+esc(l.payee)+'">'+esc(l.payee)+'</td>';
       html += '<td style="font-size:12.5px;width:70px;">'+esc(l.lienType||'—')+'</td>';
-      html += '<td class="num" style="font-size:12.5px;width:75px;">'+fmtDate(l.lastTouched)+'</td>';
-      html += '<td class="num" style="font-size:12.5px;width:45px;padding-left:14px;">'+(l.daysSinceTouch!=null?l.daysSinceTouch:'—')+'</td>';
+      html += '<td class="num" style="font-size:12.5px;" colspan="2">'+fmtDate(l.lastTouched)+'<span style="color:var(--ink-4);padding:0 5px">·</span>'+(l.daysSinceTouch!=null?l.daysSinceTouch+'d':'—')+'</td>';
       html += '<td style="font-size:12.5px;width:75px;">'+fmtDate(l.clientComm)+'</td>';
       html += '<td></td>';
       html += '<td colspan="3">'+_lienNoteDisp+'</td>';
@@ -3780,7 +3779,7 @@ function renderDataQuality(raw){
           else if(!val && current && typeof _clearNote === 'function'){ _clearNote(cn); }
           var saved = val || null;
           td.innerHTML = saved
-            ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" title="'+esc(saved)+'" data-case="'+esc(cn)+'" data-action="edit-note">'+esc(saved)+'</span>'
+            ? '<div class="note-wrap" data-tip="'+esc(saved)+'"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" data-case="'+esc(cn)+'" data-action="edit-note">'+esc(saved)+'</span></div>'
             : '<span data-case="'+esc(cn)+'" data-action="edit-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
         }
         ta.addEventListener('blur', saveCaseNote);
@@ -3808,7 +3807,7 @@ function renderDataQuality(raw){
           else if(!val && current && typeof _clearLienNote === 'function'){ _clearLienNote(cn, payee); }
           var saved = val || null;
           td.innerHTML = saved
-            ? '<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" title="'+esc(saved)+'" data-case="'+esc(cn)+'" data-payee="'+esc(payee)+'" data-action="edit-lien-note">'+esc(saved)+'</span>'
+            ? '<div class="note-wrap" data-tip="'+esc(saved)+'"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-size:12px;color:var(--ink-2);" data-case="'+esc(cn)+'" data-payee="'+esc(payee)+'" data-action="edit-lien-note">'+esc(saved)+'</span></div>'
             : '<span data-case="'+esc(cn)+'" data-payee="'+esc(payee)+'" data-action="edit-lien-note" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
         }
         ta.addEventListener('blur', saveLienNote);
