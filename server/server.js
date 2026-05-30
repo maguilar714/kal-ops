@@ -5,7 +5,33 @@ const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
 const ALLOWED_ORIGIN = 'https://my.casepeer.com';
 
+// Bearer token gating the /quo-data transcript endpoints. Set in Railway env vars.
+// These endpoints are server-to-server only (extract job writes, brief tasks read) —
+// never called from a browser, so the token never lands in client code.
+const SHARED_SECRET = process.env.SHARED_SECRET;
+
+// Transcript retention window. Rows older than this are purged on a sweep.
+const TRANSCRIPT_TTL_HOURS = 48;
+
 const pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+// Returns true if the request carries the correct bearer token. Otherwise writes
+// a 401 and returns false. Constant-time compare to avoid timing leaks.
+function requireAuth(req, res) {
+  const header = req.headers['authorization'] || '';
+  const presented = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const expected = SHARED_SECRET || '';
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  const ok = expected.length > 0 && a.length === b.length &&
+             require('crypto').timingSafeEqual(a, b);
+  if (!ok) {
+    res.writeHead(401);
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+  return true;
+}
 
 async function initDb() {
   await pool.query(`CREATE TABLE IF NOT EXISTS case_flags (case_name TEXT PRIMARY KEY, flag TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
@@ -15,13 +41,16 @@ async function initDb() {
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS email_log TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS quo_calls (phone TEXT PRIMARY KEY, cm_name TEXT, call_date TEXT, duration_sec INT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+  // Encrypted daily Quo extract. `payload` is a Fernet token (ciphertext) — the
+  // server never decrypts it. created_at drives the 48h purge.
+  await pool.query(`CREATE TABLE IF NOT EXISTS quo_transcripts (extract_date TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`);
   console.log('DB ready');
 }
 
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Content-Type', 'application/json');
 }
 
@@ -218,8 +247,45 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // QUO TRANSCRIPTS — encrypted daily extract. Bearer-auth, server-to-server only.
+  // POST: extract job stores the encrypted payload for a date.
+  // GET:  brief tasks fetch the encrypted payload to decrypt locally.
+  if (req.method === 'POST' && url === '/quo-data') {
+    if (!requireAuth(req, res)) return;
+    try {
+      const { date, payload } = await readBody(req);
+      if (!date || !payload) { res.writeHead(400); res.end(JSON.stringify({ error: 'date and payload required' })); return; }
+      await pool.query(`INSERT INTO quo_transcripts (extract_date, payload, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (extract_date) DO UPDATE SET payload=$2, created_at=NOW()`, [date, payload]);
+      res.writeHead(200); res.end(JSON.stringify({ ok: true, bytes: payload.length }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+  if (req.method === 'GET' && url === '/quo-data') {
+    if (!requireAuth(req, res)) return;
+    try {
+      const qs = new URLSearchParams(req.url.split('?')[1] || '');
+      const date = qs.get('date');
+      if (!date) { res.writeHead(400); res.end(JSON.stringify({ error: 'date query param required' })); return; }
+      const result = await pool.query('SELECT extract_date, payload, created_at FROM quo_transcripts WHERE extract_date=$1', [date]);
+      if (result.rows.length === 0) { res.writeHead(404); res.end(JSON.stringify({ error: 'not found', date })); return; }
+      const row = result.rows[0];
+      res.writeHead(200); res.end(JSON.stringify({ date: row.extract_date, payload: row.payload, created_at: row.created_at }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+
   res.writeHead(404); res.end(JSON.stringify({ error: 'Not found' }));
 });
+
+// Purge transcript rows older than the retention window. Runs at boot and hourly.
+async function purgeOldTranscripts() {
+  try {
+    const r = await pool.query(`DELETE FROM quo_transcripts WHERE created_at < NOW() - INTERVAL '${TRANSCRIPT_TTL_HOURS} hours'`);
+    if (r.rowCount) console.log(`Purged ${r.rowCount} expired transcript row(s)`);
+  } catch(e) { console.error('Transcript purge failed:', e.message); }
+}
+setInterval(purgeOldTranscripts, 60 * 60 * 1000);
+setTimeout(purgeOldTranscripts, 15000);
 
 server.listen(PORT, () => console.log(`KAL Ops server running on port ${PORT}`));
 
