@@ -439,26 +439,49 @@ def top_calls(calls, n=5):
             'duration_sec': c.get('duration'),
             'started_at': c.get('createdAt'),
             'participants': c.get('participants'),
+            'conversation_id': c.get('conversation_id'),
+            'quo_url': c.get('quo_url'),
         })
     return out
 
 # ---- Async pipeline ---------------------------------------------------------
+
+def _convo_sort_key(c):
+    # Most-recent conversation wins when a participant appears in more than one.
+    return parse_iso(c.get('updatedAt') or c.get('createdAt')) or datetime.min.replace(tzinfo=timezone.utc)
 
 async def collect_for_line(phone_meta, since_utc, until_utc):
     print(f'  > {phone_meta["label"]} ({phone_meta["number"]})', file=sys.stderr)
     convos = await list_active_conversations(phone_meta['number'], since_utc, until_utc)
     print(f'    conversations active in window: {len(convos)}', file=sys.stderr)
 
+    # Map external participant -> conversation id (CN...), most recent convo wins.
+    # Used to stamp a clickable Quo web link onto each call downstream.
+    participant_to_convo = {}
     participants = set()
-    for c in convos:
+    for c in sorted(convos, key=_convo_sort_key):
+        convo_id = c.get('id')
         for p in (c.get('participants') or []):
             if p and p != phone_meta['number']:
                 participants.add(p)
+                if convo_id:
+                    participant_to_convo[p] = convo_id   # later (more recent) overwrites
     print(f'    unique participants: {len(participants)}', file=sys.stderr)
 
     call_tasks = [list_calls_for_participant(phone_meta['id'], p, since_utc, until_utc) for p in participants]
     call_results = await asyncio.gather(*call_tasks)
     all_calls = list({c['id']: c for r in call_results for c in r}.values())
+
+    # Stamp conversation_id + quo_url onto each call (backward-compatible: extra keys).
+    for c in all_calls:
+        ext = next((p for p in (c.get('participants') or []) if p != phone_meta['number']), None)
+        convo_id = participant_to_convo.get(ext) if ext else None
+        c['conversation_id'] = convo_id
+        c['quo_url'] = (
+            f"https://my.openphone.com/inbox/{phone_meta['id']}/c/{convo_id}"
+            if convo_id else None
+        )
+
     print(f'    calls: {len(all_calls)}  t={time.time()-_t0:.0f}s', file=sys.stderr)
     return all_calls, []   # messages skipped — not used by downstream briefs
 
@@ -495,6 +518,9 @@ async def fetch_transcripts_async(calls, min_duration=MIN_TRANSCRIPT_DURATION_SE
             'duration_sec': c.get('duration'),
             'started_at': c.get('createdAt'),
             'participants': c.get('participants'),
+            'conversation_id': c.get('conversation_id'),
+            'phone_number_id': c.get('phoneNumberId'),
+            'quo_url': c.get('quo_url'),
             'transcript_text': transcript_text,
             'summary': summary_text,
             'next_steps': (sm.get('data', {}).get('nextSteps') or []) if sm else [],
