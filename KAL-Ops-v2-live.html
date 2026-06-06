@@ -1094,7 +1094,7 @@
         <div class="accent-rule"></div>
         <h2 id="cm-title">CM output · 2026 YTD</h2>
       </div>
-      <div class="hint">Sorted by settlement revenue ↓</div>
+      <div class="hint" id="cm-sort-hint">Sorted by Settlement Revenue ↓</div>
     </div>
 
     <!-- 2026 -->
@@ -2116,6 +2116,36 @@ try{ window.parent.postMessage({type:'__edit_mode_available'}, '*'); }catch(_){}
 applyTweaks();
 
 // CM period toggle
+// CM Performance — sortable columns (click any header)
+var _cmSort = { key:'revenue', dir:'desc' };
+var _cmLastRaw = null;
+var _CM_COLS = ['cm','activeCases','treating','intakes','demands','pops','popRate','revenue','fees'];
+var _CM_LABELS = {cm:'Case Manager',activeCases:'Active Cases',treating:'In Treating',intakes:'New Intakes',demands:'Demands',pops:'Pops',popRate:'Pop Rate',revenue:'Settlement Revenue',fees:'Est. Fees'};
+function _applyCMSortHint(){
+  var h=document.getElementById('cm-sort-hint');
+  if(h) h.textContent='Sorted by '+(_CM_LABELS[_cmSort.key]||_cmSort.key)+' '+(_cmSort.dir==='asc'?'↑':'↓');
+  ['cm-2026','cm-2025'].forEach(function(pid){
+    var ths=document.querySelectorAll('#'+pid+' thead th');
+    ths.forEach(function(th,idx){ var a=th.querySelector('.cm-arr'); if(a) a.textContent=(_CM_COLS[idx]===_cmSort.key)?(_cmSort.dir==='asc'?' ↑':' ↓'):''; });
+  });
+}
+function _bindCMSort(){
+  ['cm-2026','cm-2025'].forEach(function(pid){
+    var ths=document.querySelectorAll('#'+pid+' thead th');
+    ths.forEach(function(th,idx){
+      var key=_CM_COLS[idx]; if(!key||th.dataset.sortBound) return;
+      th.dataset.sortBound='1'; th.style.cursor='pointer';
+      var ar=document.createElement('span'); ar.className='cm-arr'; ar.style.color='var(--ink-3)'; ar.style.fontWeight='400'; th.appendChild(ar);
+      th.addEventListener('click', function(){
+        if(_cmSort.key===key){ _cmSort.dir=(_cmSort.dir==='asc'?'desc':'asc'); }
+        else { _cmSort.key=key; _cmSort.dir=(key==='cm'?'asc':'desc'); }
+        if(_cmLastRaw) renderCMPerformance(_cmLastRaw); else _applyCMSortHint();
+      });
+    });
+  });
+}
+_bindCMSort();
+
 const segBtns = document.querySelectorAll('#cm-seg button');
 segBtns.forEach(b => b.addEventListener('click', () => {
   segBtns.forEach(x => x.classList.toggle('on', x===b));
@@ -3825,6 +3855,7 @@ function renderCarriers(demands){
    renderCMPerformance() -- CM Performance tab tables
    ========================================================= */
 function renderCMPerformance(raw){
+  _cmLastRaw=raw;
   var demands=raw.demands||[];
   var deposits=raw.deposits||[];
   var treating=raw.treating||[];
@@ -3836,6 +3867,8 @@ function renderCMPerformance(raw){
   // Dates are YYYYMMDD ints. Add a CM here whenever they start or inherit a caseload.
   var CM_START={ 'Maybis Cantillo':20260608, 'Jesus Parra':20260608 };
   function _ymd(s){ if(!s) return 0; var p=String(s).split('/'); return p.length===3 ? parseInt(p[2],10)*10000+parseInt(p[0],10)*100+parseInt(p[1],10) : 0; }
+  // Current CMs always shown in the table, even at 0 (so new CMs read 0, not absent). Update on roster changes.
+  var ACTIVE_CMS=['Jose Duarte','Icela Parra','Rashel Prieto','Damny Castro','Cris Urbina','Ronald Agresott','Jesus Parra','Maybis Cantillo','Kausar Sarwari'];
 
   // Build treating counts by CM
   var treatingByCM={};
@@ -3898,9 +3931,9 @@ function renderCMPerformance(raw){
     });
 
     var cmSet={};
-    Object.keys(demandByCM).forEach(function(k){cmSet[k]=true;});
-    Object.keys(depByCM).forEach(function(k){if(k!=='Junior Alvarez') cmSet[k]=true;});
-    Object.keys(treatingByCM).forEach(function(k){cmSet[k]=true;});
+    // Whitelist: show only the current CM roster. Departed/non-CM names (Erick, Lucy, Ulises,
+    // Ashley, "Unknown") drop off automatically — no terminated-name list to maintain.
+    ACTIVE_CMS.forEach(function(k){cmSet[k]=true;});
 
     var rows=Object.keys(cmSet).map(function(cm){
       var dd=demandByCM[cm]||{demands:0,pops:0,analyzable:0};
@@ -3910,7 +3943,12 @@ function renderCMPerformance(raw){
       var popRate=dd.analyzable>0?Math.round(dd.pops/dd.analyzable*100):null;
       return{cm:cm,activeCases:tc.total,treating:tc.treating,intakes:intakes,demands:dd.demands,pops:dd.pops,popRate:popRate,revenue:rev,fees:Math.round(rev/3)};
     });
-    rows.sort(function(a,b){return b.revenue-a.revenue;});
+    var _sk=_cmSort.key, _sd=(_cmSort.dir==='asc')?1:-1;
+    rows.sort(function(a,b){
+      if(_sk==='cm') return String(a.cm).localeCompare(String(b.cm))*_sd;
+      var av=(a[_sk]==null?-Infinity:a[_sk]), bv=(b[_sk]==null?-Infinity:b[_sk]);
+      if(av<bv) return -1*_sd; if(av>bv) return 1*_sd; return 0;
+    });
 
     var maxRev=rows.reduce(function(mx,r){return Math.max(mx,r.revenue);},1);
 
@@ -3963,6 +4001,8 @@ function renderCMPerformance(raw){
       note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+_fmtCurrency(totalRev)+' settlement revenue · '+yearDeposits.length+' check deposits · est. fees ~'+_fmtCurrency(estFees)+'. <span style="color:var(--ink-3)">Active Cases / In Treating / New Intakes pulled from treating-overview. High-intake months shown in green — explains low demand counts.</span>';
     }
   });
+
+  _applyCMSortHint();
 
   var dep2026=deposits.filter(function(d){return d.check_date&&d.check_date.indexOf('/2026')>0;});
   var rev2026=dep2026.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
