@@ -2566,8 +2566,8 @@ function _depositsInDays(deposits, days){
   var now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
   return (deposits||[]).filter(function(d){
-    if(!d.created) return false;
-    var p = d.created.split('/');
+    if(!d.check_date) return false;
+    var p = d.check_date.split('/');
     if(p.length !== 3) return false;
     var dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
     return dt >= cutoff;
