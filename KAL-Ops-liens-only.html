@@ -2944,6 +2944,14 @@ function renderCMPerformance(raw){
   var deposits=raw.deposits||[];
   var treating=raw.treating||[];
 
+  // ---- CM start-date attribution guard (item C, added 2026-06-06) ----
+  // CasePeer overwrites a demand/deposit's case_manager when a case is reassigned, so a
+  // newly-promoted CM inherits the prior CM's history (Erick -> Maybis, Lucy -> Jesus).
+  // Demands/deposits dated BEFORE a CM's start date are not credited to them.
+  // Dates are YYYYMMDD ints. Add a CM here whenever they start or inherit a caseload.
+  var CM_START={ 'Maybis Cantillo':20260608, 'Jesus Parra':20260608 };
+  function _ymd(s){ if(!s) return 0; var p=String(s).split('/'); return p.length===3 ? parseInt(p[2],10)*10000+parseInt(p[0],10)*100+parseInt(p[1],10) : 0; }
+
   // Build treating counts by CM
   var treatingByCM={};
   treating.forEach(function(t){
@@ -2981,6 +2989,7 @@ function renderCMPerformance(raw){
     yearDemands.forEach(function(d){
       var cm=(d.case_manager||'Unknown').trim();
       if(cm==='Junior Alvarez') return;
+      if(CM_START[cm] && _ymd(d.datesent) < CM_START[cm]) return; // inherited demand — don't credit new CM
       if(!demandByCM[cm]) demandByCM[cm]={demands:0,pops:0,analyzable:0};
       demandByCM[cm].demands++;
       var lim=_parseLimit(d.insurance_policy);
@@ -2998,6 +3007,7 @@ function renderCMPerformance(raw){
     var depByCM={};
     yearDeposits.forEach(function(d){
       var cm=(d.case_manager||'Unknown').trim();
+      if(CM_START[cm] && _ymd(d.check_date) < CM_START[cm]) return; // inherited settlement — don't credit new CM
       if(!depByCM[cm]) depByCM[cm]=0;
       depByCM[cm]+=(parseFloat(d.amount)||0);
     });
