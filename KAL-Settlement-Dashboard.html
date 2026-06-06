@@ -1404,9 +1404,9 @@ function renderSettleDeposits(deposits, days){
     return;
   }
   tbody.innerHTML = filtered.map(function(d){
-    var cm = (d.case&&d.case.case_manager)||'—';
+    var cm = d.case_manager||'—';
     return '<tr>'+
-      '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+      '<td class="name" style="font-size:12px">'+_esc(d.casename||'—')+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cm)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc(d.payee||'—')+'</td>'+
       '<td><span class="flag green" style="font-size:10px">'+_esc(d.check_type||'Deposit')+'</span></td>'+

@@ -1827,11 +1827,11 @@ function renderMoneyFeed(raw){
       depBody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">No deposits in last '+_moneyPeriodDays+' days.</td></tr>';
     } else {
       depBody.innerHTML = filtered.slice(0,10).map(function(d){
-        var cm = (d.case&&d.case.case_manager)||'—';
+        var cm = d.case_manager||'—';
         var cmShort = cm.split(' ');
         var cmDisp = cmShort.length>1 ? cmShort[0]+' '+cmShort[cmShort.length-1][0]+'.' : cm;
         return '<tr>'+
-          '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_esc(d.casename||'—')+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
           '<td class="num" style="color:var(--green);font-weight:600">'+_fmtCurrency(parseFloat(d.amount)||0)+'</td>'+
           '<td style="color:var(--ink-3)">'+_fmtCheckDate(d.check_date)+'</td>'+
@@ -2174,9 +2174,9 @@ function renderSettleDeposits(deposits, days){
     return;
   }
   tbody.innerHTML = filtered.map(function(d){
-    var cm = (d.case&&d.case.case_manager)||'—';
+    var cm = d.case_manager||'—';
     return '<tr>'+
-      '<td class="name" style="font-size:12px">'+_esc((d.case&&d.case._casename)||'—')+'</td>'+
+      '<td class="name" style="font-size:12px">'+_esc(d.casename||'—')+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cm)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc(d.payee||'—')+'</td>'+
       '<td><span class="flag green" style="font-size:10px">'+_esc(d.check_type||'Deposit')+'</span></td>'+
@@ -2246,7 +2246,7 @@ function renderLienActivityFeed(disbursement, days){
   // Update disbursed panel — build deposit lookup from _depositsData
   var _depById = {};
   for(var _di=0;_di<_depositsData.length;_di++){
-    var _dep=_depositsData[_di]||{}; var _cid=(_dep.case&&_dep.case.id)||_dep.case;
+    var _dep=_depositsData[_di]||{}; var _cid=_dep.case_id;
     if(_cid) _depById[_cid]=(_depById[_cid]||0)+(parseFloat(_dep.amount)||0);
   }
   var _now = new Date();
@@ -2997,7 +2997,7 @@ function renderCMPerformance(raw){
 
     var depByCM={};
     yearDeposits.forEach(function(d){
-      var cm=((d.case&&d.case.case_manager)||'Unknown').trim();
+      var cm=(d.case_manager||'Unknown').trim();
       if(!depByCM[cm]) depByCM[cm]=0;
       depByCM[cm]+=(parseFloat(d.amount)||0);
     });
@@ -3392,7 +3392,7 @@ function renderDataQuality(raw){
     var depByCaseId = {};
     for(var j=0;j<deposits.length;j++){
       var dep = deposits[j] || {};
-      var cid = (dep.case && dep.case.id) || dep.case;
+      var cid = dep.case_id;
       if(!cid) continue;
       depByCaseId[cid] = (depByCaseId[cid]||0) + (parseFloat(dep.amount)||0);
     }
@@ -3664,7 +3664,7 @@ function renderDataQuality(raw){
     var _depByCaseId = {};
     var _allDeps = state.raw.deposits || [];
     for(var di=0;di<_allDeps.length;di++){
-      var _d = _allDeps[di]||{}; var _cid = (_d.case && _d.case.id) || _d.case;
+      var _d = _allDeps[di]||{}; var _cid = _d.case_id;
       if(_cid) _depByCaseId[_cid] = (_depByCaseId[_cid]||0) + (parseFloat(_d.amount)||0);
     }
     var now2 = state.refDate;
