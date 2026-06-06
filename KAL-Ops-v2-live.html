@@ -817,7 +817,7 @@
         <div class="accent-rule"></div>
         <h2>Attorney fees generated · 14 months</h2>
       </div>
-      <div class="hint">By disbursement month · click a bar to override</div>
+      <div class="hint">By disbursement month · closed months lock automatically · click to override</div>
     </div>
     <div class="panel area-card">
       <div class="area-head">
@@ -1274,7 +1274,7 @@
       <!-- Cases fully disbursed -->
       <div class="panel">
         <div class="panel-head">
-          <h3>Disbursed — cases closed out</h3>
+          <h3>Disbursed — awaiting close</h3>
           <div class="meta-r" id="lien-disbursed-meta">Last 7 days</div>
         </div>
         <table class="t">
@@ -1429,7 +1429,7 @@
 
       <!-- Already disbursed -->
       <div class="panel-head" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
-        <h3 id="lien-disb-closed-count" style="color:var(--ink-3);">Already disbursed · loading…</h3>
+        <h3 id="lien-disb-closed-count" style="color:var(--ink-3);">Disbursed · awaiting close · loading…</h3>
       </div>
       <table class="t">
         <thead>
@@ -2448,7 +2448,8 @@ function buildFeeChart(raw){
   months.forEach(function(m,i){
     var is26=m[2]===1, color=is26?'#34c759':'#0071e3', opacity=is26?1:0.7;
     var x=xLeft(i), cx=x+barW/2, barH=(m[1]/niceMax)*innerH, y=pad.t+innerH-barH;
-    var tipText=m[0]+' · '+feeLbl(m[1])+' atty fees'+(m[4]?' (edited)':'');
+    var _st=m[4]?'edited':(m[3]===curKey?'live':(m[1]>0?'locked':''));
+    var tipText=m[0]+' · '+feeLbl(m[1])+' atty fees'+(_st?' ('+_st+')':'');
     if(m[1]>0){
       var path='M'+(x+r)+','+y+' h'+(barW-2*r)+' a'+r+','+r+' 0 0 1 '+r+','+r+' v'+(barH-r)+' h-'+barW+' v-'+(barH-r)+' a'+r+','+r+' 0 0 1 '+r+',-'+r+' Z';
       bars+='<path d="'+path+'" fill="'+color+'" opacity="'+opacity+'" data-tip="'+tipText+'"/>';
@@ -3258,14 +3259,14 @@ function renderLienActivityFeed(disbursement, days){
   var disbursedCount = document.getElementById('lien-disbursed-count');
   var disbursedBody  = document.getElementById('lien-disbursed-body');
   if(disbursedMeta)  disbursedMeta.textContent  = days==='mtd'?'Month to date':'Last '+days+' days';
-  if(disbursedCount) disbursedCount.textContent = disbursed.length+' cases fully closed';
+  if(disbursedCount) disbursedCount.textContent = disbursed.length+' disbursed · awaiting close';
   if(disbursedBody){
     if(!disbursed.length){
       disbursedBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-3)">None in last '+days+' days.</td></tr>';
     } else {
       disbursedBody.innerHTML = disbursed.map(function(r){
         var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
-        var rowCls = r.days_in_disbursement >= 120 ? 'row-warn' : 'row-good';
+        var rowCls = 'row-good'; // disbursed cases are done — no aging warning (aging only matters for pending payout)
         var depTotal = _depById[r.id] || 0;
         var contact = (typeof _getContact === 'function') ? _getContact(r._casename||'') : {};
         var hasOvr = contact && parseFloat(contact.feeAmount) > 0;
@@ -4989,7 +4990,7 @@ function renderDataQuality(raw){
     var mtdStart2 = new Date(now2.getFullYear(), now2.getMonth(), 1);
     var tbodyClosed = document.getElementById('disb-body-closed');
     var closedCount = document.getElementById('lien-disb-closed-count');
-    if(closedCount) closedCount.textContent = 'Already disbursed · '+closed.length;
+    if(closedCount) closedCount.textContent = 'Disbursed · awaiting close · '+closed.length;
     if(!closed.length){ if(tbodyClosed) tbodyClosed.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink-3);">No disbursed cases found.</td></tr>'; }
     else {
       var html2='';
