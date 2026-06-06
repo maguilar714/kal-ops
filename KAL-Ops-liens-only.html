@@ -2246,7 +2246,7 @@ function renderLienActivityFeed(disbursement, days){
   // Update disbursed panel — build deposit lookup from _depositsData
   var _depById = {};
   for(var _di=0;_di<_depositsData.length;_di++){
-    var _dep=_depositsData[_di]||{}; var _cid=_dep.case&&_dep.case.id;
+    var _dep=_depositsData[_di]||{}; var _cid=(_dep.case&&_dep.case.id)||_dep.case;
     if(_cid) _depById[_cid]=(_depById[_cid]||0)+(parseFloat(_dep.amount)||0);
   }
   var _now = new Date();
@@ -3392,7 +3392,7 @@ function renderDataQuality(raw){
     var depByCaseId = {};
     for(var j=0;j<deposits.length;j++){
       var dep = deposits[j] || {};
-      var cid = dep.case && dep.case.id;
+      var cid = (dep.case && dep.case.id) || dep.case;
       if(!cid) continue;
       depByCaseId[cid] = (depByCaseId[cid]||0) + (parseFloat(dep.amount)||0);
     }
@@ -3664,7 +3664,7 @@ function renderDataQuality(raw){
     var _depByCaseId = {};
     var _allDeps = state.raw.deposits || [];
     for(var di=0;di<_allDeps.length;di++){
-      var _d = _allDeps[di]||{}; var _cid = _d.case && _d.case.id;
+      var _d = _allDeps[di]||{}; var _cid = (_d.case && _d.case.id) || _d.case;
       if(_cid) _depByCaseId[_cid] = (_depByCaseId[_cid]||0) + (parseFloat(_d.amount)||0);
     }
     var now2 = state.refDate;
