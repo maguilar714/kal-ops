@@ -2403,6 +2403,12 @@ function buildFeeChart(raw){
     var fee=(contact&&parseFloat(contact.feeAmount)>0)?parseFloat(contact.feeAmount):(depByCase[rr.id]||0)*0.33;
     computed[key]=(computed[key]||0)+fee;
   });
+  // PRIMARY fee source: fees-in (sum fee_total by check_date month). Closed-inclusive — no freeze/override needed once backfilled.
+  var feesInByMonth={};
+  ((raw&&raw.feesIn)||[]).forEach(function(f){
+    if(!f.check_date) return; var fp=f.check_date.split('/'); if(fp.length!==3) return;
+    var fk=fp[2]+'-'+fp[0]; feesInByMonth[fk]=(feesInByMonth[fk]||0)+(parseFloat(f.fee_total)||0);
+  });
 
   var now=new Date();
   var curKey=now.getFullYear()+'-'+((now.getMonth()+1)<10?'0':'')+(now.getMonth()+1);
@@ -2414,12 +2420,15 @@ function buildFeeChart(raw){
     var key=y+'-'+(mo<10?'0':'')+mo;
     var label=mo===1?(MONTH_NAMES[0]+' '+(y-2000)):MONTH_NAMES[mo-1]+(y===2026&&mo===2?' 26':'');
     var comp=Math.round(computed[key]||0);
+    var fi=Math.round(feesInByMonth[key]||0);
     var isClosed=key<curKey;
-    if(isClosed && comp>0 && typeof _freezeFee==='function') _freezeFee(key,comp); // snapshot so it can't drift as disbursals age off
+    if(isClosed && comp>0 && typeof _freezeFee==='function') _freezeFee(key,comp); // snapshot computed fallback so it can't drift as disbursals age off
     var ov=(typeof _getFeeOverride==='function')?_getFeeOverride(key):null;
     var fz=(typeof _getFeeFrozen==='function')?_getFeeFrozen(key):null;
-    var val=(ov!=null)?ov:(isClosed&&fz!=null?fz:comp);
-    months.push([label,val,y===2026?1:0,key,ov!=null]);
+    // Precedence: manual override > fees-in (live, closed-inclusive) > frozen > computed reconstruction
+    var val=(ov!=null)?ov:(fi>0?fi:(isClosed&&fz!=null?fz:comp));
+    var src=(ov!=null)?'edited':(fi>0?'fees-in':(isClosed&&fz!=null?'locked':'computed'));
+    months.push([label,val,y===2026?1:0,key,ov!=null,src]);
     cur=new Date(y,mo,1);
   }
   if(months.length<2) return;
@@ -2448,7 +2457,7 @@ function buildFeeChart(raw){
   months.forEach(function(m,i){
     var is26=m[2]===1, color=is26?'#34c759':'#0071e3', opacity=is26?1:0.7;
     var x=xLeft(i), cx=x+barW/2, barH=(m[1]/niceMax)*innerH, y=pad.t+innerH-barH;
-    var _st=m[4]?'edited':(m[3]===curKey?'live':(m[1]>0?'locked':''));
+    var _st=(m[3]===curKey&&m[5]!=='edited')?'live':(m[5]||'');
     var tipText=m[0]+' · '+feeLbl(m[1])+' atty fees'+(_st?' ('+_st+')':'');
     if(m[1]>0){
       var path='M'+(x+r)+','+y+' h'+(barW-2*r)+' a'+r+','+r+' 0 0 1 '+r+','+r+' v'+(barH-r)+' h-'+barW+' v-'+(barH-r)+' a'+r+','+r+' 0 0 1 '+r+',-'+r+' Z';
@@ -4554,7 +4563,7 @@ function renderDataQuality(raw){
   // ---- State ----
   var state = {
     baseUrl: '',
-    raw:{ lienMgmt:[], lienOverview:[], disbursement:[], deposits:[] },
+    raw:{ lienMgmt:[], lienOverview:[], disbursement:[], deposits:[], feesIn:[] },
     valid:[], cases:[], excludedCount:0,
     sort:{ col:'maxDays', dir:'desc' },
     expanded:{},
@@ -4705,6 +4714,31 @@ function renderDataQuality(raw){
   function _computeMtdFees(){
     var now = state.refDate;
     var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var curKey = now.getFullYear()+'-'+((now.getMonth()+1)<10?'0':'')+(now.getMonth()+1);
+    var _ovMtd = (typeof _getFeeOverride==='function') ? _getFeeOverride(curKey) : null;
+    // PRIMARY source: fees-in (fee_total where check_date in current month) — closed-inclusive.
+    var feesIn = state.raw.feesIn || [];
+    var fiRows = [];
+    for(var fi0=0; fi0<feesIn.length; fi0++){
+      var fr = feesIn[fi0] || {};
+      var fdt = parseDate(fr.check_date);
+      if(!fdt || fdt < mtdStart || fdt > now) continue;
+      fiRows.push({
+        id: fr.case_id,
+        caseName: fr.casename || '—',
+        disbursedDate: fr.check_date || '—',
+        negotiator: fr.lien_negotiator || '—',
+        depositTotal: null,
+        feeAmount: parseFloat(fr.fee_total)||0,
+        hasOverride: false,
+        source: 'fees-in'
+      });
+    }
+    if(fiRows.length){
+      var fiTotal = 0; for(var fr2=0; fr2<fiRows.length; fr2++) fiTotal += fiRows[fr2].feeAmount;
+      return { rows: fiRows, totalFee: (_ovMtd!=null?_ovMtd:fiTotal), source:'fees-in' };
+    }
+    // FALLBACK (no fees-in entered for the month yet): disbursement×rate reconstruction.
     var deposits = state.raw.deposits || [];
     var disbursement = state.raw.disbursement || [];
     // Build deposit totals by case ID (all history — disbursed cases may have old checks)
@@ -4737,7 +4771,7 @@ function renderDataQuality(raw){
     }
     var totalFee = 0;
     for(var r=0;r<rows.length;r++) totalFee += rows[r].feeAmount;
-    return { rows: rows, totalFee: totalFee };
+    return { rows: rows, totalFee: (_ovMtd!=null?_ovMtd:totalFee), source:'computed' };
   }
 
   // ---- Renderers ----
@@ -5255,7 +5289,8 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/calendar/'),
         fetchAll('/api/v1/case/litigation-overview/'),
         fetchAll('/api/v1/case/notes/'),
-        fetchAll('/api/v1/case/clients/')
+        fetchAll('/api/v1/case/clients/'),
+        fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
       ]);
       var lienMgmt     = results[0];
       var lienOverview = results[1];
@@ -5268,6 +5303,7 @@ function renderDataQuality(raw){
       var litOverview  = results[8];
       var cpNotes      = results[9] || [];
       var cpClients    = results[10] || [];
+      var feesIn       = results[11] || [];
 
       state.raw.lienMgmt    = lienMgmt;
       state.raw.lienOverview = lienOverview;
@@ -5278,6 +5314,7 @@ function renderDataQuality(raw){
       state.raw.treating     = treating;
       state.raw.calendar     = calendar;
       state.raw.litOverview  = litOverview;
+      state.raw.feesIn       = feesIn;
 
       // Lien tab (existing pipeline)
       processData();
@@ -5293,7 +5330,8 @@ function renderDataQuality(raw){
         lienMgmt:     lienMgmt,
         treating:     treating,
         calendar:     calendar,
-        litOverview:  litOverview
+        litOverview:  litOverview,
+        feesIn:       feesIn
       };
       renderPipeline(raw);
       renderSettlements(raw);

@@ -3251,7 +3251,7 @@ function renderDataQuality(raw){
   // ---- State ----
   var state = {
     baseUrl: '',
-    raw:{ lienMgmt:[], lienOverview:[], disbursement:[], deposits:[] },
+    raw:{ lienMgmt:[], lienOverview:[], disbursement:[], deposits:[], feesIn:[] },
     valid:[], cases:[], excludedCount:0,
     sort:{ col:'maxDays', dir:'desc' },
     expanded:{},
@@ -3399,6 +3399,31 @@ function renderDataQuality(raw){
   function _computeMtdFees(){
     var now = state.refDate;
     var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var curKey = now.getFullYear()+'-'+((now.getMonth()+1)<10?'0':'')+(now.getMonth()+1);
+    var _ovMtd = (typeof _getFeeOverride==='function') ? _getFeeOverride(curKey) : null;
+    // PRIMARY source: fees-in (fee_total where check_date in current month) — closed-inclusive.
+    var feesIn = state.raw.feesIn || [];
+    var fiRows = [];
+    for(var fi0=0; fi0<feesIn.length; fi0++){
+      var fr = feesIn[fi0] || {};
+      var fdt = parseDate(fr.check_date);
+      if(!fdt || fdt < mtdStart || fdt > now) continue;
+      fiRows.push({
+        id: fr.case_id,
+        caseName: fr.casename || '—',
+        disbursedDate: fr.check_date || '—',
+        negotiator: fr.lien_negotiator || '—',
+        depositTotal: null,
+        feeAmount: parseFloat(fr.fee_total)||0,
+        hasOverride: false,
+        source: 'fees-in'
+      });
+    }
+    if(fiRows.length){
+      var fiTotal = 0; for(var fr2=0; fr2<fiRows.length; fr2++) fiTotal += fiRows[fr2].feeAmount;
+      return { rows: fiRows, totalFee: (_ovMtd!=null?_ovMtd:fiTotal), source:'fees-in' };
+    }
+    // FALLBACK (no fees-in entered for the month yet): disbursement×rate reconstruction.
     var deposits = state.raw.deposits || [];
     var disbursement = state.raw.disbursement || [];
     var depByCaseId = {};
@@ -3430,7 +3455,7 @@ function renderDataQuality(raw){
     }
     var totalFee = 0;
     for(var r=0;r<rows.length;r++) totalFee += rows[r].feeAmount;
-    return { rows: rows, totalFee: totalFee };
+    return { rows: rows, totalFee: (_ovMtd!=null?_ovMtd:totalFee), source:'computed' };
   }
 
   // ---- Renderers ----
@@ -3924,9 +3949,10 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
         fetchAll('/api/v1/case/lien-negotiations-overview/'),
         fetchAll('/api/v1/case/disbursement-overview/'),
-        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
+        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31'),
+        fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
       ]);
-      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3];
+      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3]; state.raw.feesIn=results[4]||[];
       processData(); renderAll();
       renderLienActivityFeed(results[2],_lienActivityDays);
       bindLienActivityToggle(results[2]);
