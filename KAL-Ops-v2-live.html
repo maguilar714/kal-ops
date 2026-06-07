@@ -2478,6 +2478,7 @@ function buildFeeChart(raw){
   svg.onclick=function(e){
     var el=e.target.closest('[data-month]'); if(!el) return;
     var key=el.getAttribute('data-month');
+    if(key.indexOf('2026')===0){ alert('2026 fees are locked to CasePeer.\n\nThis card reads 2026 live from the fees-in endpoint — manual overrides are disabled so the dashboard always matches CasePeer. To change a 2026 month, run Take Fees on the case in CasePeer (Settlement tab → Settlement Proceeds → offer → Take Fees) and set the issue date to the real trust date.'); return; }
     var cur2=(typeof _getFeeOverride==='function')?_getFeeOverride(key):null;
     var v=prompt('Attorney fees generated for '+key+' ($) — override (blank clears override):', cur2!=null?cur2:'');
     if(v===null) return;
@@ -4792,14 +4793,16 @@ function renderDataQuality(raw){
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
     // MTD fee — single source of truth via _computeMtdFees()
     var mtd = _computeMtdFees();
-    var mtdFee = mtd.totalFee, mtdCases = mtd.rows.length;
+    var mtdFee = mtd.totalFee;
+    var mtdCases = (function(){ var s={},n=0; for(var i=0;i<mtd.rows.length;i++){ var id=mtd.rows[i].id; if(id==null){n++;continue;} if(!s[id]){s[id]=1;n++;} } return n; })(); // dedupe multi-check rows by case id
+    var mtdBasis = mtd.source === 'fees-in' ? 'CasePeer' : 'est.'; // fees-in = booked; computed = deposits×rate estimate
     var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
     var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
     var barEl = document.getElementById('lien-fee-bar');
     if(barEl){ barEl.style.width = feePct+'%'; barEl.style.background = barColor; }
     document.getElementById('lien-kpi-fee').textContent = fmtCurrency(mtdFee);
-    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'%';
+    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'% · '+mtdBasis;
   }
 
   function renderBriefing(){

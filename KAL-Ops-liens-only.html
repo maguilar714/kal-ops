@@ -3476,14 +3476,16 @@ function renderDataQuality(raw){
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
     // MTD fee — single source of truth via _computeMtdFees()
     var mtd = _computeMtdFees();
-    var mtdFee = mtd.totalFee, mtdCases = mtd.rows.length;
+    var mtdFee = mtd.totalFee;
+    var mtdCases = (function(){ var s={},n=0; for(var i=0;i<mtd.rows.length;i++){ var id=mtd.rows[i].id; if(id==null){n++;continue;} if(!s[id]){s[id]=1;n++;} } return n; })(); // dedupe multi-check rows by case id
+    var mtdBasis = mtd.source === 'fees-in' ? 'CasePeer' : 'est.'; // fees-in = booked; computed = deposits×rate estimate
     var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
     var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
     var barEl = document.getElementById('lien-fee-bar');
     if(barEl){ barEl.style.width = feePct+'%'; barEl.style.background = barColor; }
     document.getElementById('lien-kpi-fee').textContent = fmtCurrency(mtdFee);
-    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'%';
+    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'% · '+mtdBasis;
   }
 
   function renderBriefing(){
