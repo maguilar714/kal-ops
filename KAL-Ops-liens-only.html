@@ -1519,6 +1519,21 @@ var _trackerSortDir = 1; // 1=asc, -1=desc
 
 // --- Case status flags (localStorage, migrates to Railway later) ---
 var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+
+// --- Forward attribution capture (set-once snapshot) — mirror of main dashboard ---
+function _captureAttribution(raw){
+  try{
+    if(typeof _noteCache!=='object'||_noteCache===null) return;
+    var WIN=75, MAX=150, today=new Date(), wrote=0;
+    function pcp(x){ if(!x||typeof x!=='string') return null; var p=x.split('/'); if(p.length!==3) return null; var d=new Date(parseInt(p[2],10),parseInt(p[0],10)-1,parseInt(p[1],10)); return isNaN(d.getTime())?null:d; }
+    function rec(x){ var d=pcp(x); if(!d) return false; var diff=(today-d)/86400000; return diff>=0 && diff<=WIN; }
+    function stamp(key,cm){ if(wrote>=MAX||!cm) return; if(_noteCache[key]!=null) return; _noteCache[key]=cm; wrote++; fetch(_RAILWAY_URL+'/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseName:key,note:cm})}).catch(function(){}); }
+    (raw.demands||[]).forEach(function(d){ if(d.id!=null&&rec(d.datesent)) stamp('dmdAuth::'+d.id,(d.case_manager||'').trim()); });
+    (raw.deposits||[]).forEach(function(d){ if(d.id!=null&&rec(d.check_date)) stamp('depAuth::'+d.id,(d.case_manager||'').trim()); });
+    (raw.feesIn||[]).forEach(function(f){ if(f.id!=null&&rec(f.check_date)) stamp('feeAuth::'+f.id,(f.case_manager||'').trim()); });
+    if(wrote) console.log('[KAL Ops] attribution snapshot captured '+wrote+' records');
+  }catch(e){ console.warn('[KAL Ops] capture skipped:', e&&e.message); }
+}
 var _FLAG_OPTIONS = ['Pre-Lit','Lit','Arb','Referred','Drop'];
 var _FLAG_COLORS = {
   'Pre-Lit': 'gray',
@@ -3958,6 +3973,7 @@ function renderDataQuality(raw){
       processData(); renderAll();
       renderLienActivityFeed(results[2],_lienActivityDays);
       bindLienActivityToggle(results[2]);
+      _captureAttribution({deposits:results[3], feesIn:results[4]||[]});
     } catch(err){
       var msg=err&&err.message||'unknown error';
       var hint=msg.toLowerCase().indexOf('failed to fetch')>=0?'CORS blocked — must be opened from my.casepeer.com.':msg.indexOf('401')>=0||msg.indexOf('403')>=0?'Auth error — log into my.casepeer.com first.':msg;

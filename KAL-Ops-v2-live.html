@@ -1097,9 +1097,12 @@
     </div>
 
     <div style="display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-top:4px">
-      <div class="seg" id="cm-seg">
-        <button class="on" data-period="2026">2026 YTD</button>
-        <button data-period="2025">2025</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="seg" id="cm-seg">
+          <button class="on" data-period="2026">2026 YTD</button>
+          <button data-period="2025">2025</button>
+        </div>
+        <button id="kal-refresh" title="Re-pull live CasePeer data in place" style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--ink-2);background:#fff;border:1px solid var(--line-strong);border-radius:8px;padding:6px 12px;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh Data</button>
       </div>
       <div style="font-size:12.5px;color:var(--ink-3);max-width:640px">
         <b style="color:var(--ink-2)">Settlement Revenue</b> = checks deposited.
@@ -1113,7 +1116,7 @@
         <div class="accent-rule"></div>
         <h2 id="cm-title">CM output · 2026 YTD</h2>
       </div>
-      <div class="hint" id="cm-sort-hint">Sorted by Settlement Revenue ↓</div>
+      <div class="hint" id="cm-sort-hint">Sorted by Attorney Fees ↓</div>
     </div>
 
     <!-- 2026 -->
@@ -1122,21 +1125,44 @@
         <thead>
           <tr>
             <th>Case Manager</th>
-            <th class="num" data-tip="All active cases assigned to this CM.&#10;Source: treating-overview · No date filter — live count.">Active Cases<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases currently in the treating phase.&#10;Source: treating-overview · No date filter — live count.">In Treating<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases retained this calendar month only.&#10;Source: treating-overview · Filter: retainref_date in current month.">New Intakes<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">this month</div></th>
-            <th class="num" data-tip="Demands sent by this CM in the selected year.&#10;Source: demands · Filter: datesent in selected year.">Demands<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Demands where offer met or exceeded the policy limit.&#10;Source: demands · Requires both offer_amount and insurance_policy.">Pops<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Pops ÷ analyzable demands (those with both policy limit and offer).&#10;Fraction shown in cell. Denominator is smaller than total demands.">Pop Rate<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD · analyzable</div></th>
-            <th class="num has-bar" data-tip="Sum of check deposits attributed to this CM in the selected year.&#10;Source: check-deposits · Filter: check_date in selected year.">Settlement Revenue<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Estimated firm fees at 33% of settlement revenue.&#10;Derived: Settlement Revenue ÷ 3.">Est. Fees (33%)<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Demands sent by this CM (handling CM at send), selected year.&#10;Jan-May 2026 seeded from Kausar; live capture after go-live.">Demands<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Settlement-based pop rate: of cases that SETTLED with a known policy, the share that settled at or above the limit.&#10;Credited to the demand submitter, counted in the settlement month.">Pop Rate<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">settled cases</div></th>
+            <th class="num has-bar" data-tip="Settlement dollars credited to this CM (handling CM), selected year.">Settlement Revenue<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Actual attorney fees taken (Kausar worksheets / fees-in) -- not a revenue / 3 estimate.">Attorney Fees<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD &middot; actual</div></th>
           </tr>
         </thead>
         <tbody id="cm-2026-body"></tbody>
       </table>
     </div>
     <div class="note" id="cm-2026-note">
-      <b>2026 YTD totals.</b> $2,692,210 settlement revenue · 111 check deposits · est. fees ~$897,403.
+      <b>2026 YTD.</b> loading&hellip;
+    </div>
+
+    <!-- Month-by-month scoreboard (2026 only) -->
+    <style>
+      #cm-2026 td.name em, #cm-month-card td.name em{font-style:italic;color:var(--ink-2)}
+      .cm-mk{color:var(--ink-4);font-weight:400;margin-left:2px;font-size:11px;vertical-align:3px}
+      .cm-role{display:inline-block;margin-left:8px;padding:2px 6px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;background:var(--surface-3);color:var(--ink-3);border-radius:4px;vertical-align:2px}
+      .cm-frac{font-size:10px;font-weight:400;color:var(--ink-3);margin-left:3px}
+      #cm-month-card table.t td.cm-mcell, #cm-month-card table.t th.cm-mcol{text-align:center;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:60px}
+      #cm-month-card table.t td.cm-ytd, #cm-month-card table.t th.cm-ytd{border-left:2px solid var(--line-strong);font-weight:700}
+      #cm-month-card table.t tr.cm-firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
+    </style>
+    <div id="cm-month-card">
+      <div class="section-title" style="margin-top:22px">
+        <div class="left"><div class="accent-rule"></div><h2>Month-by-month</h2></div>
+        <div class="seg" id="cm-metric-seg">
+          <button class="on" data-m="dmd">Demands</button>
+          <button data-m="pop">Pop Rate</button>
+          <button data-m="fee">Attorney Fees</button>
+        </div>
+      </div>
+      <div class="panel">
+        <table class="t">
+          <thead><tr id="cm-mtx-head"></tr></thead>
+          <tbody id="cm-mtx-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 2025 -->
@@ -2149,7 +2175,7 @@ function _applyCMSortHint(){
   });
 }
 function _bindCMSort(){
-  ['cm-2026','cm-2025'].forEach(function(pid){
+  ['cm-2025'].forEach(function(pid){
     var ths=document.querySelectorAll('#'+pid+' thead th');
     ths.forEach(function(th,idx){
       var key=_CM_COLS[idx]; if(!key||th.dataset.sortBound) return;
@@ -2174,7 +2200,18 @@ segBtns.forEach(b => b.addEventListener('click', () => {
   document.getElementById('cm-2025').style.display      = is2026 ? 'none' : '';
   document.getElementById('cm-2025-note').style.display = is2026 ? 'none' : '';
   document.getElementById('cm-title').textContent = is2026 ? 'CM output · 2026 YTD' : 'CM output · 2025 full year';
+  var _mc=document.getElementById('cm-month-card'); if(_mc) _mc.style.display = is2026 ? '' : 'none';
+  var _h=document.getElementById('cm-sort-hint'); if(_h) _h.textContent = is2026 ? 'Sorted by Attorney Fees ↓' : ('Sorted by '+(_CM_LABELS[_cmSort.key]||_cmSort.key)+' '+(_cmSort.dir==='asc'?'↑':'↓'));
 }));
+
+var _kalRefreshBtn=document.getElementById('kal-refresh');
+if(_kalRefreshBtn) _kalRefreshBtn.addEventListener('click', function(){
+  if(!state || !state.reload) return;
+  var b=this, old=b.innerHTML;
+  b.style.opacity='0.6'; b.style.pointerEvents='none';
+  b.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--amber-mark)"></span>Refreshing\u2026';
+  Promise.resolve(state.reload()).catch(function(){}).then(function(){ b.innerHTML=old; b.style.opacity=''; b.style.pointerEvents=''; });
+});
 
 // Filter chips (visual only — no real filter)
 document.querySelectorAll('.chips').forEach(group => {
@@ -2501,6 +2538,26 @@ var _trackerSortDir = 1; // 1=asc, -1=desc
 
 // --- Case status flags (localStorage, migrates to Railway later) ---
 var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+
+// --- Forward attribution capture (set-once snapshot) --------------------------
+// Freezes the handling CM onto recent demands/deposits/fees so a later
+// reassignment in CasePeer can't steal the credit. Writes namespaced keys to
+// the /notes KV: dmdAuth::<id>, depAuth::<id>, feeAuth::<id>. Bounded to a
+// recent window so we never loop over years of stable records. Set-once (skips
+// keys already present in _noteCache). Fire-and-forget; never blocks render.
+function _captureAttribution(raw){
+  try{
+    if(typeof _noteCache!=='object'||_noteCache===null) return;
+    var WIN=75, MAX=150, today=new Date(), wrote=0;
+    function pcp(x){ if(!x||typeof x!=='string') return null; var p=x.split('/'); if(p.length!==3) return null; var d=new Date(parseInt(p[2],10),parseInt(p[0],10)-1,parseInt(p[1],10)); return isNaN(d.getTime())?null:d; }
+    function rec(x){ var d=pcp(x); if(!d) return false; var diff=(today-d)/86400000; return diff>=0 && diff<=WIN; }
+    function stamp(key,cm){ if(wrote>=MAX||!cm) return; if(_noteCache[key]!=null) return; _noteCache[key]=cm; wrote++; fetch(_RAILWAY_URL+'/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseName:key,note:cm})}).catch(function(){}); }
+    (raw.demands||[]).forEach(function(d){ if(d.id!=null&&rec(d.datesent)) stamp('dmdAuth::'+d.id,(d.case_manager||'').trim()); });
+    (raw.deposits||[]).forEach(function(d){ if(d.id!=null&&rec(d.check_date)) stamp('depAuth::'+d.id,(d.case_manager||'').trim()); });
+    (raw.feesIn||[]).forEach(function(f){ if(f.id!=null&&rec(f.check_date)) stamp('feeAuth::'+f.id,(f.case_manager||'').trim()); });
+    if(wrote) console.log('[KAL Ops] attribution snapshot captured '+wrote+' records');
+  }catch(e){ console.warn('[KAL Ops] capture skipped:', e&&e.message); }
+}
 var _FLAG_OPTIONS = ['Pre-Lit','Lit','Arb','Referred','Drop'];
 var _FLAG_COLORS = {
   'Pre-Lit': 'gray',
@@ -4045,7 +4102,7 @@ function renderCMPerformance(raw){
     }
   });
 
-  ['2026','2025'].forEach(function(year){
+  ['2025'].forEach(function(year){
     var yearDemands=demands.filter(function(d){
       return d.datesent&&d.datesent.indexOf('/'+year)>0;
     });
@@ -4157,7 +4214,158 @@ function renderCMPerformance(raw){
   if(cmItems[0]){var m=cmItems[0].querySelector('.marker');if(m) m.textContent=_fmtCurrency(rev2026);}
   var stamp=document.querySelector('[data-page="cm"] .briefing .stamp');
   if(stamp) stamp.innerHTML='<b>Through '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>est. fees ~'+_fmtCurrency(Math.round(rev2026/3));
+  renderCM2026();
 }
+
+/* =========================================================
+   renderCM2026() -- 2026 CM Performance from seeded history
+   Jan-May 2026 attributed to the handling CM (frozen).
+   Pop rate is settlement-based: of cases that SETTLED with a
+   known policy, the share at/above limit, credited to the demand
+   submitter, counted in the settlement month.
+   ========================================================= */
+var CM_MONTHS_2026=['Jan','Feb','Mar','Apr','May'];
+var CM_SEED_2026=[
+ {cm:'Jose Duarte',    short:'Jose',  mark:'',    rev:441833, dmd:[6,1,7,3,4],   fee:[73333,8600,52376,4444,6567],    pop:[2,1,1,0,0], ana:[3,2,4,0,2]},
+ {cm:'Lucy Estrada',   short:'Lucy',  mark:'dep', rev:453670, dmd:[1,20,0,1,3],  fee:[15738,37581,10142,28507,53284], pop:[1,3,0,1,2], ana:[4,4,6,3,3]},
+ {cm:'Cris Urbina',    short:'Cris',  mark:'',    rev:434589, dmd:[8,11,0,1,11], fee:[7882,37812,79479,7500,10000],   pop:[0,3,1,0,1], ana:[3,4,3,1,1]},
+ {cm:'Icela Parra',    short:'Icela', mark:'',    rev:337053, dmd:[4,6,6,5,6],   fee:[5000,4184,0,39500,60242],       pop:[1,0,0,2,3], ana:[1,2,0,3,5]},
+ {cm:'Rashel Prieto',  short:'Rashel',mark:'',    rev:326500, dmd:[4,4,2,1,2],   fee:[16667,0,0,68125,20000],         pop:[1,0,0,1,0], ana:[1,0,0,5,4]},
+ {cm:'Erick Romero',   short:'Erick', mark:'dep', rev:303000, dmd:[1,3,9,4,13],  fee:[0,21667,36333,21833,21167],     pop:[0,2,2,2,1], ana:[0,2,3,2,2]},
+ {cm:'Ulises',         short:'Ulises',mark:'dep', rev:333908, dmd:[1,3,0,0,0],   fee:[3608,13000,60000,17153,6667],   pop:[0,3,3,1,0], ana:[1,3,3,3,1]},
+ {cm:'Bianca Salcedo', short:'Bianca',mark:'role',role:'Disbursements', rev:145571, dmd:[0,0,0,0,0], fee:[0,18333,25599,0,0],     pop:[0,2,0,0,0], ana:[1,2,4,0,0]},
+ {cm:'Junior Alvarez', short:'Junior',mark:'role',role:'Client Care',   rev:105426, dmd:[0,0,0,0,0], fee:[2667,8359,21167,0,400], pop:[0,0,1,0,0], ana:[1,3,3,0,1]},
+ {cm:'Damny Castro',   short:'Damny', mark:'',    rev:91000,  dmd:[3,0,3,3,2],   fee:[23000,6667,0,0,0],              pop:[1,0,0,0,0], ana:[1,0,0,0,0]},
+ {cm:'Ronald Agresott',short:'Ronald',mark:'',    rev:75000,  dmd:[0,1,7,4,7],   fee:[0,0,0,20000,5000],              pop:[0,0,0,2,1], ana:[0,0,0,2,1]},
+ {cm:'Litigation',    short:'Lit',    mark:'',    rev:23500,  dmd:[0,0,0,0,0],   fee:[0,0,0,0,5688],                  pop:[0,0,0,0,0], ana:[0,0,0,0,2]},
+ {cm:'Liliana',       short:'Liliana',mark:'dep', rev:14000,  dmd:[0,0,0,0,0],   fee:[4667,0,0,0,0],                  pop:[0,0,0,0,0], ana:[1,0,0,0,0]}
+];
+var _cmMetric='dmd';
+var _LIVE_CUTOVER='2026-06';          // seed owns <= 2026-05; live computes >= this
+var _cmCombined=null;                 // cached merged model {MONTHS, rows}
+function _cmSum(a){return a.reduce(function(x,y){return x+y;},0);}
+function _cmName(r){
+  if(r.mark==='dep') return '<em>'+_esc(r.cm)+'</em><span class="cm-mk">*</span>';
+  if(r.mark==='role') return _esc(r.cm)+'<span class="cm-mk">&dagger;</span><span class="cm-role">'+_esc(r.role)+'</span>';
+  return _esc(r.cm);
+}
+function _cmPopHtml(p,a){
+  if(a===0) return '<span style="color:var(--ink-4)">&mdash;</span>';
+  var rt=Math.round(p/a*100);
+  return '<span class="flag '+(rt>=40?'green':'gray')+'">'+rt+'%</span><span class="cm-frac">'+p+'/'+a+'</span>';
+}
+function _cmTint(v,mx){var o=mx>0?(v/mx*0.20):0;return 'background:rgba(0,113,227,'+o.toFixed(3)+')';}
+function _plimCM(s){ if(!s) return null; s=String(s).toLowerCase(); if(s.indexOf('mil')>=0) return 1000000; var i=s.indexOf('k'); if(i<0) return null; var n=''; for(var j=i-1;j>=0;j--){ var c=s[j]; if(c>='0'&&c<='9') n=c+n; else break; } return n?parseInt(n,10)*1000:null; }
+function _cmYm(d){ if(!d) return ''; var p=String(d).split('/'); return p.length===3?(p[2]+'-'+p[0]):''; }
+// Live months from cutover through the current month (so the current month always shows).
+function _liveMonthList(){
+  var lab=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var now=new Date(), ey=now.getFullYear(), em=now.getMonth()+1, y=2026, m=6, res=[];
+  while(y<ey || (y===ey && m<=em)){ var ym=y+'-'+(m<10?'0'+m:m); res.push({ym:ym,label:lab[m-1]+(y!==2026?(" '"+String(y).slice(2)):'')}); m++; if(m>12){m=1;y++;} if(res.length>72) break; }
+  return res;
+}
+// Live per-CM, per-month (>= cutover), attributed via snapshot (dmdAuth/feeAuth/depAuth) with current-CM fallback.
+function _computeLive2026(raw){
+  var dem=raw.demands||[], cd=raw.deposits||[], fi=raw.feesIn||[], out={};
+  function R(cm,ym){ if(!cm) cm='(unassigned)'; if(!out[cm]) out[cm]={dmd:{},fee:{},rev:{},pop:{},ana:{}}; var o=out[cm]; ['dmd','fee','rev','pop','ana'].forEach(function(k){ if(o[k][ym]==null) o[k][ym]=0; }); return o; }
+  function ge(m){ return m && m>=_LIVE_CUTOVER; }
+  function dmdCM(d){ return (_noteCache['dmdAuth::'+d.id]||d.case_manager||'').trim(); }
+  var polByCase={}, subByCase={};
+  dem.forEach(function(d){ if(d.case&&d.case.id!=null){ if(polByCase[d.case.id]==null) polByCase[d.case.id]=d.insurance_policy; if(subByCase[d.case.id]==null) subByCase[d.case.id]=dmdCM(d); } });
+  dem.forEach(function(d){ var m=_cmYm(d.datesent); if(ge(m)) R(dmdCM(d),m).dmd[m]++; });
+  fi.forEach(function(f){ var m=_cmYm(f.check_date); if(ge(m)){ var cm=(_noteCache['feeAuth::'+f.id]||f.case_manager||'').trim(); R(cm,m).fee[m]+=parseFloat(f.fee_total)||0; } });
+  var byCase={};
+  cd.forEach(function(r){ if((r.check_type||'').toLowerCase().indexOf('settlement')<0) return; var m=_cmYm(r.check_date); if(!ge(m)) return; if(!byCase[r.case_id]) byCase[r.case_id]={amt:0,lastYm:m,depCM:(_noteCache['depAuth::'+r.id]||r.case_manager||'').trim()}; byCase[r.case_id].amt+=parseFloat(r.amount)||0; if(m>byCase[r.case_id].lastYm) byCase[r.case_id].lastYm=m; });
+  Object.keys(byCase).forEach(function(cid){ var c=byCase[cid], cm=subByCase[cid]||c.depCM, m=c.lastYm, lim=_plimCM(polByCase[cid]); var o=R(cm,m); o.rev[m]+=c.amt; if(lim){ o.ana[m]++; if(c.amt>=lim) o.pop[m]++; } });
+  return out;
+}
+// Merge frozen seed (Jan–May) + live (Jun→now) into one model.
+function _cmBuild(raw){
+  var seedMonths=[{ym:'2026-01',label:'Jan'},{ym:'2026-02',label:'Feb'},{ym:'2026-03',label:'Mar'},{ym:'2026-04',label:'Apr'},{ym:'2026-05',label:'May'}];
+  var liveMonths=_liveMonthList();
+  var MONTHS=seedMonths.concat(liveMonths);
+  var map={};
+  CM_SEED_2026.forEach(function(s){ var e=map[s.cm]={meta:{cm:s.cm,short:s.short,mark:s.mark,role:s.role}, by:{}, seedRev:s.rev}; seedMonths.forEach(function(mo,i){ e.by[mo.ym]={dmd:s.dmd[i]||0,fee:s.fee[i]||0,rev:0,pop:s.pop[i]||0,ana:s.ana[i]||0}; }); });
+  var live=_computeLive2026(raw);
+  Object.keys(live).forEach(function(full){ if(!full||full==='(unassigned)') return; if(!map[full]) map[full]={meta:{cm:full,short:(full.split(' ')[0]||full),mark:''}, by:{}, seedRev:0}; var lv=live[full]; liveMonths.forEach(function(mo){ map[full].by[mo.ym]={dmd:(lv.dmd[mo.ym]||0),fee:(lv.fee[mo.ym]||0),rev:(lv.rev[mo.ym]||0),pop:(lv.pop[mo.ym]||0),ana:(lv.ana[mo.ym]||0)}; }); });
+  var rows=Object.keys(map).map(function(full){
+    var e=map[full], dmd=0,fee=0,rev=e.seedRev,pop=0,ana=0;
+    MONTHS.forEach(function(mo){ var c=e.by[mo.ym]||{dmd:0,fee:0,rev:0,pop:0,ana:0}; if(!e.by[mo.ym]) e.by[mo.ym]=c; dmd+=c.dmd; fee+=c.fee; rev+=c.rev; pop+=c.pop; ana+=c.ana; });
+    return {meta:e.meta, by:e.by, ytd:{dmd:dmd,fee:fee,rev:rev,pop:pop,ana:ana}};
+  });
+  rows.sort(function(a,b){ return b.ytd.fee-a.ytd.fee; });
+  return {MONTHS:MONTHS, rows:rows};
+}
+function renderCM2026(){
+  var raw=_cmLastRaw||{}; _cmCombined=_cmBuild(raw);
+  var rows=_cmCombined.rows, maxRev=rows.reduce(function(m,r){return Math.max(m,r.ytd.rev);},1);
+  var body=rows.map(function(r){
+    var y=r.ytd, pct=Math.round(y.rev/maxRev*100);
+    return '<tr><td class="name">'+_cmName(r.meta)+'</td>'+
+      '<td class="num">'+y.dmd+'</td>'+
+      '<td class="num">'+_cmPopHtml(y.pop,y.ana)+'</td>'+
+      '<td class="num"><span class="bic blue"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+_fmtCurrency(y.rev)+'</span></span></td>'+
+      '<td class="num" style="font-weight:600">'+_fmtCurrency(y.fee)+'</td></tr>';
+  }).join('');
+  var tb=document.getElementById('cm-2026-body'); if(tb) tb.innerHTML=body;
+  var tF=0,tR=0,tD=0,tP=0,tA=0; rows.forEach(function(r){tF+=r.ytd.fee;tR+=r.ytd.rev;tD+=r.ytd.dmd;tP+=r.ytd.pop;tA+=r.ytd.ana;});
+  var note=document.getElementById('cm-2026-note');
+  if(note) note.innerHTML='<b>2026 YTD.</b> '+_fmtCurrency(tF)+' attorney fees &middot; '+_fmtCurrency(tR)+' settlement revenue &middot; '+tD+' demands &middot; firm pop rate '+(tA?Math.round(tP/tA*100):0)+'% ('+tP+'/'+tA+'). <span style="color:var(--ink-3)">Jan&ndash;May seeded from Kausar (frozen); Jun onward live from CasePeer via the attribution snapshot. Exec Team ($250k+) tracked separately.</span>';
+  var cmItems=document.querySelectorAll('[data-page="cm"] .briefing .items .item');
+  if(cmItems[0]){var mk0=cmItems[0].querySelector('.marker'); if(mk0) mk0.textContent=_fmtCurrency(tF);}
+  var stamp=document.querySelector('[data-page="cm"] .briefing .stamp');
+  if(stamp) stamp.innerHTML='<b>'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>credit follows the demand submitter';
+  var hint=document.getElementById('cm-sort-hint'); if(hint) hint.textContent='Sorted by Attorney Fees ↓';
+  renderCMMatrix(_cmMetric);
+}
+function renderCMMatrix(metric){
+  _cmMetric=metric;
+  if(!_cmCombined) return;
+  var MONTHS=_cmCombined.MONTHS, rows=_cmCombined.rows;
+  var head='<th>Case Manager</th>'+MONTHS.map(function(m){return '<th class="num cm-mcol">'+m.label+'</th>';}).join('')+'<th class="num cm-mcol cm-ytd">YTD</th>';
+  var hd=document.getElementById('cm-mtx-head'); if(hd) hd.innerHTML=head;
+  var mx=1;
+  if(metric!=='pop'){ rows.forEach(function(r){ MONTHS.forEach(function(m){ var v=(r.by[m.ym]||{})[metric]||0; if(v>mx)mx=v; }); }); }
+  function cell(r,m){
+    var c=r.by[m.ym]||{dmd:0,fee:0,pop:0,ana:0};
+    if(metric==='dmd'){ var v=c.dmd; return '<td class="num cm-mcell" style="'+_cmTint(v,mx)+'">'+(v||'<span style="color:var(--ink-4)">0</span>')+'</td>'; }
+    if(metric==='fee'){ var v=c.fee; var l=v?('$'+Math.round(v/1000)+'k'):'<span style="color:var(--ink-4)">&mdash;</span>'; return '<td class="num cm-mcell" style="'+_cmTint(v,mx)+'">'+l+'</td>'; }
+    if(c.ana===0) return '<td class="num cm-mcell"><span style="color:var(--ink-4)">&mdash;</span></td>';
+    var rt=Math.round(c.pop/c.ana*100); return '<td class="num cm-mcell"><span style="color:'+(rt>=40?'var(--green)':'var(--ink-2)')+';font-weight:600">'+rt+'%</span> <span class="cm-frac">'+c.pop+'/'+c.ana+'</span></td>';
+  }
+  function ytd(r){
+    var y=r.ytd;
+    if(metric==='dmd') return '<td class="num cm-mcell cm-ytd">'+y.dmd+'</td>';
+    if(metric==='fee') return '<td class="num cm-mcell cm-ytd">'+_fmtCurrency(y.fee)+'</td>';
+    if(y.ana===0) return '<td class="num cm-mcell cm-ytd">&mdash;</td>';
+    return '<td class="num cm-mcell cm-ytd">'+Math.round(y.pop/y.ana*100)+'%</td>';
+  }
+  var bodyRows=rows.map(function(r){ return '<tr><td class="name">'+_cmName(r.meta)+'</td>'+MONTHS.map(function(m){return cell(r,m);}).join('')+ytd(r)+'</tr>'; }).join('');
+  var fr='<tr class="cm-firm"><td class="name">Firm</td>';
+  MONTHS.forEach(function(m){
+    if(metric==='dmd'){ var v=rows.reduce(function(s,r){return s+((r.by[m.ym]||{}).dmd||0);},0); fr+='<td class="num cm-mcell">'+v+'</td>'; }
+    else if(metric==='fee'){ var v=rows.reduce(function(s,r){return s+((r.by[m.ym]||{}).fee||0);},0); fr+='<td class="num cm-mcell">$'+Math.round(v/1000)+'k</td>'; }
+    else { var p=rows.reduce(function(s,r){return s+((r.by[m.ym]||{}).pop||0);},0), a=rows.reduce(function(s,r){return s+((r.by[m.ym]||{}).ana||0);},0); fr+='<td class="num cm-mcell">'+(a?Math.round(p/a*100)+'%':'&mdash;')+'</td>'; }
+  });
+  if(metric==='dmd'){ var T=rows.reduce(function(s,r){return s+r.ytd.dmd;},0); fr+='<td class="num cm-mcell cm-ytd">'+T+'</td>'; }
+  else if(metric==='fee'){ var T=rows.reduce(function(s,r){return s+r.ytd.fee;},0); fr+='<td class="num cm-mcell cm-ytd">'+_fmtCurrency(T)+'</td>'; }
+  else { var P=rows.reduce(function(s,r){return s+r.ytd.pop;},0), A=rows.reduce(function(s,r){return s+r.ytd.ana;},0); fr+='<td class="num cm-mcell cm-ytd">'+(A?Math.round(P/A*100)+'%':'&mdash;')+'</td>'; }
+  fr+='</tr>';
+  var mb=document.getElementById('cm-mtx-body'); if(mb) mb.innerHTML=bodyRows+fr;
+}
+
+(function(){
+  var seg=document.getElementById('cm-metric-seg');
+  if(seg && !seg.dataset.bound){ seg.dataset.bound='1';
+    seg.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click',function(){
+        seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+        b.classList.add('on'); renderCMMatrix(b.getAttribute('data-m'));
+      });
+    });
+  }
+})();
+
 
 /* =========================================================
    renderDataQuality() -- Data Quality tab
@@ -5280,6 +5488,7 @@ function renderDataQuality(raw){
     // or the full origin when running locally (cross-origin with credentials)
     state.baseUrl = onCasePeer ? '' : 'https://my.casepeer.com';
 
+    state.reload = async function(){
     try {
       var results = await Promise.all([
         fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
@@ -5344,6 +5553,7 @@ function renderDataQuality(raw){
       renderCaseCare(Object.assign({}, raw, { notes: cpNotes, clients: cpClients }), _juniorFields);
       bindLienActivityToggle(disbursement);
       renderSOL(raw);
+      _captureAttribution(raw);
 
     } catch(err){
       var msg = err && err.message || 'unknown error';
@@ -5356,6 +5566,8 @@ function renderDataQuality(raw){
       showOffHostBanner('CasePeer fetch failed · '+hint);
       showError(hint);
     }
+    };
+    await state.reload();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
