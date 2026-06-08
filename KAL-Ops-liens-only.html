@@ -627,6 +627,7 @@
     <div style="font-size:13px;font-weight:600;color:var(--ink);letter-spacing:.01em;white-space:nowrap;">Lien Operations</div>
 
     <div class="meta">
+      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
       <button id="help-toggle" title="Toggle field descriptions on hover" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
@@ -681,14 +682,18 @@
         <div class="sub" id="lien-kpi-disb-sub">loading…</div>
       </div>
       <div class="kpi" data-tip="MTD attorney fees = sum of check deposits this month x per-case fee rate (default 33%). Click goal to edit.">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-          <div class="label" style="margin:0;">Atty Fees · MTD</div>
-          <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:3px;" title="Edit monthly goal">goal</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;gap:6px;">
+          <div class="label" style="margin:0;">Atty Fees</div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span class="lien-fee-tog" id="lien-fee-tog-mtd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:3px;">MTD</span>
+            <span class="lien-fee-tog" id="lien-fee-tog-ytd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:3px;">YTD</span>
+            <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:3px;" title="Edit monthly goal">goal</span>
+          </div>
         </div>
         <div class="row-v">
           <div class="value" id="lien-kpi-fee">—</div>
         </div>
-        <div style="margin:5px 0 3px;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;">
+        <div id="lien-fee-bar-wrap" style="margin:5px 0 3px;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;">
           <div id="lien-fee-bar" style="height:100%;background:var(--blue);width:0%;transition:width .5s ease;border-radius:2px;"></div>
         </div>
         <div class="sub" id="lien-kpi-fee-sub">loading…</div>
@@ -3411,6 +3416,19 @@ function renderDataQuality(raw){
   }
 
   // ---- Shared MTD fee computation (single source of truth) ----
+  var _lienFeeView='mtd';
+  function _computeYtdFees(){
+    var yr = state.refDate.getFullYear();
+    var feesIn = state.raw.feesIn || [];
+    var t=0, seen={}, n=0;
+    for(var i=0;i<feesIn.length;i++){
+      var fr=feesIn[i]||{}; var d=parseDate(fr.check_date);
+      if(!d || d.getFullYear()!==yr) continue;
+      t += parseFloat(fr.fee_total)||0;
+      var cid=fr.case_id; if(cid==null){n++;} else if(!seen[cid]){seen[cid]=1;n++;}
+    }
+    return { totalFee:t, cases:n, basis:'CasePeer' };
+  }
   function _computeMtdFees(){
     var now = state.refDate;
     var mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -3501,6 +3519,15 @@ function renderDataQuality(raw){
     if(barEl){ barEl.style.width = feePct+'%'; barEl.style.background = barColor; }
     document.getElementById('lien-kpi-fee').textContent = fmtCurrency(mtdFee);
     document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'% · '+mtdBasis;
+    var _view=(typeof _lienFeeView!=='undefined')?_lienFeeView:'mtd';
+    (function(){ var m=document.getElementById('lien-fee-tog-mtd'),y=document.getElementById('lien-fee-tog-ytd'); function st(el,on){ if(!el)return; el.style.background=on?'var(--blue-soft)':'transparent'; el.style.color=on?'var(--blue)':'var(--ink-4)'; el.style.fontWeight=on?'700':'400'; } st(m,_view==='mtd'); st(y,_view==='ytd'); })();
+    var _ge=document.getElementById('lien-fee-goal-edit'), _bw=document.getElementById('lien-fee-bar-wrap');
+    if(_view==='ytd'){
+      var _ytd=_computeYtdFees();
+      if(_ge)_ge.style.display='none'; if(_bw)_bw.style.display='none';
+      document.getElementById('lien-kpi-fee').textContent=fmtCurrency(_ytd.totalFee);
+      document.getElementById('lien-kpi-fee-sub').textContent=state.refDate.getFullYear()+' YTD · '+_ytd.cases+' case'+(_ytd.cases!==1?'s':'')+' · '+_ytd.basis;
+    } else { if(_ge)_ge.style.display=''; if(_bw)_bw.style.display=''; }
   }
 
   function renderBriefing(){
@@ -3909,6 +3936,7 @@ function renderDataQuality(raw){
         }
       });
     }
+    ['mtd','ytd'].forEach(function(v){ var el=document.getElementById('lien-fee-tog-'+v); if(el && !el.dataset.bd){ el.dataset.bd='1'; el.addEventListener('click', function(){ _lienFeeView=v; renderKPIs(); }); } });
   }
 
   function showError(msg){
@@ -3961,6 +3989,7 @@ function renderDataQuality(raw){
     await _loadFlags(); await _loadNotes(); await _loadContacts();
     var host=window.location.hostname;
     state.baseUrl=(host==='my.casepeer.com'||host.indexOf('casepeer')>=0)?'':'https://my.casepeer.com';
+    state.reload=async function(){
     try {
       var results=await Promise.all([
         fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
@@ -3980,11 +4009,14 @@ function renderDataQuality(raw){
       console.warn('[KAL Lien Ops] fetch failed:',msg);
       showOffHostBanner('CasePeer fetch failed · '+hint); showError(hint);
     }
+    };
+    await state.reload(); window.__kalReload=state.reload;
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
   else init();
 })();
 </script>
 
+<script>(function(){var b=document.getElementById("kal-refresh-hdr");if(!b)return;b.addEventListener("click",function(){if(!window.__kalReload)return;var o=b.innerHTML;b.style.opacity="0.6";b.style.pointerEvents="none";b.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--amber-mark)"></span>Refreshing\u2026';Promise.resolve(window.__kalReload()).catch(function(){}).then(function(){b.innerHTML=o;b.style.opacity="";b.style.pointerEvents="";});});})();</script>
 </body>
 </html>

@@ -609,6 +609,7 @@
     <div style="font-size:13px;font-weight:600;color:var(--ink);letter-spacing:.01em;white-space:nowrap;">Settlement</div>
 
     <div class="meta">
+      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
       <button id="help-toggle" title="Toggle field descriptions on hover" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
@@ -1975,6 +1976,7 @@ function renderPipeline(raw){
     var onCasePeer = host === 'my.casepeer.com' || host.indexOf('casepeer') >= 0;
     state.baseUrl = onCasePeer ? '' : 'https://my.casepeer.com';
 
+    state.reload = async function(){
     try {
       var results = await Promise.all([
         fetchAll('/api/v1/case/settlement-overview/'),
@@ -2008,6 +2010,8 @@ function renderPipeline(raw){
       console.warn('[KAL Settlement] fetch failed:', msg);
       showOffHostBanner('CasePeer fetch failed · ' + hint);
     }
+    };
+    await state.reload(); window.__kalReload=state.reload;
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
@@ -2015,5 +2019,6 @@ function renderPipeline(raw){
 })();
 </script>
 
+<script>(function(){var b=document.getElementById("kal-refresh-hdr");if(!b)return;b.addEventListener("click",function(){if(!window.__kalReload)return;var o=b.innerHTML;b.style.opacity="0.6";b.style.pointerEvents="none";b.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--amber-mark)"></span>Refreshing\u2026';Promise.resolve(window.__kalReload()).catch(function(){}).then(function(){b.innerHTML=o;b.style.opacity="";b.style.pointerEvents="";});});})();</script>
 </body>
 </html>

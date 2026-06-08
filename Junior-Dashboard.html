@@ -272,6 +272,7 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
       <div style="font-size:11px;color:var(--ink-3);margin-top:1px">Management Dashboard</div>
     </div>
     <div class="meta">
+      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <span><span class="dot"></span><span id="last-updated">Loading…</span></span>
       <button id="reload-btn" onclick="location.reload()">↺ Reload</button>
     </div>
@@ -670,6 +671,16 @@ function _renderNewIntakes(){
 }
 
 // ── Render Treating ───────────────────────────────────
+var _jTreatSort={key:'age',dir:'desc'};
+function _jTreatVal(t,key){
+  if(key==='case') return (t._casename||'').toLowerCase();
+  if(key==='age') return _daysAgo(t.retainref_date);
+  if(key==='specials') return parseFloat(t.total_meds)||0;
+  if(key==='touched') return _daysAgo(t.last_touched);
+  if(key==='sol'){ var sd=_solMap[t._casename]; return sd?_daysUntil(sd):null; }
+  return 0;
+}
+window.__jTreatSort=function(k){ if(_jTreatSort.key===k){_jTreatSort.dir=(_jTreatSort.dir==='asc'?'desc':'asc');}else{_jTreatSort.key=k;_jTreatSort.dir=(k==='case'?'asc':'desc');} _renderTreating(_activeBucket); };
 function _renderTreating(bucketIdx){
   _activeBucket=bucketIdx;
   var rows=_raw.treating.filter(function(t){
@@ -697,7 +708,13 @@ function _renderTreating(bucketIdx){
     return;
   }
 
-  rows.sort(function(a,b){ return (_daysAgo(b.retainref_date)||0)-(_daysAgo(a.retainref_date)||0); });
+  (function(){var sk=_jTreatSort.key, sd=(_jTreatSort.dir==='asc')?1:-1;
+    rows.sort(function(a,b){
+      if(sk==='case') return String(_jTreatVal(a,'case')).localeCompare(String(_jTreatVal(b,'case')))*sd;
+      var av=_jTreatVal(a,sk), bv=_jTreatVal(b,sk); av=(av==null?-Infinity:av); bv=(bv==null?-Infinity:bv);
+      return (av<bv?-1:av>bv?1:0)*sd;
+    });
+  })();
 
   // Column sets vary by bucket
   var showHI      = bucketIdx===0;
@@ -705,16 +722,17 @@ function _renderTreating(bucketIdx){
   var showUIM     = bucketIdx>=1;
   var showSol     = bucketIdx===3;
 
+  var ar=function(k){return _jTreatSort.key===k?(_jTreatSort.dir==='asc'?' ▲':' ▼'):'';};
   var html='<table class="t"><thead><tr>'
-    +'<th>Case</th>'
-    +'<th class="num">Age</th>'
-    +'<th class="num">Specials</th>'
-    +'<th>Last Touched</th>'
+    +'<th style="cursor:pointer" onclick="__jTreatSort(\'case\')">Case'+ar('case')+'</th>'
+    +'<th class="num" style="cursor:pointer" onclick="__jTreatSort(\'age\')">Age'+ar('age')+'</th>'
+    +'<th class="num" style="cursor:pointer" onclick="__jTreatSort(\'specials\')">Specials'+ar('specials')+'</th>'
+    +'<th style="cursor:pointer" onclick="__jTreatSort(\'touched\')">Last Touched'+ar('touched')+'</th>'
     +'<th>Liability</th>'
     +(showHI ? '<th>Health Ins.</th>' : '')
     +(showPolicy ? '<th>3P Policy</th>' : '')
     +(showUIM ? '<th>UIM</th>' : '')
-    +(showSol ? '<th>SOL</th>' : '')
+    +(showSol ? '<th class="num" style="cursor:pointer" onclick="__jTreatSort(\'sol\')">SOL'+ar('sol')+'</th>' : '')
     +'<th>Treatment</th>'
     +'<th>Main Tasks</th>'
     +'<th>Note</th>'
@@ -845,6 +863,7 @@ async function init(){
     return;
   }
 
+  window.__kalReload=async function(){
   try {
     // Parallel: CasePeer + Railway
     // Load core data first — render immediately without waiting for notes
@@ -904,6 +923,8 @@ async function init(){
     document.getElementById('last-updated').textContent='Load error';
     console.error('[Case Care]',err);
   }
+  };
+  await window.__kalReload();
 }
 
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
@@ -911,5 +932,6 @@ else init();
 
 })();
 </script>
+<script>(function(){var b=document.getElementById("kal-refresh-hdr");if(!b)return;b.addEventListener("click",function(){if(!window.__kalReload)return;var o=b.innerHTML;b.style.opacity="0.6";b.style.pointerEvents="none";b.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--amber-mark)"></span>Refreshing\u2026';Promise.resolve(window.__kalReload()).catch(function(){}).then(function(){b.innerHTML=o;b.style.opacity="";b.style.pointerEvents="";});});})();</script>
 </body>
 </html>
