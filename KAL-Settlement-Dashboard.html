@@ -162,7 +162,7 @@
   }
   .brand{display:flex;align-items:center;gap:12px}
   .brand-mark{
-    width:28px;height:28px;border-radius:7px;
+    width:28px;height:28px;border-radius:6px;
     background:#1d1d1f;color:#fff;
     display:grid;place-items:center;
     font-weight:700;font-size:12px;
@@ -178,7 +178,7 @@
   .tab{
     border:0;background:transparent;padding:7px 13px;
     font-size:13px;font-weight:500;color:var(--ink-2);
-    border-radius:7px;cursor:pointer;letter-spacing:-0.005em;
+    border-radius:6px;cursor:pointer;letter-spacing:-0.005em;
     display:inline-flex;align-items:center;gap:7px;
   }
   .tab .alert-dot{width:6px;height:6px;border-radius:50%;background:var(--red-mark);display:none}
@@ -194,12 +194,12 @@
   .meta .user{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:500}
   .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#d6d6da,#a8a8ad);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600}
   .density{
-    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:7px;padding:2px;gap:1px;
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:2px;gap:1px;
   }
   .density button{
     border:0;background:transparent;padding:4px 8px;
     font-size:11px;font-weight:500;color:var(--ink-3);
-    border-radius:5px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
+    border-radius:6px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
   }
   .density button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 
@@ -209,7 +209,7 @@
   /* Tab accent rule (under each section title) */
   .accent-rule{
     height:2px;width:36px;background:var(--accent);
-    border-radius:2px;margin-bottom:8px;
+    border-radius:6px;margin-bottom:8px;
   }
 
   /* ---------- Today briefing ---------- */
@@ -217,7 +217,7 @@
     background:var(--surface);
     border:1px solid var(--line);
     border-left: 3px solid var(--accent);
-    border-radius:12px;
+    border-radius:10px;
     padding:14px 18px 14px 18px;
     margin-bottom:18px;
     display:grid;
@@ -251,7 +251,7 @@
   }
   .briefing .item .marker{
     font-family:var(--num);font-size:13px;font-weight:600;
-    padding:1px 6px;border-radius:4px;
+    padding:1px 6px;border-radius:6px;
   }
   .briefing .item.red .marker{background:var(--red-bg);color:var(--red)}
   .briefing .item.amber .marker{background:var(--amber-bg);color:var(--amber)}
@@ -323,7 +323,7 @@
     position:absolute;left:12px;right:12px;top:calc(100% + 6px);z-index:30;
     background:#1d1d1f;color:#f5f5f7;
     font-size:11.5px;line-height:1.45;
-    padding:9px 11px;border-radius:8px;
+    padding:9px 11px;border-radius:6px;
     box-shadow:0 6px 20px rgba(0,0,0,.18);
     white-space:pre-line;pointer-events:none;
   }
@@ -336,7 +336,7 @@
   /* ---------- Pipeline (centerpiece) ---------- */
   .pipeline-card{
     background:var(--surface);border:1px solid var(--line);
-    border-radius:14px;padding:22px 24px 18px;
+    border-radius:10px;padding:22px 24px 18px;
   }
   .pipeline-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
   .pipeline-head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em}
@@ -363,7 +363,7 @@
 
   .pipebar{
     display:flex;gap:3px;height:62px;
-    border-radius:8px;overflow:hidden;
+    border-radius:6px;overflow:hidden;
     position:relative;
   }
   .pipeseg{
@@ -415,13 +415,13 @@
     display:inline-flex;align-items:center;gap:5px;
   }
   .area-head .legend .pip i{
-    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:1px;
+    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:6px;
   }
   .area-head .legend .pip.recent i{background:var(--amber-mark)}
   .area-svg{width:100%;height:200px;display:block}
 
   /* ---------- Tables ---------- */
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:clip}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:clip}
   .panel-head{
     padding:13px 18px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -484,7 +484,7 @@
   }
   .bic .barfill{
     position:absolute;left:0;top:50%;transform:translateY(-50%);
-    height:18px;border-radius:3px;
+    height:18px;border-radius:6px;
     background: var(--accent);
     opacity:0.14;z-index:0;
   }
@@ -513,9 +513,9 @@
 
   .badge-exec{
     display:inline-block;margin-left:8px;
-    padding:2px 6px;font-size:9.5px;font-weight:700;
+    padding:2px 6px;font-size:11px;font-weight:700;
     text-transform:uppercase;letter-spacing:0.08em;
-    background:var(--blue);color:#fff;border-radius:4px;vertical-align:2px;
+    background:var(--blue);color:#fff;border-radius:6px;vertical-align:2px;
   }
   .owner{color:var(--ink-3);font-size:12.5px}
 
@@ -535,7 +535,7 @@
   .stat-pill.blue .blip{background:var(--blue)}
 
   /* CM toggle */
-  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:9px;padding:3px;gap:2px}
+  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:3px;gap:2px}
   .seg button{
     border:0;background:transparent;padding:6px 14px;
     font-size:12.5px;font-weight:500;color:var(--ink-2);
@@ -552,7 +552,7 @@
 
   /* note tooltip wrapper */
   .note-wrap{position:relative;display:inline-block;max-width:100%}
-  .note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
   /* case 2-line cell — fixed line-height to keep rows aligned */
   .case-cell{line-height:1.25}
@@ -572,7 +572,7 @@
   }
   .foot kbd{
     font-family:var(--num);font-size:10.5px;
-    border:1px solid var(--line);border-radius:4px;
+    border:1px solid var(--line);border-radius:6px;
     padding:1px 5px;background:var(--surface);color:var(--ink-3);
   }
 
@@ -593,7 +593,7 @@
   body.help-mode [data-tip]{cursor:help;outline:1px dashed rgba(0,113,227,.35);outline-offset:2px;}
   #kal-help-tip{
     position:fixed;z-index:99999;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.5;
-    padding:8px 12px;border-radius:7px;white-space:pre-wrap;max-width:300px;pointer-events:none;
+    padding:8px 12px;border-radius:6px;white-space:pre-wrap;max-width:300px;pointer-events:none;
     box-shadow:0 4px 16px rgba(0,0,0,.22);font-family:Inter,sans-serif;font-weight:400;display:none;
   }
 </style>
@@ -609,9 +609,9 @@
     <div style="font-size:13px;font-weight:600;color:var(--ink);letter-spacing:.01em;white-space:nowrap;">Settlement</div>
 
     <div class="meta">
-      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
+      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
-      <button id="help-toggle" title="Open help for this dashboard" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
+      <button id="help-toggle" title="Open help for this dashboard" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
   </header>
 </div>
@@ -1011,13 +1011,13 @@ function _showFlagDropdown(anchorEl, caseName, onSelect){
   _closeFlagDropdown();
   var dd = document.createElement('div');
   dd.id = '_flag_dd';
-  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
+  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
   var rect = anchorEl.getBoundingClientRect();
   dd.style.top  = (rect.bottom + 4) + 'px';
   dd.style.left = rect.left + 'px';
   // Clear option at top
   var clearItem = document.createElement('div');
-  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
+  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:6px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
   clearItem.textContent = '— Clear status';
   clearItem.addEventListener('mouseenter', function(){ clearItem.style.background='var(--surface-3)'; });
   clearItem.addEventListener('mouseleave', function(){ clearItem.style.background=''; });
@@ -1032,7 +1032,7 @@ function _showFlagDropdown(anchorEl, caseName, onSelect){
   _FLAG_OPTIONS.forEach(function(opt){
     var item = document.createElement('div');
     var cls = _FLAG_COLORS[opt] || 'gray';
-    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
+    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:6px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
     item.innerHTML = '<span class="flag '+cls+'" style="pointer-events:none">'+opt+'</span>';
     item.addEventListener('mouseenter', function(){ item.style.background='var(--surface-3)'; });
     item.addEventListener('mouseleave', function(){ item.style.background=''; });
@@ -1344,7 +1344,7 @@ function renderSettleOffers(demands, view, settlementMap){
       return '<td style="padding:0 24px 0 0">'+
         '<input type="text" value="'+_esc(dt)+'" placeholder="MM/DD/YYYY" '+
         'data-action="set-email-date" data-case="'+_esc(caseName)+'" data-tkey="'+t.key+'" '+
-        'style="font:inherit;font-size:11px;font-family:var(--num);padding:2px 6px;border:1px solid var(--line);border-radius:4px;width:96px;background:var(--surface);color:var(--ink-2);outline:none">'+
+        'style="font:inherit;font-size:11px;font-family:var(--num);padding:2px 6px;border:1px solid var(--line);border-radius:6px;width:96px;background:var(--surface);color:var(--ink-2);outline:none">'+
         '</td>';
     }).join('');
     var expandRow = '<tr class="expand-row" data-expand-for="'+_esc(caseName)+'" style="display:none">'+
@@ -1385,7 +1385,7 @@ function renderSettleOffers(demands, view, settlementMap){
 
     var _caseId = (d.case && d.case.id) || null;
     return '<tr class="'+rowCls+'">'+
-      '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
+      '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
       '<td class="name" style="font-size:12px">'+_caseLink(caseName, _caseId)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
@@ -1650,7 +1650,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(claimEl){
         var cn = claimEl.getAttribute('data-case');
         var current = _getContact(cn).claimNumber || '';
-        claimEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="Claim #" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:120px;outline:none;background:var(--surface);color:var(--ink)">';
+        claimEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="Claim #" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:120px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = claimEl.querySelector('input');
         inp.focus(); inp.select();
         function saveClaimNum(){
@@ -1673,7 +1673,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(emailEl){
         var cn = emailEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterEmail || '';
-        emailEl.innerHTML = '<input type="email" value="'+_esc(current)+'" placeholder="adjuster@carrier.com" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:180px;outline:none;background:var(--surface);color:var(--ink)">';
+        emailEl.innerHTML = '<input type="email" value="'+_esc(current)+'" placeholder="adjuster@carrier.com" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:180px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = emailEl.querySelector('input');
         inp.focus(); inp.select();
         function saveEmail(){
@@ -1696,7 +1696,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(adjNameEl){
         var cn = adjNameEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterName || '';
-        adjNameEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="First Last" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:150px;outline:none;background:var(--surface);color:var(--ink)">';
+        adjNameEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="First Last" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:150px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = adjNameEl.querySelector('input');
         inp.focus(); inp.select();
         function saveAdjName(){
@@ -1719,7 +1719,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(adjPhoneEl){
         var cn = adjPhoneEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterPhone || '';
-        adjPhoneEl.innerHTML = '<input type="tel" value="'+_esc(current)+'" placeholder="(xxx) xxx-xxxx" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:140px;outline:none;background:var(--surface);color:var(--ink)">';
+        adjPhoneEl.innerHTML = '<input type="tel" value="'+_esc(current)+'" placeholder="(xxx) xxx-xxxx" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:140px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = adjPhoneEl.querySelector('input');
         inp.focus(); inp.select();
         function saveAdjPhone(){
@@ -1786,7 +1786,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       var td = el.closest('td');
       if(!td || td.querySelector('textarea')) return; // already editing
       var current = _getNote(caseName) || '';
-      td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
+      td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
       var ta = td.querySelector('textarea');
       ta.focus();
       ta.setSelectionRange(ta.value.length, ta.value.length);
