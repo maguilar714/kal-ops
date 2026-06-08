@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v2</title>
+<title>KAL Operations · v4.3</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -629,7 +629,7 @@
     <div class="meta">
       <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
-      <button id="help-toggle" title="Toggle field descriptions on hover" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
+      <button id="help-toggle" title="Open help for this dashboard" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
   </header>
 </div>
@@ -941,7 +941,7 @@
   
 
   <footer class="foot">
-    <div>KAL Operations · v2 · live data</div>
+    <div>KAL Operations · v4.3 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -1103,9 +1103,9 @@
 
 <script>
 /* =========================================================
-   Live timestamp — runs immediately on load
+   Live timestamp — set on load AND after every refresh
    ========================================================= */
-(function(){
+window.updateLiveStamp = function(){
   var now = new Date();
   var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1121,7 +1121,8 @@
   if(!metaEl && metaEl2) metaEl2.innerHTML = '<span class="dot"></span>'+timeStr;
   var pipeStamp = document.getElementById('pipe-stamp');
   if(pipeStamp) pipeStamp.innerHTML = '<b>'+days[now.getDay()]+' brief</b> updated '+stampTime;
-})();
+};
+window.updateLiveStamp();
 
 /* =========================================================
    Tabs + density + period toggle
@@ -1188,70 +1189,6 @@ function setTweak(patch){
   Object.assign(twk, patch);
   applyTweaks();
 
-(function(){
-  var btn=document.getElementById('help-toggle');
-  if(!btn) return;
-
-  var tip=document.createElement('div');
-  tip.id='kal-help-tip';
-  document.body.appendChild(tip);
-
-  var active=false;
-  var bound=[];
-
-  function showTip(txt,e){
-    if(!txt) return;
-    tip.textContent=txt;
-    tip.style.display='block';
-    positionTip(e);
-  }
-  function positionTip(e){
-    var x=e.clientX+16, y=e.clientY-8;
-    tip.style.left=x+'px';
-    tip.style.top=y+'px';
-  }
-  function hideTip(){ tip.style.display='none'; }
-
-  function activate(){
-    active=true;
-    btn.style.background='#0071e3';
-    btn.style.color='#fff';
-    btn.style.borderColor='#0071e3';
-    btn.textContent='✓ Help ON';
-    document.body.classList.add('help-mode');
-    var els=document.querySelectorAll('[data-tip]');
-    els.forEach(function(el){
-      var txt=el.getAttribute('data-tip');
-      var onEnter=function(e){ showTip(txt,e); };
-      var onMove =function(e){ positionTip(e); };
-      var onLeave=function(){ hideTip(); };
-      el.addEventListener('mouseenter',onEnter);
-      el.addEventListener('mousemove', onMove);
-      el.addEventListener('mouseleave',onLeave);
-      bound.push({el:el,onEnter:onEnter,onMove:onMove,onLeave:onLeave});
-    });
-  }
-
-  function deactivate(){
-    active=false;
-    btn.style.background='';
-    btn.style.color='';
-    btn.style.borderColor='';
-    btn.textContent='? Help';
-    document.body.classList.remove('help-mode');
-    hideTip();
-    bound.forEach(function(b){
-      b.el.removeEventListener('mouseenter',b.onEnter);
-      b.el.removeEventListener('mousemove', b.onMove);
-      b.el.removeEventListener('mouseleave',b.onLeave);
-    });
-    bound=[];
-  }
-
-  btn.addEventListener('click',function(){
-    active ? deactivate() : activate();
-  });
-})();
   try{
     window.parent.postMessage({type:'__edit_mode_set_keys', edits: patch}, '*');
   }catch(_){}
@@ -3995,14 +3932,22 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/lien-negotiations-management/lien-negotiations/'),
         fetchAll('/api/v1/case/lien-negotiations-overview/'),
         fetchAll('/api/v1/case/disbursement-overview/'),
-        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31'),
-        fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
+        fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
       ]);
-      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3]; state.raw.feesIn=results[4]||[];
+      // fees-in fetched separately — a 403 means this user lacks the CasePeer permission;
+      // fall back to disbursement×rate estimate rather than crashing the whole dashboard.
+      var feesIn = [];
+      try {
+        feesIn = await fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31');
+      } catch(feErr){
+        console.warn('[KAL Lien Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+') — MTD fee will use estimate fallback');
+      }
+      state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3]; state.raw.feesIn=feesIn;
       processData(); renderAll();
       renderLienActivityFeed(results[2],_lienActivityDays);
       bindLienActivityToggle(results[2]);
-      _captureAttribution({deposits:results[3], feesIn:results[4]||[]});
+      _captureAttribution({deposits:results[3], feesIn:feesIn});
+      if(window.updateLiveStamp) window.updateLiveStamp();
     } catch(err){
       var msg=err&&err.message||'unknown error';
       var hint=msg.toLowerCase().indexOf('failed to fetch')>=0?'CORS blocked — must be opened from my.casepeer.com.':msg.indexOf('401')>=0||msg.indexOf('403')>=0?'Auth error — log into my.casepeer.com first.':msg;
@@ -4017,6 +3962,54 @@ function renderDataQuality(raw){
 })();
 </script>
 
+<script>
+/* =========================================================
+   Help panel — slides in from the right
+   ========================================================= */
+(function(){
+  var btn = document.getElementById('help-toggle');
+  if(!btn) return;
+
+  var TITLE = 'Lien Operations';
+  var BODY = `
+      <h4>What this dashboard is</h4><p>Your working view of liens and payouts across the firm.</p>
+      <h4>Top numbers</h4><p>Active liens, cases in lien negotiation, cases in disbursement, and attorney fees taken month-to-date (pulled from CasePeer's fees-in records).</p>
+      <h4>Negotiator summary</h4><p>A card per negotiator showing their pod's load at a glance.</p>
+      <h4>Case rollup</h4><p>Each case with its liens — expand a row to see them. Flags mark trouble: Stuck (open 45+ days), No Activity (untouched 14+ days), and High Lien Load (more than 5 liens).</p>
+      <h4>Disbursement</h4><p>Split into cases waiting for payout and cases already disbursed.</p>`;
+  var FOOT = 'Numbers refresh when you click Refresh. The time next to the button shows the last data pull.';
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '#kal-help-ov{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:99998;opacity:0;pointer-events:none;transition:opacity .18s ease;}',
+    '#kal-help-ov.on{opacity:1;pointer-events:auto;}',
+    '#kal-help-panel{position:fixed;top:0;right:0;height:100%;width:340px;max-width:88vw;background:var(--surface);border-left:1px solid var(--line);z-index:99999;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:-8px 0 28px rgba(0,0,0,.10);}',
+    '#kal-help-panel.on{transform:translateX(0);}',
+    '#kal-help-panel .hp-hd{display:flex;align-items:flex-start;gap:8px;padding:18px 18px 12px;border-bottom:1px solid var(--line);}',
+    '#kal-help-panel .hp-ttl{font-size:17px;font-weight:600;color:var(--ink);}',
+    '#kal-help-panel .hp-sub{font-size:12px;color:var(--ink-4);margin-top:2px;}',
+    '#kal-help-panel .hp-x{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:22px;line-height:1;padding:0 4px;}',
+    '#kal-help-panel .hp-body{padding:16px 18px 22px;overflow-y:auto;font-size:13px;line-height:1.55;color:var(--ink-2);}',
+    '#kal-help-panel .hp-body h4{font-size:13px;font-weight:600;color:var(--ink);margin:0 0 2px;}',
+    '#kal-help-panel .hp-body p{margin:0 0 13px;color:var(--ink-3);}',
+    '#kal-help-panel .hp-foot{margin-top:4px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-4);}'
+  ].join('');
+  document.head.appendChild(css);
+
+  var ov = document.createElement('div'); ov.id = 'kal-help-ov';
+  var panel = document.createElement('div'); panel.id = 'kal-help-panel';
+  panel.innerHTML = '<div class="hp-hd"><div><div class="hp-ttl">' + TITLE + '</div><div class="hp-sub">What this dashboard shows and where the numbers come from.</div></div><button class="hp-x" id="hp-x" aria-label="Close help">&times;</button></div><div class="hp-body">' + BODY + '<div class="hp-foot">' + FOOT + '</div></div>';
+  document.body.appendChild(ov);
+  document.body.appendChild(panel);
+
+  function openPanel(){ ov.classList.add('on'); panel.classList.add('on'); }
+  function closePanel(){ ov.classList.remove('on'); panel.classList.remove('on'); }
+  btn.addEventListener('click', openPanel);
+  ov.addEventListener('click', closePanel);
+  document.getElementById('hp-x').addEventListener('click', closePanel);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePanel(); });
+})();
+</script>
 <script>(function(){var b=document.getElementById("kal-refresh-hdr");if(!b)return;b.addEventListener("click",function(){if(!window.__kalReload)return;var o=b.innerHTML;b.style.opacity="0.6";b.style.pointerEvents="none";b.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--amber-mark)"></span>Refreshing\u2026';Promise.resolve(window.__kalReload()).catch(function(){}).then(function(){b.innerHTML=o;b.style.opacity="";b.style.pointerEvents="";});});})();</script>
 </body>
 </html>

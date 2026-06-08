@@ -611,7 +611,7 @@
     <div class="meta">
       <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
-      <button id="help-toggle" title="Toggle field descriptions on hover" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
+      <button id="help-toggle" title="Open help for this dashboard" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
   </header>
 </div>
@@ -1932,32 +1932,44 @@ function renderPipeline(raw){
   function initHelp(){
     var btn = document.getElementById('help-toggle');
     if(!btn) return;
-    var tt = null;
-    var active = false;
-    btn.addEventListener('click', function(){
-      active = !active;
-      btn.style.background = active ? 'var(--surface-3)' : '';
-      btn.style.color      = active ? 'var(--ink)'      : 'var(--ink-3)';
-    });
-    document.addEventListener('mouseover', function(e){
-      if(!active) return;
-      var el = e.target.closest('[data-tip]');
-      if(!el) return;
-      if(!tt){
-        tt = document.createElement('div');
-        tt.style.cssText = 'position:fixed;z-index:9999;max-width:280px;background:#1d1d1f;color:#f5f5f7;font-size:12px;line-height:1.5;padding:8px 12px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);pointer-events:none;white-space:pre-wrap;font-family:Inter,sans-serif;';
-        document.body.appendChild(tt);
-      }
-      tt.textContent = el.getAttribute('data-tip');
-      tt.style.display = 'block';
-    });
-    document.addEventListener('mousemove', function(e){
-      if(tt && tt.style.display !== 'none'){ tt.style.left = (e.clientX+14)+'px'; tt.style.top = (e.clientY-8)+'px'; }
-    });
-    document.addEventListener('mouseout', function(e){
-      var el = e.target.closest('[data-tip]');
-      if(el && tt) tt.style.display = 'none';
-    });
+
+    var TITLE = 'Settlements';
+    var BODY = `
+      <h4>What this dashboard is</h4><p>The demand pipeline and adjuster tracking.</p>
+      <h4>Demand tracker</h4><p>Each row is a sent demand. Expand it to see the adjuster's name, email, and phone, drop in email templates, and leave notes.</p>
+      <h4>Open offers and deposits</h4><p>Offers currently on the table and money recently received.</p>
+      <h4>Top carriers</h4><p>Insurance carriers ranked by demand count, with pops, pop rate, and average offer — so you can see who pays and who fights.</p>`;
+    var FOOT = 'Numbers refresh when you click Refresh. The time next to the button shows the last data pull.';
+
+    var css = document.createElement('style');
+    css.textContent = [
+      '#kal-help-ov{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:99998;opacity:0;pointer-events:none;transition:opacity .18s ease;}',
+      '#kal-help-ov.on{opacity:1;pointer-events:auto;}',
+      '#kal-help-panel{position:fixed;top:0;right:0;height:100%;width:340px;max-width:88vw;background:var(--surface);border-left:1px solid var(--line);z-index:99999;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:-8px 0 28px rgba(0,0,0,.10);}',
+      '#kal-help-panel.on{transform:translateX(0);}',
+      '#kal-help-panel .hp-hd{display:flex;align-items:flex-start;gap:8px;padding:18px 18px 12px;border-bottom:1px solid var(--line);}',
+      '#kal-help-panel .hp-ttl{font-size:17px;font-weight:600;color:var(--ink);}',
+      '#kal-help-panel .hp-sub{font-size:12px;color:var(--ink-4);margin-top:2px;}',
+      '#kal-help-panel .hp-x{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:22px;line-height:1;padding:0 4px;}',
+      '#kal-help-panel .hp-body{padding:16px 18px 22px;overflow-y:auto;font-size:13px;line-height:1.55;color:var(--ink-2);}',
+      '#kal-help-panel .hp-body h4{font-size:13px;font-weight:600;color:var(--ink);margin:0 0 2px;}',
+      '#kal-help-panel .hp-body p{margin:0 0 13px;color:var(--ink-3);}',
+      '#kal-help-panel .hp-foot{margin-top:4px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-4);}'
+    ].join('');
+    document.head.appendChild(css);
+
+    var ov = document.createElement('div'); ov.id = 'kal-help-ov';
+    var panel = document.createElement('div'); panel.id = 'kal-help-panel';
+    panel.innerHTML = '<div class="hp-hd"><div><div class="hp-ttl">' + TITLE + '</div><div class="hp-sub">What this dashboard shows and where the numbers come from.</div></div><button class="hp-x" id="hp-x" aria-label="Close help">&times;</button></div><div class="hp-body">' + BODY + '<div class="hp-foot">' + FOOT + '</div></div>';
+    document.body.appendChild(ov);
+    document.body.appendChild(panel);
+
+    function openPanel(){ ov.classList.add('on'); panel.classList.add('on'); }
+    function closePanel(){ ov.classList.remove('on'); panel.classList.remove('on'); }
+    btn.addEventListener('click', openPanel);
+    ov.addEventListener('click', closePanel);
+    document.getElementById('hp-x').addEventListener('click', closePanel);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePanel(); });
   }
 
 /* =========================================================
@@ -1965,7 +1977,6 @@ function renderPipeline(raw){
    ========================================================= */
   async function init(){
     updateTimestamp();
-    setInterval(updateTimestamp, 60000);
     initHelp();
 
     await _loadFlags();
@@ -1999,6 +2010,7 @@ function renderPipeline(raw){
 
       renderSettlements({ settlement: settlement, demands: demands, deposits: deposits });
       _captureAttribution({demands: demands, deposits: deposits});
+      updateTimestamp();
 
     } catch(err){
       var msg = err && err.message || 'unknown error';
