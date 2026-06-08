@@ -183,7 +183,7 @@
   }
   .brand{display:flex;align-items:center;gap:12px}
   .brand-mark{
-    width:28px;height:28px;border-radius:7px;
+    width:28px;height:28px;border-radius:6px;
     background:#1d1d1f;color:#fff;
     display:grid;place-items:center;
     font-weight:700;font-size:12px;
@@ -199,7 +199,7 @@
   .tab{
     border:0;background:transparent;padding:7px 13px;
     font-size:13px;font-weight:500;color:var(--ink-2);
-    border-radius:7px;cursor:pointer;letter-spacing:-0.005em;
+    border-radius:6px;cursor:pointer;letter-spacing:-0.005em;
     display:inline-flex;align-items:center;gap:7px;
   }
   .tab .alert-dot{width:6px;height:6px;border-radius:50%;background:var(--red-mark);display:none}
@@ -215,12 +215,12 @@
   .meta .user{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:500}
   .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#d6d6da,#a8a8ad);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600}
   .density{
-    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:7px;padding:2px;gap:1px;
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:2px;gap:1px;
   }
   .density button{
     border:0;background:transparent;padding:4px 8px;
     font-size:11px;font-weight:500;color:var(--ink-3);
-    border-radius:5px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
+    border-radius:6px;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;
   }
   .density button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 
@@ -230,7 +230,7 @@
   /* Tab accent rule (under each section title) */
   .accent-rule{
     height:2px;width:36px;background:var(--accent);
-    border-radius:2px;margin-bottom:8px;
+    border-radius:6px;margin-bottom:8px;
   }
 
   /* ---------- Today briefing ---------- */
@@ -238,7 +238,7 @@
     background:var(--surface);
     border:1px solid var(--line);
     border-left: 3px solid var(--accent);
-    border-radius:12px;
+    border-radius:10px;
     padding:14px 18px 14px 18px;
     margin-bottom:18px;
     display:grid;
@@ -272,7 +272,7 @@
   }
   .briefing .item .marker{
     font-family:var(--num);font-size:13px;font-weight:600;
-    padding:1px 6px;border-radius:4px;
+    padding:1px 6px;border-radius:6px;
   }
   .briefing .item.red .marker{background:var(--red-bg);color:var(--red)}
   .briefing .item.amber .marker{background:var(--amber-bg);color:var(--amber)}
@@ -344,7 +344,7 @@
     position:absolute;left:12px;right:12px;top:calc(100% + 6px);z-index:30;
     background:#1d1d1f;color:#f5f5f7;
     font-size:11.5px;line-height:1.45;
-    padding:9px 11px;border-radius:8px;
+    padding:9px 11px;border-radius:6px;
     box-shadow:0 6px 20px rgba(0,0,0,.18);
     white-space:pre-line;pointer-events:none;
   }
@@ -357,7 +357,7 @@
   /* ---------- Pipeline (centerpiece) ---------- */
   .pipeline-card{
     background:var(--surface);border:1px solid var(--line);
-    border-radius:14px;padding:22px 24px 18px;
+    border-radius:10px;padding:22px 24px 18px;
   }
   .pipeline-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
   .pipeline-head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em}
@@ -384,7 +384,7 @@
 
   .pipebar{
     display:flex;gap:3px;height:62px;
-    border-radius:8px;overflow:hidden;
+    border-radius:6px;overflow:hidden;
     position:relative;
   }
   .pipeseg{
@@ -436,13 +436,13 @@
     display:inline-flex;align-items:center;gap:5px;
   }
   .area-head .legend .pip i{
-    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:1px;
+    width:10px;height:2px;background:var(--ink);display:inline-block;border-radius:6px;
   }
   .area-head .legend .pip.recent i{background:var(--amber-mark)}
   .area-svg{width:100%;height:200px;display:block}
 
   /* ---------- Tables ---------- */
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:clip}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:clip}
   .panel-head{
     padding:13px 18px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -505,7 +505,7 @@
   }
   .bic .barfill{
     position:absolute;left:0;top:50%;transform:translateY(-50%);
-    height:18px;border-radius:3px;
+    height:18px;border-radius:6px;
     background: var(--accent);
     opacity:0.14;z-index:0;
   }
@@ -534,9 +534,9 @@
 
   .badge-exec{
     display:inline-block;margin-left:8px;
-    padding:2px 6px;font-size:9.5px;font-weight:700;
+    padding:2px 6px;font-size:11px;font-weight:700;
     text-transform:uppercase;letter-spacing:0.08em;
-    background:var(--blue);color:#fff;border-radius:4px;vertical-align:2px;
+    background:var(--blue);color:#fff;border-radius:6px;vertical-align:2px;
   }
   .owner{color:var(--ink-3);font-size:12.5px}
 
@@ -556,7 +556,7 @@
   .stat-pill.blue .blip{background:var(--blue)}
 
   /* CM toggle */
-  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:9px;padding:3px;gap:2px}
+  .seg{display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:3px;gap:2px}
   .seg button{
     border:0;background:transparent;padding:6px 14px;
     font-size:12.5px;font-weight:500;color:var(--ink-2);
@@ -577,7 +577,7 @@
   .case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
 
   /* ── Case Care tab: dropdowns ── */
-  .jdrop{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-family:var(--ui);font-size:11.5px;padding:3px 6px;border-radius:5px;cursor:pointer;min-width:72px;max-width:100%;outline:none;transition:border-color .12s,color .12s}
+  .jdrop{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-family:var(--ui);font-size:11.5px;padding:3px 6px;border-radius:6px;cursor:pointer;min-width:72px;max-width:100%;outline:none;transition:border-color .12s,color .12s}
   .jdrop[data-field="liability"]{min-width:90px}
   .jdrop[data-field="hi"]{min-width:90px}
   .jdrop:focus{border-color:var(--blue)}
@@ -600,12 +600,12 @@
   .jdrop[data-field="mainTasks"][data-val="Completed"]{color:var(--green);border-color:var(--green-mark)}
   .jdrop[data-field="mainTasks"][data-val="Review"]{color:var(--amber);border-color:var(--amber-mark)}
   .jdrop[data-field="mainTasks"][data-val="Not Done"]{color:var(--red);border-color:var(--red-mark)}
-  .jnote{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:11.5px;padding:4px 8px;border-radius:5px;width:140px;outline:none;transition:border-color .12s}
+  .jnote{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:11.5px;padding:4px 8px;border-radius:6px;width:140px;outline:none;transition:border-color .12s}
   .jnote:focus{border-color:var(--blue)}
   .jnote::placeholder{color:var(--ink-4)}
   /* note tooltip wrapper */
   .note-wrap{position:relative;display:inline-block;max-width:100%}
-  .note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
   /* flag stack column — vertical so column edge stays clean */
   td.flagcol{white-space:normal}
@@ -620,7 +620,7 @@
   }
   .foot kbd{
     font-family:var(--num);font-size:10.5px;
-    border:1px solid var(--line);border-radius:4px;
+    border:1px solid var(--line);border-radius:6px;
     padding:1px 5px;background:var(--surface);color:var(--ink-3);
   }
 
@@ -641,7 +641,7 @@
   body.help-mode [data-tip]{cursor:help;outline:1px dashed rgba(0,113,227,.35);outline-offset:2px;}
   #kal-help-tip{
     position:fixed;z-index:99999;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.5;
-    padding:8px 12px;border-radius:7px;white-space:pre-wrap;max-width:300px;pointer-events:none;
+    padding:8px 12px;border-radius:6px;white-space:pre-wrap;max-width:300px;pointer-events:none;
     box-shadow:0 4px 16px rgba(0,0,0,.22);font-family:Inter,sans-serif;font-weight:400;display:none;
   }
 </style>
@@ -666,9 +666,9 @@
     </nav>
 
     <div class="meta">
-      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
+      <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
       <div><span class="dot"></span><span id="live-timestamp"></span></div>
-      <button id="help-toggle" title="Open help for this tab" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
+      <button id="help-toggle" title="Open help for this tab" style="margin-left:10px;background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-3);cursor:pointer;letter-spacing:.03em;">? Help</button>
     </div>
   </header>
 </div>
@@ -813,7 +813,7 @@
     </div>
 
     <!-- Attorney fees generated by month -->
-    <div class="section-title" style="margin-top:28px">
+    <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
         <h2>Attorney fees generated · 14 months</h2>
@@ -830,11 +830,11 @@
         <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
           <div style="text-align:right;line-height:1.1;">
             <div id="fee-ytd-val" style="font-family:var(--num);font-weight:700;font-size:16px;color:var(--ink);">—</div>
-            <div id="fee-ytd-lbl" style="font-size:9px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;">2026 YTD</div>
+            <div id="fee-ytd-lbl" style="font-size:11px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;">2026 YTD</div>
           </div>
           <div style="display:flex;gap:4px;">
-            <span id="fee-ytd-tog-2026" style="font-size:10px;cursor:pointer;padding:1px 6px;border-radius:3px;">2026</span>
-            <span id="fee-ytd-tog-2025" style="font-size:10px;cursor:pointer;padding:1px 6px;border-radius:3px;">2025</span>
+            <span id="fee-ytd-tog-2026" style="font-size:10px;cursor:pointer;padding:1px 6px;border-radius:6px;">2026</span>
+            <span id="fee-ytd-tog-2025" style="font-size:10px;cursor:pointer;padding:1px 6px;border-radius:6px;">2025</span>
           </div>
         </div>
       </div>
@@ -842,7 +842,7 @@
     </div>
 
     <!-- Money Feed -->
-    <div class="section-title" style="margin-top:28px">
+    <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
         <h2>Money feed</h2>
@@ -1119,7 +1119,7 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:18px">
+    <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
         <h2 id="cm-title">CM output · 2026 YTD</h2>
@@ -1133,10 +1133,10 @@
         <thead>
           <tr>
             <th style="cursor:pointer" data-k="cm" onclick="__cmYtdSort('cm')">Case Manager<span class="cm-arr"></span></th>
-            <th class="num" style="cursor:pointer" data-k="dmd" onclick="__cmYtdSort('dmd')" data-tip="Demands sent by this CM (handling CM at send), selected year.&#10;Jan-May 2026 seeded from Kausar; live capture after go-live.">Demands<span class="cm-arr"></span><div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" style="cursor:pointer" data-k="pop" onclick="__cmYtdSort('pop')" data-tip="Settlement-based pop rate: of cases that SETTLED with a known policy, the share that settled at or above the limit.&#10;Credited to the demand submitter, counted in the settlement month.">Pop Rate<span class="cm-arr"></span><div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">settled cases</div></th>
-            <th class="num has-bar" style="cursor:pointer" data-k="rev" onclick="__cmYtdSort('rev')" data-tip="Settlement dollars credited to this CM (handling CM), selected year.">Settlement Revenue<span class="cm-arr"></span><div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" style="cursor:pointer" data-k="fee" onclick="__cmYtdSort('fee')" data-tip="Actual attorney fees taken (Kausar worksheets / fees-in) -- not a revenue / 3 estimate.">Attorney Fees<span class="cm-arr"></span><div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD &middot; actual</div></th>
+            <th class="num" style="cursor:pointer" data-k="dmd" onclick="__cmYtdSort('dmd')" data-tip="Demands sent by this CM (handling CM at send), selected year.&#10;Jan-May 2026 seeded from Kausar; live capture after go-live.">Demands<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" style="cursor:pointer" data-k="pop" onclick="__cmYtdSort('pop')" data-tip="Settlement-based pop rate: of cases that SETTLED with a known policy, the share that settled at or above the limit.&#10;Credited to the demand submitter, counted in the settlement month.">Pop Rate<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">settled cases</div></th>
+            <th class="num has-bar" style="cursor:pointer" data-k="rev" onclick="__cmYtdSort('rev')" data-tip="Settlement dollars credited to this CM (handling CM), selected year.">Settlement Revenue<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" style="cursor:pointer" data-k="fee" onclick="__cmYtdSort('fee')" data-tip="Actual attorney fees taken (Kausar worksheets / fees-in) -- not a revenue / 3 estimate.">Attorney Fees<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD &middot; actual</div></th>
           </tr>
         </thead>
         <tbody id="cm-2026-body"></tbody>
@@ -1150,7 +1150,7 @@
     <style>
       #cm-2026 td.name em, #cm-month-card td.name em{font-style:italic;color:var(--ink-2)}
       .cm-mk{color:var(--ink-4);font-weight:400;margin-left:2px;font-size:11px;vertical-align:3px}
-      .cm-role{display:inline-block;margin-left:8px;padding:2px 6px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;background:var(--surface-3);color:var(--ink-3);border-radius:4px;vertical-align:2px}
+      .cm-role{display:inline-block;margin-left:8px;padding:2px 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;background:var(--surface-3);color:var(--ink-3);border-radius:6px;vertical-align:2px}
       .cm-arr{font-size:10px;color:var(--ink-3);font-weight:400}
       .cm-frac{font-size:10px;font-weight:400;color:var(--ink-3);margin-left:3px}
       #cm-month-card table.t td.cm-mcell, #cm-month-card table.t th.cm-mcol{text-align:center;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:60px}
@@ -1158,7 +1158,7 @@
       #cm-month-card table.t tr.cm-firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
     </style>
     <div id="cm-month-card">
-      <div class="section-title" style="margin-top:22px">
+      <div class="section-title">
         <div class="left"><div class="accent-rule"></div><h2>Month-by-month</h2></div>
         <div class="seg" id="cm-metric-seg">
           <button class="on" data-m="dmd">Demands</button>
@@ -1180,14 +1180,14 @@
         <thead>
           <tr>
             <th>Case Manager</th>
-            <th class="num" data-tip="All active cases assigned to this CM.&#10;Source: treating-overview · No date filter — live count.">Active Cases<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases currently in the treating phase.&#10;Source: treating-overview · No date filter — live count.">In Treating<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases retained this calendar month only.&#10;Source: treating-overview · Filter: retainref_date in current month.">New Intakes<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">this month</div></th>
-            <th class="num" data-tip="Demands sent by this CM in the selected year.&#10;Source: demands · Filter: datesent in selected year.">Demands<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Demands where offer met or exceeded the policy limit.&#10;Source: demands · Requires both offer_amount and insurance_policy.">Pops<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Pops ÷ analyzable demands (those with both policy limit and offer).&#10;Fraction shown in cell. Denominator is smaller than total demands.">Pop Rate<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD · analyzable</div></th>
-            <th class="num has-bar" data-tip="Sum of check deposits attributed to this CM in the selected year.&#10;Source: check-deposits · Filter: check_date in selected year.">Settlement Revenue<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Estimated firm fees at 33% of settlement revenue.&#10;Derived: Settlement Revenue ÷ 3.">Est. Fees (33%)<div style="font-size:9px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="All active cases assigned to this CM.&#10;Source: treating-overview · No date filter — live count.">Active Cases<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
+            <th class="num" data-tip="Cases currently in the treating phase.&#10;Source: treating-overview · No date filter — live count.">In Treating<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
+            <th class="num" data-tip="Cases retained this calendar month only.&#10;Source: treating-overview · Filter: retainref_date in current month.">New Intakes<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">this month</div></th>
+            <th class="num" data-tip="Demands sent by this CM in the selected year.&#10;Source: demands · Filter: datesent in selected year.">Demands<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Demands where offer met or exceeded the policy limit.&#10;Source: demands · Requires both offer_amount and insurance_policy.">Pops<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Pops ÷ analyzable demands (those with both policy limit and offer).&#10;Fraction shown in cell. Denominator is smaller than total demands.">Pop Rate<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD · analyzable</div></th>
+            <th class="num has-bar" data-tip="Sum of check deposits attributed to this CM in the selected year.&#10;Source: check-deposits · Filter: check_date in selected year.">Settlement Revenue<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Estimated firm fees at 33% of settlement revenue.&#10;Derived: Settlement Revenue ÷ 3.">Est. Fees (33%)<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
           </tr>
         </thead>
         <tbody id="cm-2025-body"></tbody>
@@ -1241,32 +1241,32 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;gap:6px;">
           <div class="label" style="margin:0;">Atty Fees</div>
           <div style="display:flex;align-items:center;gap:5px;">
-            <span class="lien-fee-tog" id="lien-fee-tog-mtd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:3px;">MTD</span>
-            <span class="lien-fee-tog" id="lien-fee-tog-ytd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:3px;">YTD</span>
-            <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:3px;" title="Edit monthly goal">goal</span>
+            <span class="lien-fee-tog" id="lien-fee-tog-mtd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:6px;">MTD</span>
+            <span class="lien-fee-tog" id="lien-fee-tog-ytd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:6px;">YTD</span>
+            <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:6px;" title="Edit monthly goal">goal</span>
           </div>
         </div>
         <div class="row-v">
           <div class="value" id="lien-kpi-fee">—</div>
         </div>
-        <div id="lien-fee-bar-wrap" style="margin:5px 0 3px;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;">
-          <div id="lien-fee-bar" style="height:100%;background:var(--blue);width:0%;transition:width .5s ease;border-radius:2px;"></div>
+        <div id="lien-fee-bar-wrap" style="margin:5px 0 3px;height:4px;border-radius:6px;background:var(--surface-3);overflow:hidden;">
+          <div id="lien-fee-bar" style="height:100%;background:var(--blue);width:0%;transition:width .5s ease;border-radius:6px;"></div>
         </div>
         <div class="sub" id="lien-kpi-fee-sub">loading…</div>
       </div>
     </div>
 
     <!-- Color legend -->
-    <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px;padding:8px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;align-items:center;">
+    <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px;padding:8px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;align-items:center;">
       <span style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:4px;">Legend</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--red-bg);border:1px solid var(--red-mark);"></span>Stuck case</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--amber-bg,#fff8ee);border:1px solid var(--amber,#f59e0b);"></span>Flagged case (no activity / high load)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:var(--red-bg);border:1px solid var(--red-mark);"></span>Stuck case</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:var(--amber-bg,#fff8ee);border:1px solid var(--amber,#f59e0b);"></span>Flagged case (no activity / high load)</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span class="flag red" style="font-size:10px;padding:1px 5px;">Stuck</span>Days in liens &gt; threshold</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span class="flag amber" style="font-size:10px;padding:1px 5px;">No Activity</span>No lien touch since threshold</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="color:var(--amber);font-weight:600;font-size:11px;">Amber text</span>Inactive lien in drill-down</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--blue);opacity:.8;"></span>Normal (disb. &lt;60d)</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--amber);opacity:.8;"></span>Slow (disb. 60–119d)</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:2px;background:var(--red);opacity:.8;"></span>Overdue (disb. 120d+)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:6px;background:var(--blue);opacity:.8;"></span>Normal (disb. &lt;60d)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:6px;background:var(--amber);opacity:.8;"></span>Slow (disb. 60–119d)</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);"><span style="display:inline-block;width:28px;height:8px;border-radius:6px;background:var(--red);opacity:.8;"></span>Overdue (disb. 120d+)</span>
     </div>
 
     <!-- Lien Activity Feed — moved above drill-down -->
@@ -1356,13 +1356,13 @@
     <div class="panel" id="lien-filter-bar" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Negotiator</span>
-        <select id="lien-f-neg" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+        <select id="lien-f-neg" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);">
           <option value="">All</option>
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Flag</span>
-        <select id="lien-f-flag" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);">
+        <select id="lien-f-flag" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);">
           <option value="">All</option>
           <option value="Stuck">Stuck</option>
           <option value="No Activity">No Activity</option>
@@ -1373,15 +1373,15 @@
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);">Search</span>
-        <input id="lien-f-search" type="text" placeholder="Case name…" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:200px;" />
+        <input id="lien-f-search" type="text" placeholder="Case name…" style="font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:200px;" />
       </div>
       <div style="flex:1"></div>
       <details id="lien-thresh-disclosure" style="font-size:12px;">
         <summary style="cursor:pointer;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;">Thresholds</summary>
         <div style="display:flex;gap:14px;margin-top:8px;align-items:center;">
-          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Stuck&nbsp;&gt; <input id="lien-th-stuck" type="number" value="45" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
-          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Inactive&nbsp;&ge; <input id="lien-th-inactive" type="number" value="14" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
-          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">High Load&nbsp;&gt; <input id="lien-th-load" type="number" value="5" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> liens</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Stuck&nbsp;&gt; <input id="lien-th-stuck" type="number" value="45" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">Inactive&nbsp;&ge; <input id="lien-th-inactive" type="number" value="14" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> days</label>
+          <label style="display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:11px;">High Load&nbsp;&gt; <input id="lien-th-load" type="number" value="5" min="1" style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;"> liens</label>
         </div>
       </details>
     </div>
@@ -1645,7 +1645,7 @@
     <!-- Treating Cases -->
     <div class="section-title">
       <div><div class="accent-rule" style="background:var(--indigo)"></div><h2>Treating Cases</h2></div>
-      <div class="seg" id="cc-bucket-tabs" style="background:rgba(0,0,0,.05);border-radius:9px;padding:3px;gap:2px">
+      <div class="seg" id="cc-bucket-tabs" style="background:rgba(0,0,0,.05);border-radius:6px;padding:3px;gap:2px">
         <button class="seg on" data-bucket="0" style="border-radius:6px;padding:5px 14px;font-size:12px">0–30<span id="cc-bc0" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
         <button class="seg" data-bucket="1" style="border-radius:6px;padding:5px 14px;font-size:12px">31–60<span id="cc-bc1" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
         <button class="seg" data-bucket="2" style="border-radius:6px;padding:5px 14px;font-size:12px">61–90<span id="cc-bc2" style="font-size:10px;color:var(--ink-4);margin-left:3px;font-family:var(--num)"></span></button>
@@ -1697,15 +1697,15 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:16px">
+    <div class="section-title">
       <div class="left">
         <div class="accent-rule" style="background:var(--red-mark)"></div>
         <h2>SOL tracker · all active cases</h2>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:11px;color:var(--ink-3)">
-          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:var(--purple-bg);color:var(--purple);text-transform:uppercase;letter-spacing:.05em">M</span> manual &nbsp;
-          <span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:var(--surface-3);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">A</span> auto from CasePeer
+          <span style="font-size:11px;font-weight:600;padding:1px 4px;border-radius:6px;background:var(--purple-bg);color:var(--purple);text-transform:uppercase;letter-spacing:.05em">M</span> manual &nbsp;
+          <span style="font-size:11px;font-weight:600;padding:1px 4px;border-radius:6px;background:var(--surface-3);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">A</span> auto from CasePeer
         </div>
         <div class="seg" id="sol-view-seg">
           <button class="on" data-view="30">30 days</button>
@@ -1822,7 +1822,7 @@
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border:1px solid rgba(0,0,0,0.08);
-    border-radius:14px;
+    border-radius:10px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.04);
     font:13px/1.4 var(--ui); color:var(--ink);
     overflow:hidden;
@@ -1856,7 +1856,7 @@
   }
   #twk .twk-lbl .twk-hint{font-size:11px;color:var(--ink-4);font-weight:400}
   #twk .twk-seg{
-    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:8px;padding:2px;gap:1px;
+    display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:2px;gap:1px;
   }
   #twk .twk-seg button{
     flex:1;border:0;background:transparent;padding:6px 10px;
@@ -1866,7 +1866,7 @@
   #twk .twk-seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
   #twk .twk-swatches{display:flex;gap:8px;flex-wrap:wrap}
   #twk .twk-sw{
-    width:36px;height:36px;border-radius:8px;cursor:pointer;
+    width:36px;height:36px;border-radius:6px;cursor:pointer;
     border:2px solid transparent;
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
     position:relative;
@@ -1894,7 +1894,7 @@
     margin-top:4px;
     appearance:none;border:1px solid var(--line);background:var(--surface);
     color:var(--ink-2);font:inherit;font-size:11.5px;font-weight:500;
-    padding:7px 10px;border-radius:8px;cursor:pointer;
+    padding:7px 10px;border-radius:6px;cursor:pointer;
   }
   #twk .twk-reset:hover{background:var(--surface-3);color:var(--ink)}
 
@@ -2347,7 +2347,7 @@ function buildDemandChart(demands){
   if(!tt){
     tt=document.createElement('div');
     tt.id='_chart_tt';
-    tt.style.cssText='position:fixed;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.4;padding:6px 10px;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none;display:none;z-index:200;font-family:Inter,sans-serif;white-space:nowrap;';
+    tt.style.cssText='position:fixed;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none;display:none;z-index:200;font-family:Inter,sans-serif;white-space:nowrap;';
     document.body.appendChild(tt);
   }
   svg.onmouseover=function(e){
@@ -2470,7 +2470,7 @@ function buildFeeChart(raw){
   svg.innerHTML=grid+bars+xlabs;
 
   var tt=document.getElementById('_chart_tt');
-  if(!tt){ tt=document.createElement('div'); tt.id='_chart_tt'; tt.style.cssText='position:fixed;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.4;padding:6px 10px;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none;display:none;z-index:200;font-family:Inter,sans-serif;white-space:nowrap;'; document.body.appendChild(tt); }
+  if(!tt){ tt=document.createElement('div'); tt.id='_chart_tt'; tt.style.cssText='position:fixed;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none;display:none;z-index:200;font-family:Inter,sans-serif;white-space:nowrap;'; document.body.appendChild(tt); }
   svg.onmouseover=function(e){ var el=e.target.closest('[data-tip]'); if(!el) return; tt.textContent=el.getAttribute('data-tip'); tt.style.display='block'; };
   svg.onmousemove=function(e){ tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-32)+'px'; };
   svg.onmouseout=function(){tt.style.display='none';};
@@ -2712,13 +2712,13 @@ function _showFlagDropdown(anchorEl, caseName, onSelect){
   _closeFlagDropdown();
   var dd = document.createElement('div');
   dd.id = '_flag_dd';
-  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
+  dd.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);padding:4px;min-width:110px;';
   var rect = anchorEl.getBoundingClientRect();
   dd.style.top  = (rect.bottom + 4) + 'px';
   dd.style.left = rect.left + 'px';
   // Clear option at top
   var clearItem = document.createElement('div');
-  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
+  clearItem.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:6px;font-size:12px;font-weight:500;color:var(--ink-3);border-bottom:1px solid var(--line);margin-bottom:3px;';
   clearItem.textContent = '— Clear status';
   clearItem.addEventListener('mouseenter', function(){ clearItem.style.background='var(--surface-3)'; });
   clearItem.addEventListener('mouseleave', function(){ clearItem.style.background=''; });
@@ -2733,7 +2733,7 @@ function _showFlagDropdown(anchorEl, caseName, onSelect){
   _FLAG_OPTIONS.forEach(function(opt){
     var item = document.createElement('div');
     var cls = _FLAG_COLORS[opt] || 'gray';
-    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
+    item.style.cssText = 'padding:6px 10px;cursor:pointer;border-radius:6px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;';
     item.innerHTML = '<span class="flag '+cls+'" style="pointer-events:none">'+opt+'</span>';
     item.addEventListener('mouseenter', function(){ item.style.background='var(--surface-3)'; });
     item.addEventListener('mouseleave', function(){ item.style.background=''; });
@@ -3133,7 +3133,7 @@ function renderSettleOffers(demands, view, settlementMap){
       return '<td style="padding:0 24px 0 0">'+
         '<input type="text" value="'+_esc(dt)+'" placeholder="MM/DD/YYYY" '+
         'data-action="set-email-date" data-case="'+_esc(caseName)+'" data-tkey="'+t.key+'" '+
-        'style="font:inherit;font-size:11px;font-family:var(--num);padding:2px 6px;border:1px solid var(--line);border-radius:4px;width:96px;background:var(--surface);color:var(--ink-2);outline:none">'+
+        'style="font:inherit;font-size:11px;font-family:var(--num);padding:2px 6px;border:1px solid var(--line);border-radius:6px;width:96px;background:var(--surface);color:var(--ink-2);outline:none">'+
         '</td>';
     }).join('');
     var expandRow = '<tr class="expand-row" data-expand-for="'+_esc(caseName)+'" style="display:none">'+
@@ -3174,7 +3174,7 @@ function renderSettleOffers(demands, view, settlementMap){
 
     var _caseId = (d.case && d.case.id) || null;
     return '<tr class="'+rowCls+'">'+
-      '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
+      '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
       '<td class="name" style="font-size:12px">'+_caseLink(caseName, _caseId)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
@@ -3379,8 +3379,8 @@ function _solActionText(daysOut, casestatus){
 
 function _solSourceTag(manual){
   return manual
-    ? '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:#efeaf9;color:#5b3aa8;text-transform:uppercase;letter-spacing:.05em;margin-left:4px">M</span>'
-    : '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:#f0f0f2;color:#6e6e73;text-transform:uppercase;letter-spacing:.05em;margin-left:4px">A</span>';
+    ? '<span style="font-size:11px;font-weight:600;padding:1px 4px;border-radius:6px;background:#efeaf9;color:#5b3aa8;text-transform:uppercase;letter-spacing:.05em;margin-left:4px">M</span>'
+    : '<span style="font-size:11px;font-weight:600;padding:1px 4px;border-radius:6px;background:#f0f0f2;color:#6e6e73;text-transform:uppercase;letter-spacing:.05em;margin-left:4px">A</span>';
 }
 
 function renderSOL(raw){
@@ -3670,7 +3670,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(claimEl){
         var cn = claimEl.getAttribute('data-case');
         var current = _getContact(cn).claimNumber || '';
-        claimEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="Claim #" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:120px;outline:none;background:var(--surface);color:var(--ink)">';
+        claimEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="Claim #" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:120px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = claimEl.querySelector('input');
         inp.focus(); inp.select();
         function saveClaimNum(){
@@ -3693,7 +3693,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(emailEl){
         var cn = emailEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterEmail || '';
-        emailEl.innerHTML = '<input type="email" value="'+_esc(current)+'" placeholder="adjuster@carrier.com" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:180px;outline:none;background:var(--surface);color:var(--ink)">';
+        emailEl.innerHTML = '<input type="email" value="'+_esc(current)+'" placeholder="adjuster@carrier.com" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:180px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = emailEl.querySelector('input');
         inp.focus(); inp.select();
         function saveEmail(){
@@ -3716,7 +3716,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(adjNameEl){
         var cn = adjNameEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterName || '';
-        adjNameEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="First Last" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:150px;outline:none;background:var(--surface);color:var(--ink)">';
+        adjNameEl.innerHTML = '<input type="text" value="'+_esc(current)+'" placeholder="First Last" style="font:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:150px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = adjNameEl.querySelector('input');
         inp.focus(); inp.select();
         function saveAdjName(){
@@ -3739,7 +3739,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       if(adjPhoneEl){
         var cn = adjPhoneEl.getAttribute('data-case');
         var current = _getContact(cn).adjusterPhone || '';
-        adjPhoneEl.innerHTML = '<input type="tel" value="'+_esc(current)+'" placeholder="(xxx) xxx-xxxx" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:4px;width:140px;outline:none;background:var(--surface);color:var(--ink)">';
+        adjPhoneEl.innerHTML = '<input type="tel" value="'+_esc(current)+'" placeholder="(xxx) xxx-xxxx" style="font:inherit;font-size:12px;font-family:var(--num);padding:2px 6px;border:1px solid var(--blue);border-radius:6px;width:140px;outline:none;background:var(--surface);color:var(--ink)">';
         var inp = adjPhoneEl.querySelector('input');
         inp.focus(); inp.select();
         function saveAdjPhone(){
@@ -3806,7 +3806,7 @@ function bindSettlePanelToggles(raw, settlementMap){
       var td = el.closest('td');
       if(!td || td.querySelector('textarea')) return; // already editing
       var current = _getNote(caseName) || '';
-      td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
+      td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
       var ta = td.querySelector('textarea');
       ta.focus();
       ta.setSelectionRange(ta.value.length, ta.value.length);
@@ -5362,7 +5362,7 @@ function renderDataQuality(raw){
         var td = noteEl.closest('td');
         if(!td || td.querySelector('textarea')) return;
         var current = (typeof _getNote === 'function') ? (_getNote(cn) || '') : '';
-        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
+        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
         var ta = td.querySelector('textarea');
         ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
         function saveCaseNote(){
@@ -5390,7 +5390,7 @@ function renderDataQuality(raw){
         var td = lienNoteEl.closest('td');
         if(!td || td.querySelector('textarea')) return;
         var current = (typeof _getLienNote === 'function') ? (_getLienNote(cn, payee) || '') : '';
-        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:4px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
+        td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+esc(current)+'</textarea>';
         var ta = td.querySelector('textarea');
         ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
         function saveLienNote(){
