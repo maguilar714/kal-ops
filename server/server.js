@@ -36,9 +36,13 @@ function requireAuth(req, res) {
 async function initDb() {
   await pool.query(`CREATE TABLE IF NOT EXISTS case_flags (case_name TEXT PRIMARY KEY, flag TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_notes (case_name TEXT PRIMARY KEY, note TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS case_contacts (case_name TEXT PRIMARY KEY, adjuster_email TEXT, claim_number TEXT, email_log TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
-  // Add email_log column if upgrading from earlier schema
+  await pool.query(`CREATE TABLE IF NOT EXISTS case_contacts (case_name TEXT PRIMARY KEY, adjuster_email TEXT, claim_number TEXT, adjuster_name TEXT, adjuster_phone TEXT, fee_amount TEXT, fee_rate TEXT, email_log TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+  // Backfill columns for deployments created before these fields existed.
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS email_log TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS adjuster_name TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS adjuster_phone TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_amount TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_rate TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS quo_calls (phone TEXT PRIMARY KEY, cm_name TEXT, call_date TEXT, duration_sec INT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Encrypted daily Quo extract. `payload` is a Fernet token (ciphertext) — the
@@ -128,12 +132,16 @@ const server = http.createServer(async (req, res) => {
   // CONTACTS
   if (req.method === 'GET' && url === '/contacts') {
     try {
-      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, email_log FROM case_contacts');
+      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log FROM case_contacts');
       const contacts = {};
       result.rows.forEach(r => {
         contacts[r.case_name] = {
           adjusterEmail: r.adjuster_email,
           claimNumber: r.claim_number,
+          adjusterName: r.adjuster_name,
+          adjusterPhone: r.adjuster_phone,
+          feeAmount: r.fee_amount,
+          feeRate: r.fee_rate,
           emailLog: r.email_log ? JSON.parse(r.email_log) : null
         };
       });
@@ -143,21 +151,52 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'POST' && url === '/contacts') {
     try {
-      const { caseName, adjusterEmail, claimNumber, emailLog } = await readBody(req);
+      const body = await readBody(req);
+      const caseName = body.caseName;
       if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
-      const emailLogStr = emailLog !== undefined ? JSON.stringify(emailLog) : null;
-      await pool.query(`
-        INSERT INTO case_contacts (case_name, adjuster_email, claim_number, email_log, updated_at)
-        VALUES ($1, $2, $3, $4, NOW())
-        ON CONFLICT (case_name) DO UPDATE SET
-          adjuster_email = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE case_contacts.adjuster_email END,
-          claim_number   = CASE WHEN $3::text IS NOT NULL THEN $3::text ELSE case_contacts.claim_number END,
-          email_log      = CASE WHEN $4::text IS NOT NULL THEN $4::text ELSE case_contacts.email_log END,
-          updated_at = NOW()
-      `, [caseName,
-          adjusterEmail !== undefined ? adjusterEmail : null,
-          claimNumber !== undefined ? claimNumber : null,
-          emailLogStr]);
+
+      // Map incoming JSON keys -> DB columns. Whitelisted: column names never come
+      // from user input, so this is injection-safe. Only keys actually present in
+      // the body are written. A key present with null clears that column; an absent
+      // key leaves it unchanged. This is what makes single-field saves (e.g. just
+      // adjusterName) not wipe the other fields, and lets the fee-override clear
+      // button (feeAmount: null) actually clear.
+      const COLMAP = {
+        adjusterEmail: 'adjuster_email',
+        claimNumber:   'claim_number',
+        adjusterName:  'adjuster_name',
+        adjusterPhone: 'adjuster_phone',
+        feeAmount:     'fee_amount',
+        feeRate:       'fee_rate',
+        emailLog:      'email_log'
+      };
+
+      const cols = [], vals = [];
+      Object.keys(COLMAP).forEach(key => {
+        if (!Object.prototype.hasOwnProperty.call(body, key)) return; // absent -> leave unchanged
+        let v = body[key];
+        if (v === null || v === undefined) v = null;
+        else if (key === 'emailLog') v = JSON.stringify(v);
+        else v = String(v);
+        cols.push(COLMAP[key]);
+        vals.push(v);
+      });
+
+      if (cols.length === 0) {
+        // No data fields sent — just ensure the row exists.
+        await pool.query(`INSERT INTO case_contacts (case_name, updated_at) VALUES ($1, NOW()) ON CONFLICT (case_name) DO UPDATE SET updated_at = NOW()`, [caseName]);
+        res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+      }
+
+      const insertCols = ['case_name'].concat(cols).concat('updated_at');
+      const insertVals = ['$1'].concat(cols.map((_, i) => '$' + (i + 2))).concat('NOW()');
+      const updateSet  = cols.map((c, i) => c + ' = $' + (i + 2)).concat('updated_at = NOW()').join(', ');
+
+      await pool.query(
+        `INSERT INTO case_contacts (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})
+         ON CONFLICT (case_name) DO UPDATE SET ${updateSet}`,
+        [caseName].concat(vals)
+      );
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
