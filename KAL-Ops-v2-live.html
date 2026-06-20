@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v4.4</title>
+<title>KAL Operations · v4.6</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -611,6 +611,45 @@
   td.flagcol{white-space:normal}
   td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 
+  /* ===== Settlement Scoreboard + Tag queue (added 2026-06-20) ===== */
+  .settle-subnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:16px}
+  .settle-subnav .lbl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);margin-right:2px}
+  .settle-jump{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .settle-jump:hover{border-color:var(--line-strong);color:var(--ink)}
+  .settle-jump.cur{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+  .settle-jump .ct{font-family:var(--num);font-size:10.5px;font-weight:600;background:var(--blue);color:#fff;border-radius:999px;padding:0 6px;line-height:16px}
+  .settle-jump.alert .ct{background:var(--red-mark)}
+  .settle-subnav .spacer{flex:1}
+  .sb-collapse{border:0;background:transparent;cursor:pointer;color:var(--ink-4);font-size:12px;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;transition:transform .15s;margin-right:2px}
+  .sb-collapse:hover{background:var(--surface-3);color:var(--ink-2)}
+  .sect.collapsed .sb-collapse{transform:rotate(-90deg)}
+  .sect.collapsed .sect-body{display:none}
+  .sb-who{display:inline-flex;align-items:center;gap:7px}
+  .sb-av{width:22px;height:22px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:700}
+  .sb-av.team{background:linear-gradient(135deg,#4c9bf0,#0071e3)}
+  .sb-av.cm{background:linear-gradient(135deg,#a98fe0,#5b3aa8)}
+  .sb-role{display:inline-block;margin-left:7px;padding:2px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;border-radius:6px;vertical-align:1px;background:var(--purple-bg);color:var(--purple)}
+  #sb-table tr.grp td{background:var(--surface-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:7px 16px}
+  #sb-table tr.subtot td{font-weight:700;background:#fbfbfd}
+  #sb-table tr.subtot td:first-child{box-shadow:inset 3px 0 0 var(--line-strong)}
+  #sb-table tr.firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
+  #sb-mtx td,#sb-mtx th{text-align:center;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:60px}
+  #sb-mtx td.lbl,#sb-mtx th.lbl{text-align:left;font-family:var(--ui)}
+  #sb-mtx td.ytd,#sb-mtx th.ytd{border-left:2px solid var(--line-strong);font-weight:700}
+  #sb-mtx tr.firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
+  #tagq tr.needs td{background:#f3f8fe}
+  #tagq tr.needs td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+  .tagq-amt{font-family:var(--num);font-variant-numeric:tabular-nums}
+  .tagq-amt .src{display:block;font-size:9.5px;color:var(--green);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ui);font-weight:600;margin-top:1px}
+  .tagq-amt .src.blank{color:var(--amber)}
+  .tagq-sel{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--ui);font-size:12px;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:500;min-width:130px}
+  .tagq-sel.empty{border:1px solid var(--blue);color:var(--blue);background:#f3f8fe;font-weight:600}
+  .tagq-date{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-family:var(--num);font-size:12px;padding:4px 6px;border-radius:6px;width:118px}
+  .tagq-amtin{border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--num);font-size:12px;padding:4px 6px;border-radius:6px;width:92px;text-align:right}
+  .sb-legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-3);padding:10px 16px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;margin:10px 0}
+  .sb-legend b{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);margin-right:2px}
+  .sb-sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
   .page{display:none}
   .page.active{display:block}
 
@@ -659,6 +698,7 @@
       <button class="tab active" data-tab="pipeline">Pipeline</button>
       <button class="tab" data-tab="casecare">Case Care</button>
       <button class="tab" data-tab="settlements" data-alerts="1"><span>Settlements</span><span class="alert-dot"></span></button>
+      <button class="tab" data-tab="settled" id="settled-tab"><span>Settled $</span><span class="alert-dot"></span></button>
       <button class="tab" data-tab="cm">CM Performance</button>
       <button class="tab" data-tab="lien" data-alerts="1"><span>Lien Operations</span><span class="alert-dot"></span></button>
       <button class="tab" data-tab="sol" id="sol-tab"><span>SOL</span><span class="alert-dot" style="display:none"></span></button>
@@ -692,7 +732,7 @@
     <div class="briefing">
       <div class="head"><span class="pulse"></span>Today · 3 to look at</div>
       <div class="items">
-        <div class="item red"><span class="marker">65</span><span>expired demands need adjuster follow-up — Mark &amp; Hernan.</span></div>
+        <div class="item red"><span class="marker">65</span><span>expired demands need adjuster follow-up — Mark &amp; Gus.</span></div>
         <div class="item amber"><span class="marker">84</span><span>active negotiations — bottleneck stage, +6 vs last week.</span></div>
         <div class="item red"><span class="marker">141d</span><span>Bianca's avg lien-negotiation time — 10 inactive 14d+.</span></div>
       </div>
@@ -761,7 +801,7 @@
         <div class="sub">54 third-party · 14 UIM</div>
       </div>
 
-      <div class="kpi warn" data-tip="Active settlement negotiations.&#10;Source: CasePeer · Stage = Settlement Negotiations.&#10;Mark + Hernan handle this stage.">
+      <div class="kpi warn" data-tip="Active settlement negotiations.&#10;Source: CasePeer · Stage = Settlement Negotiations.&#10;Mark + Gus handle this stage.">
         <div class="accent">Bottleneck</div>
         <div class="label">Active Negotiations</div>
         <div class="row-v">
@@ -769,7 +809,7 @@
           <div class="delta down">▲ 6 wk</div>
         </div>
         <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
-        <div class="sub">Mark &amp; Hernan</div>
+        <div class="sub">Mark &amp; Gus</div>
       </div>
 
       <div class="kpi" data-tip="Cases settled, awaiting lien resolution.&#10;Source: CasePeer · Stage = Lien Negotiations.">
@@ -915,9 +955,97 @@
   <!-- ===========================================================
        TAB 2 — SETTLEMENTS
        =========================================================== -->
+  <!-- ===========================================================
+       TAB — SETTLED $ (settlement results + who settled)
+       =========================================================== -->
+  <section class="page" data-page="settled" style="--accent:#0a7d3b">
+
+    <!-- ===== SCOREBOARD (settled results) ===== -->
+    <div class="sect" id="sec-score">
+      <div class="briefing" style="border-left-color:var(--green-mark)">
+        <div class="head"><span class="pulse" style="background:var(--green-mark)"></span>Settlement Scoreboard</div>
+        <div class="items" id="sb-briefing-items">
+          <div class="item blue"><span class="marker">—</span><span>loading settled totals…</span></div>
+        </div>
+        <div class="stamp"><b id="sb-stamp-title">Settled · MTD</b><span id="sb-stamp-meta">—</span></div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:4px">
+        <div class="seg" id="sb-period-seg">
+          <button class="on" data-period="mtd">MTD</button>
+          <button data-period="prev">Prior month</button>
+          <button data-period="ytd">YTD</button>
+        </div>
+        <div style="font-size:12.5px;color:var(--ink-3)">
+          <b style="color:var(--ink-2)">Settled value</b> = accepted offer (CasePeer) · <b style="color:var(--ink-2)">Who</b> = tagged below
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="sb-kpis" style="margin-top:12px">
+        <div class="kpi good"><div class="accent">MTD</div><div class="label">Total Settled</div><div class="row-v"><div class="value" id="sb-kpi-total">—</div></div><div class="sub" id="sb-kpi-total-sub">loading…</div></div>
+        <div class="kpi"><div class="label">Settlements Closed</div><div class="row-v"><div class="value" id="sb-kpi-count">—</div></div><div class="sub" id="sb-kpi-count-sub">—</div></div>
+        <div class="kpi"><div class="accent" style="background:var(--blue-soft);color:var(--blue)">Team</div><div class="label">Settlement Team</div><div class="row-v"><div class="value" id="sb-kpi-team">—</div></div><div class="sub" id="sb-kpi-team-sub">Mark &amp; Gus</div></div>
+        <div class="kpi"><div class="accent" style="background:var(--purple-bg);color:var(--purple)">CM</div><div class="label">CM-Settled</div><div class="row-v"><div class="value" id="sb-kpi-cm">—</div></div><div class="sub" id="sb-kpi-cm-sub">self-settled</div></div>
+      </div>
+
+      <div class="section-title">
+        <div class="left"><div class="accent-rule" style="background:var(--green-mark)"></div>
+          <h2><button class="sb-collapse" data-sect="sec-score">▾</button><span id="sb-table-title">Who settled · this month</span></h2></div>
+        <div class="hint">Sorted by total value</div>
+      </div>
+      <div class="sect-body">
+        <div class="panel">
+          <table class="t" id="sb-table">
+            <thead><tr><th>Rep</th><th class="num">Settlements</th><th class="num">Avg</th><th class="num has-bar">Total Settled Value</th></tr></thead>
+            <tbody id="sb-table-body"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">
+          <div class="left"><div class="accent-rule" style="background:var(--green-mark)"></div><h2>Month-by-month</h2></div>
+          <div class="seg" id="sb-mtx-seg"><button class="on" data-m="value">Value</button><button data-m="count">Settlements</button></div>
+        </div>
+        <div class="panel"><table class="t" id="sb-mtx"><thead><tr id="sb-mtx-head"></tr></thead><tbody id="sb-mtx-body"></tbody></table></div>
+        <div style="font-size:11.5px;color:var(--ink-4);margin-top:6px"><b style="color:var(--ink-3)">Value</b> = dollars settled per rep that month · <b style="color:var(--ink-3)">Settlements</b> = case count. June seeded from settlement log; later months grow live.</div>
+      </div>
+    </div>
+
+    <!-- ===== TAG WHO SETTLED ===== -->
+    <div class="sect" id="sec-tag">
+      <div class="section-title">
+        <div class="left"><div class="accent-rule"></div>
+          <h2><button class="sb-collapse" data-sect="sec-tag">▾</button>Tag who settled <span class="flag red" id="tagq-badge" style="font-size:10px;padding:2px 7px;display:none">0 untagged</span></h2></div>
+        <div class="hint">Cases CasePeer marks Settled · pick the rep to credit</div>
+      </div>
+      <div class="sect-body">
+        <div class="sb-legend">
+          <b>Fields:</b>
+          <span><span class="sb-sw" style="background:var(--surface-3)"></span>Auto from CasePeer</span>
+          <span><span class="sb-sw" style="background:#f3f8fe;border:1px solid var(--blue)"></span>You enter (who + date)</span>
+          <span><span class="sb-sw" style="background:var(--green-bg)"></span>Amount auto-filled</span>
+          <span><span class="sb-sw" style="background:var(--amber-bg)"></span>Amount blank — confirm</span>
+          <span class="spacer" style="flex:1"></span>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink-2)"><input type="checkbox" id="tagq-untagged-only">Show untagged only</label>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Settled in CasePeer</h3><div class="meta-r" id="tagq-meta">—</div></div>
+          <table class="t" id="tagq">
+            <thead><tr><th>Case</th><th>Managing CM</th><th>Policy</th><th>Type</th><th class="num">Amount</th><th>Settled by</th><th>Date</th></tr></thead>
+            <tbody id="tagq-body"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- ===========================================================
+       TAB 2 — SETTLEMENTS
+       =========================================================== -->
   <section class="page" data-page="settlements" style="--accent:#0071e3">
 
-    <div class="briefing">
+    <div class="briefing" id="sd-briefing">
       <div class="head"><span class="pulse"></span>Settlements · 1 to act on</div>
       <div class="items">
         <div class="item red"><span class="marker">65</span><span>demands past 30-day window with no carrier offer.</span></div>
@@ -927,7 +1055,7 @@
       <div class="stamp"><b>Settlement health</b>updated live</div>
     </div>
 
-    <div class="kpi-grid">
+    <div class="kpi-grid" id="sd-kpis">
       <div class="kpi" data-tip="Total demands sent in 2026 to date.">
         <div class="label">Demands Sent · 2026 YTD</div>
         <div class="row-v">
@@ -938,7 +1066,7 @@
         <div class="sub">Jan: 29 · Feb: 15</div>
       </div>
 
-      <div class="kpi alert" data-tip="30-day window closed, no offer received.&#10;Mark &amp; Hernan own follow-up.">
+      <div class="kpi alert" data-tip="30-day window closed, no offer received.&#10;Mark &amp; Gus own follow-up.">
         <div class="accent">Action</div>
         <div class="label">Expired · No Response</div>
         <div class="row-v">
@@ -967,7 +1095,7 @@
           <div class="delta down">▲ 6 wk</div>
         </div>
         <div class="spark" data-spark="74,75,77,76,78,79,80,81,82,82,83,83,84,84" data-color="amber"></div>
-        <div class="sub">Mark &amp; Hernan</div>
+        <div class="sub">Mark &amp; Gus</div>
       </div>
     </div>
 
@@ -980,13 +1108,8 @@
     <div class="panel">
       <div class="panel-head">
         <h3>By status</h3>
-        <div class="chips" data-filter="settle">
-          <button class="chip on" data-f="all">All owners</button>
-          <button class="chip" data-f="mark">Mark</button>
-          <button class="chip" data-f="hernan">Hernan</button>
-        </div>
       </div>
-      <table class="t">
+      <table class="t" id="sd-bystatus">
         <thead>
           <tr>
             <th>Status</th>
@@ -1000,7 +1123,7 @@
             <td><span class="stat-pill red"><span class="blip"></span>Expired · no offer</span></td>
             <td class="num">65</td>
             <td>30-day window closed, no carrier response.</td>
-            <td class="owner">Mark · Hernan</td>
+            <td class="owner">Mark · Gus</td>
           </tr>
           <tr>
             <td><span class="stat-pill"><span class="blip"></span>Pending · in window</span></td>
@@ -1012,7 +1135,7 @@
             <td><span class="stat-pill amber"><span class="blip"></span>Negotiating</span></td>
             <td class="num">84</td>
             <td>Offer received, active negotiation.</td>
-            <td class="owner">Mark · Hernan</td>
+            <td class="owner">Mark · Gus</td>
           </tr>
           <tr class="row-good">
             <td><span class="stat-pill green"><span class="blip"></span>Settled · move to liens</span></td>
@@ -2008,11 +2131,11 @@ function activate(name){
 tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
 activate('pipeline');
 
-const order = ['pipeline','casecare','settlements','cm','lien','sol','dq'];
+const order = ['pipeline','casecare','settlements','settled','cm','lien','sol','dq'];
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const n = parseInt(e.key,10);
-  if(n>=1 && n<=6) activate(order[n-1]);
+  if(n>=1 && n<=order.length) activate(order[n-1]);
   if(e.key.toLowerCase() === 'y') document.querySelector('#cm-seg button:not(.on)')?.click();
 });
 
@@ -2956,7 +3079,7 @@ function renderSettleOffers(demands, view, settlementMap){
     : 'Pending demands — inside response window';
   if(meta) meta.textContent = filtered.length + ' demands · ' + withOfferCount + ' with offer · ' + noOfferCount + ' no response';
   if(urgency) urgency.textContent = view === 'expired'
-    ? noOfferCount + ' need adjuster follow-up · Mark & Hernan'
+    ? noOfferCount + ' need adjuster follow-up · Mark & Gus'
     : 'Monitor — response window still open';
   if(totalEl){
     var offerTotal = filtered.reduce(function(s,d){ return s+(parseFloat(d.offer_amount)||0); }, 0);
@@ -3886,7 +4009,7 @@ function renderPipeline(raw){
     var m=pipeItems[0].querySelector('.marker');
     var t=pipeItems[0].querySelector('span:last-child');
     if(m) m.textContent=expiredCount;
-    if(t) t.textContent='expired demands need adjuster follow-up — Mark & Hernan.';
+    if(t) t.textContent='expired demands need adjuster follow-up — Mark & Gus.';
   }
   if(pipeItems[1]){var m2=pipeItems[1].querySelector('.marker');if(m2) m2.textContent=settleNeg;}
   if(pipeItems[2]){var m3=pipeItems[2].querySelector('.marker');if(m3) m3.textContent=disb+' cases';}
@@ -3895,6 +4018,203 @@ function renderPipeline(raw){
   buildFeeChart(raw);
   renderMoneyFeed(raw);
   bindMoneyPeriodToggle(raw);
+}
+
+/* =========================================================
+   SETTLEMENT SCOREBOARD + TAG QUEUE  (added 2026-06-20)
+   - June 2026 seeded (frozen) from Mark's settlement log.
+   - Going forward: cases CasePeer marks Settled appear in the
+     tag queue; rep + date + amount are tagged and frozen into
+     Railway /notes under setl::<caseId>.
+   - Scoreboard sums frozen tags; seeded months (June) are NOT
+     double-counted from live tags.
+   ========================================================= */
+var SETTLE_TEAM = ['Mark Thiry','Gustavo Altamirano'];
+var SETTLE_CMS  = ['Jose Duarte','Icela Parra','Rashel Carey','Damny Castro','Cris Urbina','Ronald Agresott','Jesus Parra','Maybis Cantillo'];
+function _sbIsTeam(n){ return SETTLE_TEAM.indexOf((n||'').trim())>=0; }
+// June 2026 seed from Mark's log: [rep, isCM, amount]
+var SETTLE_SEED = [
+  ['Mark Thiry',false,100000],['Mark Thiry',false,30000],['Mark Thiry',false,30000],
+  ['Mark Thiry',false,30000],['Mark Thiry',false,11500],['Mark Thiry',false,50000],
+  ['Mark Thiry',false,25000],['Mark Thiry',false,30000],['Mark Thiry',false,10000],
+  ['Mark Thiry',false,5000],['Mark Thiry',false,5000],['Mark Thiry',false,3500],
+  ['Mark Thiry',false,3000],['Mark Thiry',false,20069.14],['Mark Thiry',false,30000],
+  ['Gustavo Altamirano',false,30000],['Gustavo Altamirano',false,30000],['Gustavo Altamirano',false,15000],
+  ['Gustavo Altamirano',false,30000],['Gustavo Altamirano',false,30000],['Gustavo Altamirano',false,60000],
+  ['Rashel Carey',true,30000],['Rashel Carey',true,30000],
+  ['Damny Castro',true,30000],
+  ['Jesus Parra',true,15000],['Jesus Parra',true,15000],
+  ['Ronald Agresott',true,15000]
+].map(function(r){ return {rep:r[0], cm:r[1], amt:r[2], month:'2026-06'}; });
+var SEED_MONTHS = {'2026-06':true};
+
+var _sbPeriod='mtd', _sbMetric='value', _sbBound=false, _tagqRaw=null, _tagqUntaggedOnly=false;
+
+function _sbFmt(n){ return '$'+Math.round(n).toLocaleString(); }
+function _sbFmtK(n){ return n>=1000 ? '$'+Math.round(n/1000)+'K' : '$'+Math.round(n); }
+function _sbNowMonth(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); }
+function _sbPrevMonth(){ var d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); }
+function _sbMonthFromDate(s){
+  if(!s) return null;
+  if(s.indexOf('/')>=0){ var p=s.split('/'); if(p.length===3) return p[2]+'-'+('0'+p[0]).slice(-2); }
+  if(s.length>=7) return s.slice(0,7);
+  return null;
+}
+// frozen seed + live tags (live tags in a seeded month are skipped to avoid double-count)
+function _sbAllRecords(){
+  var recs = SETTLE_SEED.slice();
+  try {
+    Object.keys(_noteCache||{}).forEach(function(k){
+      if(k.indexOf('setl::')!==0) return;
+      var v=_noteCache[k]; if(!v) return;
+      var o; try{ o=(typeof v==='string')?JSON.parse(v):v; }catch(e){ return; }
+      if(!o||!o.who||o.amt==null) return;
+      var mo=_sbMonthFromDate(o.date); if(!mo) return;
+      if(SEED_MONTHS[mo]) return;
+      recs.push({rep:o.who, cm:!_sbIsTeam(o.who), amt:parseFloat(o.amt)||0, month:mo});
+    });
+  } catch(e){}
+  return recs;
+}
+function _sbInPeriod(rec){
+  if(_sbPeriod==='mtd') return rec.month===_sbNowMonth();
+  if(_sbPeriod==='prev') return rec.month===_sbPrevMonth();
+  return rec.month && rec.month.slice(0,4)===String(new Date().getFullYear()); // ytd
+}
+
+function renderScoreboard(raw){
+  var $=function(id){return document.getElementById(id);};
+  var recs=_sbAllRecords().filter(_sbInPeriod);
+  var by={}; recs.forEach(function(r){ if(!by[r.rep]) by[r.rep]={rep:r.rep,cm:r.cm,n:0,sum:0}; by[r.rep].n++; by[r.rep].sum+=r.amt; });
+  var arr=Object.keys(by).map(function(k){return by[k];});
+  var team=arr.filter(function(x){return !x.cm;}).sort(function(a,b){return b.sum-a.sum;});
+  var cms =arr.filter(function(x){return x.cm;}).sort(function(a,b){return b.sum-a.sum;});
+  var teamN=team.reduce(function(s,x){return s+x.n;},0), teamV=team.reduce(function(s,x){return s+x.sum;},0);
+  var cmN=cms.reduce(function(s,x){return s+x.n;},0), cmV=cms.reduce(function(s,x){return s+x.sum;},0);
+  var totN=teamN+cmN, totV=teamV+cmV;
+
+  if($('sb-kpi-total')) $('sb-kpi-total').textContent=_sbFmtK(totV);
+  if($('sb-kpi-total-sub')) $('sb-kpi-total-sub').textContent=totN+' cases settled';
+  if($('sb-kpi-count')) $('sb-kpi-count').textContent=totN;
+  if($('sb-kpi-count-sub')) $('sb-kpi-count-sub').textContent=totN?('Avg '+_sbFmtK(totV/totN)+' per case'):'—';
+  if($('sb-kpi-team')) $('sb-kpi-team').textContent=_sbFmtK(teamV);
+  if($('sb-kpi-team-sub')) $('sb-kpi-team-sub').textContent=teamN+' closed · Mark & Gus';
+  if($('sb-kpi-cm')) $('sb-kpi-cm').textContent=_sbFmtK(cmV);
+  if($('sb-kpi-cm-sub')) $('sb-kpi-cm-sub').textContent=cmN+' settled'+(totV?(' · '+Math.round(cmV/totV*100)+'% of $'):'');
+
+  var plab=_sbPeriod==='mtd'?'this month':(_sbPeriod==='prev'?'prior month':'2026 YTD');
+  if($('sb-table-title')) $('sb-table-title').textContent='Who settled · '+plab;
+  if($('sb-stamp-meta')) $('sb-stamp-meta').textContent=totN+' settlements';
+  if($('sb-stamp-title')) $('sb-stamp-title').textContent='Settled · '+(_sbPeriod==='mtd'?'MTD':(_sbPeriod==='prev'?'prior':'YTD'));
+
+  var bi=$('sb-briefing-items');
+  if(bi) bi.innerHTML=
+    '<div class="item blue"><span class="marker">'+_sbFmt(totV)+'</span><span>settled across '+totN+' cases.</span></div>'+
+    '<div class="item blue"><span class="marker">'+teamN+'</span><span>closed by the settlement team.</span></div>'+
+    '<div class="item purple"><span class="marker">'+cmN+'</span><span>settled by case managers.</span></div>';
+
+  var maxV=Math.max.apply(null,arr.map(function(x){return x.sum;}).concat([1]));
+  var body=$('sb-table-body');
+  if(body){
+    function row(x){
+      var w=Math.round(x.sum/maxV*100);
+      var ini=x.rep.split(' ').map(function(p){return p[0]||'';}).join('').slice(0,2).toUpperCase();
+      var avc=x.cm?'cm':'team', barc=x.cm?'purple':'blue', role=x.cm?'<span class="sb-role">CM</span>':'';
+      return '<tr><td class="name"><span class="sb-who"><span class="sb-av '+avc+'">'+ini+'</span>'+_esc(x.rep)+'</span>'+role+'</td>'+
+        '<td class="num">'+x.n+'</td><td class="num">'+_sbFmt(x.sum/x.n)+'</td>'+
+        '<td class="num"><span class="bic '+barc+'"><span class="barfill" style="width:'+w+'%"></span><span class="barlbl">'+_sbFmt(x.sum)+'</span></span></td></tr>';
+    }
+    var html='';
+    if(team.length){ html+='<tr class="grp"><td colspan="4">Settlement Team</td></tr>'; team.forEach(function(x){html+=row(x);}); html+='<tr class="subtot"><td>Team subtotal</td><td class="num">'+teamN+'</td><td class="num">'+(teamN?_sbFmt(teamV/teamN):'—')+'</td><td class="num">'+_sbFmt(teamV)+'</td></tr>'; }
+    if(cms.length){ html+='<tr class="grp"><td colspan="4">Case Managers — settled their own cases</td></tr>'; cms.forEach(function(x){html+=row(x);}); html+='<tr class="subtot"><td>CM-settled subtotal</td><td class="num">'+cmN+'</td><td class="num">'+(cmN?_sbFmt(cmV/cmN):'—')+'</td><td class="num">'+_sbFmt(cmV)+'</td></tr>'; }
+    html+='<tr class="firm"><td>Firm total</td><td class="num">'+totN+'</td><td class="num">'+(totN?_sbFmt(totV/totN):'—')+'</td><td class="num">'+_sbFmt(totV)+'</td></tr>';
+    if(!arr.length) html='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">No settlements tagged for this period.</td></tr>';
+    body.innerHTML=html;
+  }
+  renderSbMatrix();
+  _sbBindOnce();
+}
+
+function renderSbMatrix(){
+  var yr=String(new Date().getFullYear());
+  var recs=_sbAllRecords().filter(function(r){return r.month && r.month.slice(0,4)===yr;});
+  var monthsSet={}; recs.forEach(function(r){monthsSet[r.month]=true;});
+  var months=Object.keys(monthsSet).sort(); if(!months.length) months=[_sbNowMonth()];
+  var moLab=function(m){return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m.slice(5),10)-1];};
+  var reps={}; recs.forEach(function(r){ if(!reps[r.rep]) reps[r.rep]={rep:r.rep,cm:r.cm}; });
+  var repArr=Object.keys(reps).map(function(k){return reps[k];}).sort(function(a,b){ if(a.cm!==b.cm) return a.cm?1:-1; return a.rep<b.rep?-1:1; });
+  function val(rep,m){ var s=0,n=0; recs.forEach(function(r){ if(r.rep===rep&&r.month===m){s+=r.amt;n++;} }); return _sbMetric==='value'?s:n; }
+  function cell(v){ return _sbMetric==='value'?(v?_sbFmtK(v):'—'):(v||'—'); }
+  var head=document.getElementById('sb-mtx-head');
+  if(head){ var h='<th class="lbl">Rep</th>'; months.forEach(function(m){h+='<th>'+moLab(m)+'</th>';}); h+='<th class="ytd">YTD</th>'; head.innerHTML=h; }
+  var body=document.getElementById('sb-mtx-body');
+  if(body){ var html='';
+    repArr.forEach(function(rp){ var ytd=0,cells=''; months.forEach(function(m){ var v=val(rp.rep,m); ytd+=v; cells+='<td>'+cell(v)+'</td>'; }); var role=rp.cm?' <span class="sb-role">CM</span>':''; html+='<tr><td class="lbl name">'+_esc(rp.rep)+role+'</td>'+cells+'<td class="ytd">'+cell(ytd)+'</td></tr>'; });
+    var fcells='',fytd=0; months.forEach(function(m){ var s=0,n=0; recs.forEach(function(r){if(r.month===m){s+=r.amt;n++;}}); var v=_sbMetric==='value'?s:n; fytd+=v; fcells+='<td>'+cell(v)+'</td>'; });
+    html+='<tr class="firm"><td class="lbl">Firm</td>'+fcells+'<td class="ytd">'+cell(fytd)+'</td></tr>';
+    body.innerHTML=html;
+  }
+}
+
+function _sbTagKey(id){ return 'setl::'+id; }
+function _sbGetTag(id){ var v=(typeof _noteCache!=='undefined'&&_noteCache)?_noteCache[_sbTagKey(id)]:null; if(!v) return null; try{ return (typeof v==='string')?JSON.parse(v):v; }catch(e){ return null; } }
+function _sbSaveTag(id,obj){ try{ _noteCache[_sbTagKey(id)]=JSON.stringify(obj); fetch(_RAILWAY_URL+'/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseName:_sbTagKey(id),note:JSON.stringify(obj)})}).catch(function(){}); }catch(e){} }
+
+function renderTagQueue(raw){
+  _tagqRaw=raw||_tagqRaw; if(!_tagqRaw) return;
+  var settlement=_tagqRaw.settlement||[], demands=_tagqRaw.demands||[];
+  var dmap={}; demands.forEach(function(d){ var cn=d.case&&d.case._casename; if(cn&&!dmap[cn]) dmap[cn]=d; });
+  var settled=settlement.filter(function(s){ return s.casestatus==='Settled'; });
+  var today=(function(){var d=new Date();return ('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2)+'/'+d.getFullYear();})();
+  var body=document.getElementById('tagq-body'); if(!body) return;
+  function rosterOpts(sel){ var o='<option value="">▾ Select rep</option>'; o+='<optgroup label="Settlement team">'; SETTLE_TEAM.forEach(function(n){o+='<option'+(n===sel?' selected':'')+'>'+_esc(n)+'</option>';}); o+='</optgroup><optgroup label="Case managers">'; SETTLE_CMS.forEach(function(n){o+='<option'+(n===sel?' selected':'')+'>'+_esc(n)+'</option>';}); o+='</optgroup>'; return o; }
+  var untagged=0, html='';
+  settled.forEach(function(s){
+    var tag=_sbGetTag(s.id); if(!tag) untagged++;
+    if(_tagqUntaggedOnly && tag) return;
+    var d=dmap[s._casename]||{};
+    var cm=s.case_manager||d.case_manager||'—';
+    var policy=d.insurance_policy||'—', type=d.demandtype||'—';
+    var offer=(d.offer_amount!=null&&d.offer_amount!=='')?parseFloat(d.offer_amount):null;
+    var amtVal=(tag&&tag.amt!=null)?tag.amt:(offer!=null?offer:'');
+    var blank=(offer===null&&!(tag&&tag.amt!=null));
+    var who=(tag&&tag.who)?tag.who:'', date=(tag&&tag.date)?tag.date:today;
+    html+='<tr class="'+(tag?'':'needs')+'">'+
+      '<td class="case-cell"><div class="case-name">'+_esc(s._casename||'—')+'</div><div class="case-meta">'+(d.doi?'DOL '+_esc(d.doi):'')+'</div></td>'+
+      '<td>'+_esc(cm)+'</td><td class="num">'+_esc(policy)+'</td><td><span class="flag gray">'+_esc(type)+'</span></td>'+
+      '<td class="num"><span class="tagq-amt"><input class="tagq-amtin" data-id="'+s.id+'" data-f="amt" value="'+(amtVal!==''&&amtVal!=null?(Math.round(amtVal*100)/100):'')+'" placeholder="—"><span class="src'+(blank?' blank':'')+'">'+(blank?'blank · confirm':'auto')+'</span></span></td>'+
+      '<td><select class="tagq-sel'+(who?'':' empty')+'" data-id="'+s.id+'" data-f="who">'+rosterOpts(who)+'</select></td>'+
+      '<td><input class="tagq-date" data-id="'+s.id+'" data-f="date" value="'+_esc(date)+'"></td></tr>';
+  });
+  if(!settled.length) html='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-3)">No cases in Settled status.</td></tr>';
+  body.innerHTML=html;
+  var meta=document.getElementById('tagq-meta'); if(meta) meta.textContent=untagged+' untagged · '+(settled.length-untagged)+' tagged';
+  var navct=document.getElementById('tagq-navct'); if(navct) navct.textContent=untagged;
+  var badge=document.getElementById('tagq-badge'); if(badge){ badge.textContent=untagged+' untagged'; badge.style.display=untagged?'inline-flex':'none'; }
+  var stab=document.getElementById('settled-tab'); if(stab) stab.setAttribute('data-alerts', untagged>0?'1':'0');
+  body.querySelectorAll('[data-f]').forEach(function(el){
+    el.addEventListener('change',function(){
+      var id=el.getAttribute('data-id'), f=el.getAttribute('data-f'), cur=_sbGetTag(id)||{};
+      if(f==='amt') cur.amt=el.value!==''?parseFloat(el.value):null;
+      else if(f==='who') cur.who=el.value;
+      else if(f==='date') cur.date=el.value;
+      if(!cur.date) cur.date=today;
+      _sbSaveTag(id,cur);
+      renderScoreboard(_tagqRaw); renderTagQueue(_tagqRaw);
+    });
+  });
+}
+
+function _sbBindOnce(){
+  if(_sbBound) return; _sbBound=true;
+  var pseg=document.getElementById('sb-period-seg');
+  if(pseg) pseg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ pseg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); _sbPeriod=b.getAttribute('data-period'); renderScoreboard(_tagqRaw); }); });
+  var mseg=document.getElementById('sb-mtx-seg');
+  if(mseg) mseg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ mseg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); _sbMetric=b.getAttribute('data-m'); renderSbMatrix(); }); });
+  document.querySelectorAll('.sb-collapse').forEach(function(btn){ btn.addEventListener('click',function(e){ e.stopPropagation(); var el=document.getElementById(btn.getAttribute('data-sect')); if(el) el.classList.toggle('collapsed'); }); });
+  document.querySelectorAll('.settle-subnav .settle-jump').forEach(function(a){ a.addEventListener('click',function(){ document.querySelectorAll('.settle-subnav .settle-jump').forEach(function(x){x.classList.remove('cur');}); a.classList.add('cur'); var el=document.getElementById(a.getAttribute('data-go')); if(el) window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'}); }); });
+  var uo=document.getElementById('tagq-untagged-only');
+  if(uo) uo.addEventListener('change',function(){ _tagqUntaggedOnly=uo.checked; renderTagQueue(_tagqRaw); });
 }
 
 /* =========================================================
@@ -3925,7 +4245,7 @@ function renderSettlements(raw){
   var activeNeg=settlement.filter(function(s){return s.casestatus==='Settlement Negotiations';}).length;
   var settledCount=settlement.filter(function(s){return s.casestatus==='Settled';}).length;
 
-  var settleKpis=document.querySelectorAll('[data-page="settlements"] .kpi .value');
+  var settleKpis=document.querySelectorAll('#sd-kpis .kpi .value');
   if(settleKpis[0]) settleKpis[0].textContent=sent2026;
   if(settleKpis[1]) settleKpis[1].textContent=expired;
   if(settleKpis[2]) settleKpis[2].textContent=pending;
@@ -3939,10 +4259,10 @@ function renderSettlements(raw){
     byMonth[mo]=(byMonth[mo]||0)+1;
   });
   var subParts=Object.keys(byMonth).map(function(k){return k+': '+byMonth[k];});
-  var settleSubs=document.querySelectorAll('[data-page="settlements"] .kpi .sub');
+  var settleSubs=document.querySelectorAll('#sd-kpis .kpi .sub');
   if(settleSubs[0]) settleSubs[0].textContent=subParts.slice(0,4).join(' · ')||'No demands yet';
 
-  var settleTbody=document.querySelector('[data-page="settlements"] .panel table.t tbody');
+  var settleTbody=document.querySelector('#sd-bystatus tbody');
   if(settleTbody){
     var rows=settleTbody.querySelectorAll('tr');
     var counts=[expired,pending,activeNeg,settledCount];
@@ -3964,9 +4284,12 @@ function renderSettlements(raw){
   renderSettleOffers(demands, _settleOfferView, settlementMap);
   bindSettlePanelToggles(raw, settlementMap);
 
-  var settleItems=document.querySelectorAll('[data-page="settlements"] .briefing .items .item');
+  var settleItems=document.querySelectorAll('#sd-briefing .items .item');
   if(settleItems[0]){var sm=settleItems[0].querySelector('.marker');if(sm) sm.textContent=expired;}
   if(settleItems[2]){var sm3=settleItems[2].querySelector('.marker');if(sm3) sm3.textContent=settledCount;}
+
+  try { renderScoreboard(raw); } catch(e){ console.warn('[KAL Ops] scoreboard render failed:', e); }
+  try { renderTagQueue(raw); } catch(e){ console.warn('[KAL Ops] tag queue render failed:', e); }
 }
 
 /* =========================================================
@@ -5600,6 +5923,9 @@ function renderDataQuality(raw){
       console.warn('[KAL Ops] fetch failed:', msg);
       showOffHostBanner('CasePeer fetch failed · '+hint);
       showError(hint);
+      // Preview fallback: render the settlement scoreboard from the frozen
+      // June seed even when off-host, so the layout is visible without CasePeer.
+      try { renderScoreboard(null); renderTagQueue({settlement:[],demands:[]}); } catch(e){}
     }
     };
     await state.reload();
