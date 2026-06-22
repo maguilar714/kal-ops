@@ -1342,6 +1342,11 @@ function _fmtCurrency(n){
   return '$'+Math.round(n).toLocaleString();
 }
 function _esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(String(s==null?'':s)));return d.innerHTML;}
+function _caseLink(name, id){
+  var label = _esc(name||'—');
+  if(!id) return label;
+  return '<a href="https://my.casepeer.com/case/'+id+'/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;text-decoration-color:var(--ink-4)" onmouseover="this.style.textDecorationColor=\'var(--blue)\'" onmouseout="this.style.textDecorationColor=\'var(--ink-4)\'">'+label+'</a>';
+}
 
 /* =========================================================
    Demand area chart -- live build from DATA.demands
@@ -2204,7 +2209,7 @@ function renderLienActivityFeed(disbursement, days){
         var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
         var rowCls = r.days_in_disbursement >= 90 ? 'row-warn' : '';
         return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
           '<td class="num">'+daysDisp+'</td>'+
           '<td class="num" style="color:var(--ink-3)">'+_esc(r.pending_disbursement_date||'—')+'</td>'+
@@ -2246,7 +2251,7 @@ function renderLienActivityFeed(disbursement, days){
         if(isMtd && hasOvr) feeLabel += ' ✎';
         var depLabel = depTotal > 0 ? (depTotal>=1000?'$'+Math.round(depTotal/1000)+'K':'$'+Math.round(depTotal).toLocaleString()) : '—';
         return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_esc(r._casename||'—')+'</td>'+
+          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
           '<td class="num">'+daysDisp+'</td>'+
           '<td class="num" style="color:var(--green);font-weight:600">'+_esc(r.disbursed_date||'—')+'</td>'+
@@ -3291,6 +3296,7 @@ function renderDataQuality(raw){
       }
       cases.push({
         caseName:c.caseName,
+        caseId:c.caseId,
         negotiator:Object.keys(c.negSet).sort().join(', ')||'—',
         lienCount:c.liens.length,
         maxDays:maxDays,
@@ -3550,7 +3556,7 @@ function renderDataQuality(raw){
       var estFee = c.settlementTotal > 0 ? c.settlementTotal * feeRate : null;
       html += '<tr class="'+rowCls+'" data-case="'+esc(c.caseName)+'">';
       html += '<td><button class="chip" data-expand="'+esc(c.caseName)+'" style="padding:1px 8px;font-size:13px;line-height:1;">'+(exp?'−':'+')+'</button></td>';
-      html += '<td class="name">'+esc(c.caseName)+'</td>';
+      html += '<td class="name">'+_caseLink(c.caseName, c.caseId)+'</td>';
       html += '<td>'+esc(c.negotiator)+'</td>';
       html += '<td class="num">'+c.lienCount+'</td>';
       html += '<td class="num">'+c.maxDays+'d</td>';
@@ -3681,7 +3687,7 @@ function renderDataQuality(raw){
         var rowCls = d>=120 ? 'row-alert' : (d>=60 ? 'row-warn' : '');
         var barCls = d>=120 ? 'amber' : 'blue';
         html += '<tr class="'+rowCls+'">';
-        html += '<td class="case-cell"><div class="case-name">'+esc(r._casename||'—')+'</div></td>';
+        html += '<td class="case-cell"><div class="case-name">'+_caseLink(r._casename||'—', r.id||null)+'</div></td>';
         html += '<td>'+esc(r.lien_negotiator||'—')+'</td>';
         html += '<td class="num"><span class="bic '+barCls+'"><span class="barfill" style="width:'+pct+'%"></span><span class="barlbl">'+d+'</span></span></td>';
         html += '<td class="num">'+esc(r.last_touched_lien_negotiator||'—')+'</td>';
@@ -3721,7 +3727,7 @@ function renderDataQuality(raw){
         var feeLabel = feeAmt > 0 ? fmtCurrency(feeAmt) : '—';
         if(isMtd && hasOvr) feeLabel += ' ✎';
         html2 += '<tr class="row-good">';
-        html2 += '<td class="case-cell"><div class="case-name">'+esc(rc._casename||'—')+'</div></td>';
+        html2 += '<td class="case-cell"><div class="case-name">'+_caseLink(rc._casename||'—', rc.id||null)+'</div></td>';
         html2 += '<td>'+esc(rc.lien_negotiator||'—')+'</td>';
         html2 += '<td class="num">'+dc+'d</td>';
         html2 += '<td class="num">'+esc(rc.disbursed_date||'—')+'</td>';
