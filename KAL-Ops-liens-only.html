@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v4.4</title>
+<title>KAL Operations · v4.9</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -295,7 +295,7 @@
   .section-title .hint{font-size:12px;color:var(--ink-4)}
 
   /* ---------- KPI cards ---------- */
-  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .kpi{
     position:relative;background:var(--surface);
     border:1px solid var(--line);border-radius:10px;
@@ -694,23 +694,6 @@
         </div>
         <div class="sub" id="lien-kpi-disb-sub">loading…</div>
       </div>
-      <div class="kpi" data-tip="MTD attorney fees = sum of check deposits this month x per-case fee rate (default 33%). Click goal to edit.">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;gap:6px;">
-          <div class="label" style="margin:0;">Atty Fees</div>
-          <div style="display:flex;align-items:center;gap:5px;">
-            <span class="lien-fee-tog" id="lien-fee-tog-mtd" style="font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:6px;">MTD</span>
-            <span class="lien-fee-tog" id="lien-fee-tog-ytd" style="display:none;font-size:10px;cursor:pointer;letter-spacing:.04em;padding:1px 6px;border-radius:6px;">YTD</span>
-            <span id="lien-fee-goal-edit" style="font-size:10px;cursor:pointer;color:var(--ink-4);letter-spacing:.04em;padding:1px 5px;border:1px solid var(--line);border-radius:6px;" title="Edit monthly goal">goal</span>
-          </div>
-        </div>
-        <div class="row-v">
-          <div class="value" id="lien-kpi-fee">—</div>
-        </div>
-        <div id="lien-fee-bar-wrap" style="margin:5px 0 3px;height:4px;border-radius:6px;background:var(--surface-3);overflow:hidden;">
-          <div id="lien-fee-bar" style="height:100%;background:var(--blue);width:0%;transition:width .5s ease;border-radius:6px;"></div>
-        </div>
-        <div class="sub" id="lien-kpi-fee-sub">loading…</div>
-      </div>
     </div>
 
     <!-- Color legend -->
@@ -954,7 +937,7 @@
   
 
   <footer class="foot">
-    <div>KAL Operations · v4.4 · live data</div>
+    <div>KAL Operations · v4.9 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3412,39 +3395,12 @@ function renderDataQuality(raw){
       var fiTotal = 0; for(var fr2=0; fr2<fiRows.length; fr2++) fiTotal += fiRows[fr2].feeAmount;
       return { rows: fiRows, totalFee: (_ovMtd!=null?_ovMtd:fiTotal), source:'fees-in' };
     }
-    // FALLBACK (no fees-in entered for the month yet): disbursement×rate reconstruction.
-    var deposits = state.raw.deposits || [];
-    var disbursement = state.raw.disbursement || [];
-    var depByCaseId = {};
-    for(var j=0;j<deposits.length;j++){
-      var dep = deposits[j] || {};
-      var cid = dep.case_id;
-      if(!cid) continue;
-      depByCaseId[cid] = (depByCaseId[cid]||0) + (parseFloat(dep.amount)||0);
-    }
-    var rows = [];
-    for(var d0=0;d0<disbursement.length;d0++){
-      var dr = disbursement[d0] || {};
-      if(dr.casestatus !== 'Disbursed') continue;
-      var dd = parseDate(dr.disbursed_date);
-      if(!dd || dd < mtdStart || dd > now) continue;
-      var depositTotal = depByCaseId[dr.id] || 0;
-      var contact = (typeof _getContact === 'function') ? _getContact(dr._casename||'') : {};
-      var hasOverride = contact && parseFloat(contact.feeAmount) > 0;
-      var feeAmount = hasOverride ? parseFloat(contact.feeAmount) : depositTotal * 0.33;
-      rows.push({
-        id: dr.id,
-        caseName: dr._casename || '—',
-        disbursedDate: dr.disbursed_date || '—',
-        negotiator: dr.lien_negotiator || '—',
-        depositTotal: depositTotal,
-        feeAmount: feeAmount,
-        hasOverride: hasOverride
-      });
-    }
-    var totalFee = 0;
-    for(var r=0;r<rows.length;r++) totalFee += rows[r].feeAmount;
-    return { rows: rows, totalFee: (_ovMtd!=null?_ovMtd:totalFee), source:'computed' };
+    // No fees-in booked for the month yet. Honest empty state — override > frozen > $0.
+    // The disbursement×rate reconstruction was removed 2026-06-24 (misleading estimate).
+    var _fz = (typeof _getFeeFrozen==='function') ? _getFeeFrozen(curKey) : null;
+    if(_ovMtd!=null) return { rows: [], totalFee: _ovMtd, source:'override' };
+    if(_fz!=null)    return { rows: [], totalFee: _fz,    source:'frozen' };
+    return { rows: [], totalFee: 0, source:'none' };
   }
 
   // ---- Renderers ----
@@ -3463,27 +3419,9 @@ function renderDataQuality(raw){
     var disbPending = (state.raw.disbursement||[]).filter(function(r){ return r.casestatus==='Disbursement'; });
     document.getElementById('lien-kpi-disb').textContent = disbPending.length;
     document.getElementById('lien-kpi-disb-sub').textContent = 'Final payout pending';
-    // MTD fee — single source of truth via _computeMtdFees()
-    var mtd = _computeMtdFees();
-    var mtdFee = mtd.totalFee;
-    var mtdCases = (function(){ var s={},n=0; for(var i=0;i<mtd.rows.length;i++){ var id=mtd.rows[i].id; if(id==null){n++;continue;} if(!s[id]){s[id]=1;n++;} } return n; })(); // dedupe multi-check rows by case id
-    var mtdBasis = mtd.source === 'fees-in' ? 'CasePeer' : 'est.'; // fees-in = booked; computed = deposits×rate estimate
-    var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
-    var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
-    var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
-    var barEl = document.getElementById('lien-fee-bar');
-    if(barEl){ barEl.style.width = feePct+'%'; barEl.style.background = barColor; }
-    document.getElementById('lien-kpi-fee').textContent = fmtCurrency(mtdFee);
-    document.getElementById('lien-kpi-fee-sub').textContent = 'of '+fmtCurrency(feeGoal)+' goal · '+mtdCases+' case'+(mtdCases!==1?'s':'')+' · '+feePct+'% · '+mtdBasis;
-    var _view=(typeof _lienFeeView!=='undefined')?_lienFeeView:'mtd';
-    (function(){ var m=document.getElementById('lien-fee-tog-mtd'),y=document.getElementById('lien-fee-tog-ytd'); function st(el,on){ if(!el)return; el.style.background=on?'var(--blue-soft)':'transparent'; el.style.color=on?'var(--blue)':'var(--ink-4)'; el.style.fontWeight=on?'700':'400'; } st(m,_view==='mtd'); st(y,_view==='ytd'); })();
-    var _ge=document.getElementById('lien-fee-goal-edit'), _bw=document.getElementById('lien-fee-bar-wrap');
-    if(_view==='ytd'){
-      var _ytd=_computeYtdFees();
-      if(_ge)_ge.style.display='none'; if(_bw)_bw.style.display='none';
-      document.getElementById('lien-kpi-fee').textContent=fmtCurrency(_ytd.totalFee);
-      document.getElementById('lien-kpi-fee-sub').textContent=state.refDate.getFullYear()+' YTD · '+_ytd.cases+' case'+(_ytd.cases!==1?'s':'')+' · '+_ytd.basis;
-    } else { if(_ge)_ge.style.display=''; if(_bw)_bw.style.display=''; }
+    // Attorney-fee KPI removed 2026-06-24 (v4.9) — firm financials are leadership-only and live
+    // on the master dashboard. CasePeer permission-scopes fees-in per login, so any fee figure on
+    // this team build was unreliable anyway.
   }
 
   function renderBriefing(){
@@ -3876,23 +3814,7 @@ function renderDataQuality(raw){
       renderDisbursement();
       renderKPIs();
     });
-
-    // Monthly goal edit
-    var goalBtn = document.getElementById('lien-fee-goal-edit');
-    if(goalBtn){
-      goalBtn.addEventListener('click', function(){
-        var cur = localStorage.getItem('lien_fee_goal') || '225000';
-        var val = prompt('Monthly attorney fee goal ($):', cur);
-        if(val !== null){
-          var num = parseFloat(String(val).replace(/[$,]/g,''));
-          if(!isNaN(num) && num > 0){
-            localStorage.setItem('lien_fee_goal', String(num));
-            renderKPIs();
-          }
-        }
-      });
-    }
-    ['mtd','ytd'].forEach(function(v){ var el=document.getElementById('lien-fee-tog-'+v); if(el && !el.dataset.bd){ el.dataset.bd='1'; el.addEventListener('click', function(){ _lienFeeView=v; renderKPIs(); }); } });
+    // (Attorney-fee KPI + goal editor + MTD/YTD toggle removed v4.9 — firm financials are leadership-only.)
   }
 
   function showError(msg){
@@ -3953,13 +3875,14 @@ function renderDataQuality(raw){
         fetchAll('/api/v1/case/disbursement-overview/'),
         fetchAll('/api/v1/case/check-deposits/?check_date__gte=2025-01-01&check_date__lte=2026-12-31')
       ]);
-      // fees-in fetched separately — a 403 means this user lacks the CasePeer permission;
-      // fall back to disbursement×rate estimate rather than crashing the whole dashboard.
+      // fees-in is no longer used for the team's fee KPI (the meter reads the firm % published to
+      // Railway). Still fetched for the disbursed-panel inline per-case fee display. Estimate fallback
+      // removed 2026-06-24; on failure the inline fees simply blank rather than showing an estimate.
       var feesIn = [];
       try {
         feesIn = await fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31');
       } catch(feErr){
-        console.warn('[KAL Lien Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+') — MTD fee will use estimate fallback');
+        console.warn('[KAL Lien Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+')');
       }
       state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3]; state.raw.feesIn=feesIn;
       processData(); renderAll();

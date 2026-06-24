@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v4.6</title>
+<title>KAL Operations · v4.9</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -702,7 +702,7 @@
     </div>
 
     <nav class="topbar-tabs" role="tablist">
-      <button class="tab active" data-tab="pipeline">Pipeline</button>
+      <button class="tab active" data-tab="pipeline">Overview</button>
       <button class="tab" data-tab="casecare">Case Care</button>
       <button class="tab" data-tab="settlements" data-alerts="1"><span>Settlements</span><span class="alert-dot"></span></button>
       <button class="tab" data-tab="settled" id="settled-tab"><span>Settled $</span><span class="alert-dot"></span></button>
@@ -1956,7 +1956,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v4.6 · live data</div>
+    <div>KAL Operations · v4.9 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -5313,40 +5313,13 @@ function renderDataQuality(raw){
       var fiTotal = 0; for(var fr2=0; fr2<fiRows.length; fr2++) fiTotal += fiRows[fr2].feeAmount;
       return { rows: fiRows, totalFee: (_ovMtd!=null?_ovMtd:fiTotal), source:'fees-in' };
     }
-    // FALLBACK (no fees-in entered for the month yet): disbursement×rate reconstruction.
-    var deposits = state.raw.deposits || [];
-    var disbursement = state.raw.disbursement || [];
-    // Build deposit totals by case ID (all history — disbursed cases may have old checks)
-    var depByCaseId = {};
-    for(var j=0;j<deposits.length;j++){
-      var dep = deposits[j] || {};
-      var cid = dep.case_id;
-      if(!cid) continue;
-      depByCaseId[cid] = (depByCaseId[cid]||0) + (parseFloat(dep.amount)||0);
-    }
-    var rows = [];
-    for(var d0=0;d0<disbursement.length;d0++){
-      var dr = disbursement[d0] || {};
-      if(dr.casestatus !== 'Disbursed') continue;
-      var dd = parseDate(dr.disbursed_date);
-      if(!dd || dd < mtdStart || dd > now) continue;
-      var depositTotal = depByCaseId[dr.id] || 0;
-      var contact = (typeof _getContact === 'function') ? _getContact(dr._casename||'') : {};
-      var hasOverride = contact && parseFloat(contact.feeAmount) > 0;
-      var feeAmount = hasOverride ? parseFloat(contact.feeAmount) : depositTotal * 0.33;
-      rows.push({
-        id: dr.id,
-        caseName: dr._casename || '—',
-        disbursedDate: dr.disbursed_date || '—',
-        negotiator: dr.lien_negotiator || '—',
-        depositTotal: depositTotal,
-        feeAmount: feeAmount,
-        hasOverride: hasOverride
-      });
-    }
-    var totalFee = 0;
-    for(var r=0;r<rows.length;r++) totalFee += rows[r].feeAmount;
-    return { rows: rows, totalFee: (_ovMtd!=null?_ovMtd:totalFee), source:'computed' };
+    // No fees-in booked for the month yet. Honest empty state — override > frozen > $0.
+    // The disbursement×rate reconstruction was removed 2026-06-24: it produced misleading
+    // estimates (e.g. inflated team numbers) and masked the real "no fees taken yet" state.
+    var _fz = (typeof _getFeeFrozen==='function') ? _getFeeFrozen(curKey) : null;
+    if(_ovMtd!=null) return { rows: [], totalFee: _ovMtd, source:'override' };
+    if(_fz!=null)    return { rows: [], totalFee: _fz,    source:'frozen' };
+    return { rows: [], totalFee: 0, source:'none' };
   }
 
   // ---- Renderers ----
@@ -5369,7 +5342,10 @@ function renderDataQuality(raw){
     var mtd = _computeMtdFees();
     var mtdFee = mtd.totalFee;
     var mtdCases = (function(){ var s={},n=0; for(var i=0;i<mtd.rows.length;i++){ var id=mtd.rows[i].id; if(id==null){n++;continue;} if(!s[id]){s[id]=1;n++;} } return n; })(); // dedupe multi-check rows by case id
-    var mtdBasis = mtd.source === 'fees-in' ? 'CasePeer' : 'est.'; // fees-in = booked; computed = deposits×rate estimate
+    var mtdBasis = mtd.source === 'fees-in' ? 'CasePeer'
+      : mtd.source === 'override' ? 'manual'
+      : mtd.source === 'frozen' ? 'frozen'
+      : 'no fees taken yet';
     var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
     var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
@@ -5892,12 +5868,12 @@ function renderDataQuality(raw){
       var cpNotes      = results[9] || [];
       var cpClients    = results[10] || [];
       // fees-in fetched separately — a 403 means this user lacks the CasePeer permission;
-      // fall back to disbursement×rate estimate rather than crashing the whole dashboard.
+      // the fee card then honestly shows $0 / "no fees taken yet" (estimate fallback removed 2026-06-24).
       var feesIn = [];
       try {
         feesIn = await fetchAll('/api/v1/case/fees-in/?check_date__gte=2025-01-01&check_date__lte=2026-12-31');
       } catch(feErr){
-        console.warn('[KAL Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+') — fee cards will use estimate fallback');
+        console.warn('[KAL Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+') — fee card will show $0');
       }
 
       state.raw.lienMgmt    = lienMgmt;
@@ -5973,7 +5949,7 @@ function renderDataQuality(raw){
   if(!btn) return;
 
   var HELP = {
-    pipeline: { title:'Pipeline', body:`
+    pipeline: { title:'Overview', body:`
       <h4>What this tab is</h4><p>A firm-wide snapshot of where every case sits right now.</p>
       <h4>Stage counts</h4><p>The cards across the top count cases by stage: Demanded and UIM Demanded (waiting on the adjuster), Settlement Negotiations, Settled, Lien Negotiations, and Disbursement.</p>
       <h4>Demand volume</h4><p>The chart shows how many demands went out each month over the last 14 months.</p>
