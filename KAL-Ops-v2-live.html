@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v4.9</title>
+<title>KAL Operations · v5.0</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -1456,7 +1456,7 @@
       <!-- Cases fully disbursed -->
       <div class="panel">
         <div class="panel-head">
-          <h3>Disbursed — awaiting close</h3>
+          <h3>Disbursed (incl. closed)</h3>
           <div class="meta-r" id="lien-disbursed-meta">Last 7 days</div>
         </div>
         <table class="t">
@@ -1476,7 +1476,7 @@
         </table>
         <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
           <span id="lien-disbursed-count" style="color:var(--ink-3)">—</span>
-          <span style="font-size:11px;color:var(--green)">Fully closed</span>
+          <span style="font-size:11px;color:var(--green)">From fees-in · survives close</span>
         </div>
       </div>
 
@@ -1956,7 +1956,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v4.9 · live data</div>
+    <div>KAL Operations · v5.0 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3370,6 +3370,7 @@ function renderSettleDeposits(deposits, days){
 
 var _lienActivityDays = 7;
 var _depositsData = [];
+var _feesInData = [];
 
 function _dateInDays(dateStr, days){
   if(!dateStr) return false;
@@ -3394,13 +3395,21 @@ function renderLienActivityFeed(disbursement, days){
     return new Date(parseInt(pb[2]),parseInt(pb[0])-1,parseInt(pb[1])) - new Date(parseInt(pa[2]),parseInt(pa[0])-1,parseInt(pa[1]));
   });
 
-  var disbursed = (disbursement||[]).filter(function(r){
-    return r.casestatus === 'Disbursed' && _dateInDays(r.disbursed_date, days);
-  }).sort(function(a,b){
-    var pa=a.disbursed_date?a.disbursed_date.split('/'):[0,0,0];
-    var pb=b.disbursed_date?b.disbursed_date.split('/'):[0,0,0];
-    return new Date(parseInt(pb[2]),parseInt(pb[0])-1,parseInt(pb[1])) - new Date(parseInt(pa[2]),parseInt(pa[0])-1,parseInt(pa[1]));
-  });
+  // Disbursed — sourced from fees-in (closed-inclusive, so disbursed cases stay visible after they
+  // close, unlike disbursement-overview which drops them). Keyed by check_date (date fees taken ≈
+  // disbursement date under the Take-Fees SOP), deduped by case_id; multi-check cases sum fee_total.
+  var _fiByCase = {};
+  for(var _fi=0; _fi<(_feesInData||[]).length; _fi++){
+    var _f=_feesInData[_fi]||{};
+    if(!_dateInDays(_f.check_date, days)) continue;
+    var _cid=_f.case_id; if(_cid==null) continue;
+    if(!_fiByCase[_cid]) _fiByCase[_cid]={ id:_cid, _casename:_f.casename||'—', lien_negotiator:_f.lien_negotiator||'—', disbursed_date:_f.check_date||'—', casestatus:_f.casestatus||'', _feeTotal:0, _dt:null };
+    _fiByCase[_cid]._feeTotal += parseFloat(_f.fee_total)||0;
+    var _pp=_f.check_date?_f.check_date.split('/'):null;
+    var _pd=(_pp&&_pp.length===3)?new Date(parseInt(_pp[2]),parseInt(_pp[0])-1,parseInt(_pp[1])):null;
+    if(_pd && (!_fiByCase[_cid]._dt || _pd>_fiByCase[_cid]._dt)){ _fiByCase[_cid]._dt=_pd; _fiByCase[_cid].disbursed_date=_f.check_date; }
+  }
+  var disbursed = Object.keys(_fiByCase).map(function(k){ return _fiByCase[k]; }).sort(function(a,b){ return (b._dt||0)-(a._dt||0); });
 
   // Update cleared panel
   var clearedMeta  = document.getElementById('lien-cleared-meta');
@@ -3437,33 +3446,26 @@ function renderLienActivityFeed(disbursement, days){
   var disbursedCount = document.getElementById('lien-disbursed-count');
   var disbursedBody  = document.getElementById('lien-disbursed-body');
   if(disbursedMeta)  disbursedMeta.textContent  = days==='mtd'?'Month to date':'Last '+days+' days';
-  if(disbursedCount) disbursedCount.textContent = disbursed.length+' disbursed · awaiting close';
+  if(disbursedCount) disbursedCount.textContent = disbursed.length+' disbursed (incl. closed)';
   if(disbursedBody){
     if(!disbursed.length){
       disbursedBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-3)">None in last '+days+' days.</td></tr>';
     } else {
       disbursedBody.innerHTML = disbursed.map(function(r){
-        var daysDisp = r.days_in_disbursement ? r.days_in_disbursement+'d' : '—';
-        var rowCls = 'row-good'; // disbursed cases are done — no aging warning (aging only matters for pending payout)
+        var daysDisp = r._dt ? Math.max(0,Math.floor((Date.now()-r._dt)/86400000))+'d' : '—';
+        var isClosed = (r.casestatus||'').toLowerCase().indexOf('closed')>=0;
         var depTotal = _depById[r.id] || 0;
-        var contact = (typeof _getContact === 'function') ? _getContact(r._casename||'') : {};
-        var hasOvr = contact && parseFloat(contact.feeAmount) > 0;
-        var feeAmt = hasOvr ? parseFloat(contact.feeAmount) : depTotal * 0.33;
-        var disbDt = r.disbursed_date ? (function(s){ var p=s.split('/'); return p.length===3?new Date(parseInt(p[2]),parseInt(p[0])-1,parseInt(p[1])):null; })(r.disbursed_date) : null;
-        var isMtd = disbDt && disbDt >= _mtdStart && disbDt <= _now;
-        var feeStyle = isMtd ? 'color:var(--green);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-style:dotted;' : 'color:var(--ink-3);';
-        var feeAction = isMtd ? ' data-action="edit-fee-amount" data-case="'+_esc(r._casename||'')+'"' : '';
-        var feeTip = isMtd ? ' title="Click to override fee amount"' : '';
+        var feeAmt = r._feeTotal || 0;
         var feeLabel = feeAmt > 0 ? (feeAmt>=1000?'$'+Math.round(feeAmt/1000)+'K':'$'+Math.round(feeAmt).toLocaleString()) : '—';
-        if(isMtd && hasOvr) feeLabel += ' ✎';
         var depLabel = depTotal > 0 ? (depTotal>=1000?'$'+Math.round(depTotal/1000)+'K':'$'+Math.round(depTotal).toLocaleString()) : '—';
-        return '<tr class="'+rowCls+'">'+
-          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+'</td>'+
+        var statusBadge = isClosed ? ' <span style="font-size:9px;color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:0 4px;vertical-align:middle;">closed</span>' : '';
+        return '<tr class="row-good">'+
+          '<td class="name" style="font-size:12px">'+_caseLink(r._casename||'—', r.id||null)+statusBadge+'</td>'+
           '<td style="color:var(--ink-3)">'+_esc(r.lien_negotiator||'—')+'</td>'+
           '<td class="num">'+daysDisp+'</td>'+
           '<td class="num" style="color:var(--green);font-weight:600">'+_esc(r.disbursed_date||'—')+'</td>'+
           '<td class="num">'+depLabel+'</td>'+
-          '<td class="num"><span style="'+feeStyle+'"'+feeTip+feeAction+'>'+feeLabel+'</span></td>'+
+          '<td class="num" style="color:var(--green);font-weight:600">'+feeLabel+'</td>'+
           '</tr>';
       }).join('');
     }
@@ -5882,6 +5884,7 @@ function renderDataQuality(raw){
       state.raw.settlement   = settlement;
       state.raw.demands      = demands;
       state.raw.deposits     = deposits; _depositsData = deposits;
+      _feesInData = feesIn;
       state.raw.treating     = treating;
       state.raw.calendar     = calendar;
       state.raw.litOverview  = litOverview;
