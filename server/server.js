@@ -43,7 +43,13 @@ async function initDb() {
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS adjuster_phone TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_amount TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_rate TEXT`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, note TEXT, treatment TEXT, main_tasks TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+  // Backfill columns for deployments created before these fields existed.
+  // The dashboards send note/treatment/mainTasks to /junior; without these
+  // columns the values were silently dropped (same bug class as /contacts).
+  await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS note TEXT`);
+  await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS treatment TEXT`);
+  await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS main_tasks TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS quo_calls (phone TEXT PRIMARY KEY, cm_name TEXT, call_date TEXT, duration_sec INT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Encrypted daily Quo extract. `payload` is a Fernet token (ciphertext) — the
   // server never decrypts it. created_at drives the 48h purge.
@@ -245,10 +251,10 @@ const server = http.createServer(async (req, res) => {
   // JUNIOR FIELDS (liability, health_insurance, policy_3p, uim)
   if (req.method === 'GET' && url === '/junior') {
     try {
-      const result = await pool.query('SELECT case_name, liability, health_insurance, policy_3p, uim FROM case_junior');
+      const result = await pool.query('SELECT case_name, liability, health_insurance, policy_3p, uim, note, treatment, main_tasks FROM case_junior');
       const data = {};
       result.rows.forEach(r => {
-        data[r.case_name] = { liability: r.liability, healthInsurance: r.health_insurance, policy3p: r.policy_3p, uim: r.uim };
+        data[r.case_name] = { liability: r.liability, healthInsurance: r.health_insurance, policy3p: r.policy_3p, uim: r.uim, note: r.note, treatment: r.treatment, mainTasks: r.main_tasks };
       });
       res.writeHead(200); res.end(JSON.stringify(data));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
@@ -256,22 +262,36 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'POST' && url === '/junior') {
     try {
-      const { caseName, liability, healthInsurance, policy3p, uim } = await readBody(req);
+      const body = await readBody(req);
+      // Reject unknown fields loudly instead of silently dropping them. This is the
+      // guard against the /junior + /contacts data-loss bug class: a dashboard that
+      // POSTs a field with no column here now gets a 400 the first time it's tested,
+      // not weeks of silent loss. Add a column + handler before adding a field.
+      const ALLOWED = ['caseName','liability','healthInsurance','policy3p','uim','note','treatment','mainTasks'];
+      const unknown = Object.keys(body).filter(k => !ALLOWED.includes(k));
+      if (unknown.length) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown field(s): ' + unknown.join(', ') + '. Add a column + GET/POST handler in server.js before sending this field.' })); return; }
+      const { caseName, liability, healthInsurance, policy3p, uim, note, treatment, mainTasks } = body;
       if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
       await pool.query(`
-        INSERT INTO case_junior (case_name, liability, health_insurance, policy_3p, uim, updated_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
+        INSERT INTO case_junior (case_name, liability, health_insurance, policy_3p, uim, note, treatment, main_tasks, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         ON CONFLICT (case_name) DO UPDATE SET
           liability        = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE case_junior.liability END,
           health_insurance = CASE WHEN $3::text IS NOT NULL THEN $3::text ELSE case_junior.health_insurance END,
           policy_3p        = CASE WHEN $4::text IS NOT NULL THEN $4::text ELSE case_junior.policy_3p END,
           uim              = CASE WHEN $5::text IS NOT NULL THEN $5::text ELSE case_junior.uim END,
+          note             = CASE WHEN $6::text IS NOT NULL THEN $6::text ELSE case_junior.note END,
+          treatment        = CASE WHEN $7::text IS NOT NULL THEN $7::text ELSE case_junior.treatment END,
+          main_tasks       = CASE WHEN $8::text IS NOT NULL THEN $8::text ELSE case_junior.main_tasks END,
           updated_at = NOW()
       `, [caseName,
           liability !== undefined ? liability : null,
           healthInsurance !== undefined ? healthInsurance : null,
           policy3p !== undefined ? policy3p : null,
-          uim !== undefined ? uim : null]);
+          uim !== undefined ? uim : null,
+          note !== undefined ? note : null,
+          treatment !== undefined ? treatment : null,
+          mainTasks !== undefined ? mainTasks : null]);
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
