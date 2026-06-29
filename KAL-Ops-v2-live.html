@@ -657,6 +657,46 @@
   .jump-link:hover{border-color:var(--line-strong);color:var(--ink)}
   .jump-link.cur{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
 
+  /* ── Check Tracker ── */
+  .ck-ecell{cursor:pointer;border-radius:6px;padding:2px 4px;margin:-2px -4px;display:inline-block;border-bottom:1px dashed transparent}
+  .ck-ecell:hover{background:#eef2f8;border-bottom-color:#b9cbe6}
+  .ck-ph{color:var(--ink-4);font-style:italic}
+  .ck-dt{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ink-2)}
+  .ck-authstack{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+  .ck-authd{font-size:11px;color:var(--ink-4);font-family:var(--num)}
+  .ck-note{color:var(--ink-2);font-size:12.5px}
+  .ck-wait{font-family:var(--num);font-weight:600;font-variant-numeric:tabular-nums}
+  .ck-wait.ok{color:var(--ink-3)} .ck-wait.warn{color:var(--amber)} .ck-wait.bad{color:var(--red)}
+  .ck-ie{width:100%;min-width:90px;border:1px solid var(--blue);border-radius:6px;padding:5px 7px;font-family:var(--ui);font-size:12.5px;color:var(--ink);background:#fff}
+  .ck-ie:focus{outline:none;box-shadow:0 0 0 3px rgba(0,113,227,.15)}
+  .ck-olink{color:var(--blue);font-size:12px;font-weight:600;cursor:pointer}
+  .ck-olink:hover{text-decoration:underline}
+  .ck-olink.vd{color:var(--ink-3)} .ck-olink.vd:hover{color:var(--red)}
+  .ck-sep{color:var(--ink-4);margin:0 7px;font-size:11px}
+  .ck-delx{border:1px solid transparent;background:transparent;color:var(--ink-4);font-size:13px;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .ck-delx:hover{color:var(--red);background:var(--red-bg)}
+  tr.ck-dim td{color:var(--ink-4)}
+  .ck-add{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer}
+  .ck-add:hover{border-color:var(--ink);background:var(--surface-2)}
+  .ck-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center}
+  .ck-overlay.show{display:flex}
+  .ck-modal{background:var(--surface);border-radius:14px;width:420px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .ck-mhead{padding:16px 20px;border-bottom:1px solid var(--line);font-size:15px;font-weight:600}
+  .ck-mbody{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+  .ck-fld label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:5px}
+  .ck-fld input,.ck-fld select{width:100%;border:1px solid var(--line-strong);border-radius:8px;padding:9px 11px;font-family:var(--ui);font-size:13.5px;color:var(--ink);background:#fff}
+  .ck-fld input:focus,.ck-fld select:focus{outline:none;border-color:var(--blue)}
+  .ck-row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .ck-mfoot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .ck-btn{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer}
+  .ck-btn.primary{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+  .ck-tawrap{position:relative}
+  .ck-talist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10;background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:200px;overflow:auto;display:none}
+  .ck-talist.show{display:block}
+  .ck-taitem{padding:8px 11px;font-size:13px;cursor:pointer}
+  .ck-taitem:hover,.ck-taitem.active{background:var(--blue-soft)}
+  .ck-taempty{padding:10px 11px;font-size:12.5px;color:var(--ink-4)}
+
   .page{display:none}
   .page.active{display:block}
 
@@ -1346,6 +1386,7 @@
     <div class="jump-nav">
       <span class="jl-lbl">Jump to</span>
       <a class="jump-link cur" data-go="lien-activity">Activity feed</a>
+      <a class="jump-link" data-go="lien-checks">Check tracker</a>
       <a class="jump-link" data-go="lien-drill">Case drill-down</a>
     </div>
 
@@ -1480,6 +1521,72 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ===== Check Tracker — pending endorsement authorization ===== -->
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2 id="lien-checks">Check tracker</h2>
+      </div>
+      <div class="chips" id="ck-chips">
+        <button class="chip on" data-f="active">Active</button>
+        <button class="chip" data-f="awaiting">Awaiting auth</button>
+        <button class="chip" data-f="authorized">Authorized</button>
+        <button class="chip" data-f="issues">Issues</button>
+        <button class="chip" data-f="deposited">Deposited</button>
+        <button class="chip" data-f="voided">Voided</button>
+        <button class="chip" data-f="all">All</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="ck-kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"></div>
+
+    <div class="panel" style="margin-bottom:28px">
+      <div class="panel-head">
+        <h3>Checks in hand · pending authorization</h3>
+        <button class="ck-add" id="ck-add">+ Add check</button>
+      </div>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Negotiator</th>
+            <th>Received</th>
+            <th class="num">Waiting</th>
+            <th>Authorization</th>
+            <th>Issue / Notes</th>
+            <th>Outcome</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ck-body"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink-3)">Loading…</td></tr></tbody>
+      </table>
+      <div style="background:var(--surface-2);border-top:1px solid var(--line);padding:9px 16px;font-size:11px;color:var(--ink-4)">Manual log — checks received and held until the client authorizes endorsement. Click any cell to edit. Deposited/voided rows archive after 30 days. Saved to the shared backend; not synced to CasePeer.</div>
+    </div>
+
+    <!-- Add-check modal -->
+    <div class="ck-overlay" id="ck-overlay">
+      <div class="ck-modal">
+        <div class="ck-mhead">Add check</div>
+        <div class="ck-mbody">
+          <div class="ck-fld ck-tawrap">
+            <label>Case — pick from CasePeer</label>
+            <input id="ck-fcase" autocomplete="off" placeholder="Start typing a last name…" />
+            <div class="ck-talist" id="ck-talist"></div>
+          </div>
+          <div class="ck-row2">
+            <div class="ck-fld"><label>Negotiator</label>
+              <select id="ck-fneg"><option value="">—</option><option>Bianca</option><option>Lorgia</option><option>Cinthya</option><option>Alison</option><option>Nubia</option></select>
+            </div>
+            <div class="ck-fld"><label>Date received</label><input id="ck-frecv" type="date" /></div>
+          </div>
+        </div>
+        <div class="ck-mfoot">
+          <button class="ck-btn" id="ck-cancel">Cancel</button>
+          <button class="ck-btn primary" id="ck-save">Save check</button>
+        </div>
+      </div>
     </div>
 
     <!-- Sub-tab toggle -->
@@ -5822,9 +5929,191 @@ function renderDataQuality(raw){
   }
 
 
+  /* =========================================================
+     Check Tracker — pending endorsement authorization
+     Manual log stored in Railway /notes under chk::<id> keys.
+     ========================================================= */
+  var _ckFilter='active', _ckCaseIndex=[], _ckEditing=null;
+  var _ckTAmatches=[], _ckTAactive=-1, _ckTAvalid=false, _ckTAcaseId=null;
+  function _ckPad(n){return (n<10?'0':'')+n;}
+  function _ckToday(){return new Date();}
+  function _ckFmt(d){return d?_ckPad(d.getMonth()+1)+'/'+_ckPad(d.getDate())+'/'+d.getFullYear():'';}
+  function _ckIso(d){return d?d.getFullYear()+'-'+_ckPad(d.getMonth()+1)+'-'+_ckPad(d.getDate()):'';}
+  function _ckFromIso(s){if(!s)return null;var p=String(s).split('-');if(p.length!==3)return null;var d=new Date(+p[0],+p[1]-1,+p[2]);return isNaN(d.getTime())?null:d;}
+  function _ckDays(a,b){return Math.round((b-a)/86400000);}
+  function _ckId(){return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+  function _ckAll(){var out=[];for(var k in _noteCache){if(k.indexOf('chk::')===0){try{var o=JSON.parse(_noteCache[k]);if(o&&o.id)out.push(o);}catch(e){}}}return out;}
+  function _ckSave(o){_setNote('chk::'+o.id, JSON.stringify(o));}
+  function _ckGet(id){var v=_noteCache['chk::'+id];if(!v)return null;try{return JSON.parse(v);}catch(e){return null;}}
+  function _ckDelete(id){_clearNote('chk::'+id);}
+  function _ckClosed(o){return o.deposited||o.voided;}
+  function _ckActive(o){return !o.deposited&&!o.voided;}
+  function _ckWait(o){var end=_ckFromIso(_ckClosed(o))||_ckToday();var r=_ckFromIso(o.recv);return r?_ckDays(r,end):0;}
+  function _ckPass(o){
+    if(_ckFilter==='all')return true;
+    var cl=_ckClosed(o);
+    if(cl){var cd=_ckFromIso(cl);if(cd&&_ckDays(cd,_ckToday())>30)return false;}
+    if(_ckFilter==='deposited')return !!o.deposited;
+    if(_ckFilter==='voided')return !!o.voided;
+    if(_ckFilter==='active')return _ckActive(o);
+    if(!_ckActive(o))return false;
+    if(_ckFilter==='awaiting')return !o.auth;
+    if(_ckFilter==='authorized')return !!o.auth;
+    if(_ckFilter==='issues')return !!o.issue;
+    return true;
+  }
+  function buildCheckCaseIndex(){
+    var seen={}, idx=[];
+    function add(id,name){if(!name)return;var key=(id||'')+'|'+name;if(seen[key])return;seen[key]=1;idx.push({id:id||null,name:name});}
+    (state.raw.lienOverview||[]).forEach(function(r){add(r.id,r._casename);});
+    (state.raw.disbursement||[]).forEach(function(r){add(r.id,r._casename);});
+    (state.raw.lienMgmt||[]).forEach(function(r){if(r.case)add(r.case.id,r.case._casename);});
+    (state.raw.deposits||[]).forEach(function(r){add(r.case_id,r.casename);});
+    idx.sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));});
+    _ckCaseIndex=idx;
+  }
+  function _ckKpi(cls,label,val,sub){return '<div class="kpi '+cls+'"><div class="label">'+label+'</div><div class="row-v"><div class="value">'+val+'</div></div><div class="sub">'+sub+'</div></div>';}
+  function _ckEC(id,field,inner){return '<span class="ck-ecell" data-id="'+id+'" data-field="'+field+'">'+inner+'</span>';}
+  function _ckRowClass(o){if(o.voided||o.deposited)return 'ck-dim';if(o.issue)return 'row-alert';if(o.auth)return 'row-good';var w=_ckWait(o);if(w>14)return 'row-alert';if(w>7)return 'row-warn';return '';}
+  function _ckRow(o){
+    var w=_ckWait(o), closed=_ckClosed(o);
+    var waitCell=closed?'<span class="ck-wait ok">—</span>':'<span class="ck-wait '+(w>14?'bad':(w>7?'warn':'ok'))+'">'+w+'</span>';
+    var neg=o.neg?'<span>'+_esc(o.neg)+'</span>':'<span class="ck-ph">— set</span>';
+    var recv='<span class="ck-dt">'+_ckFmt(_ckFromIso(o.recv))+'</span>';
+    var statusFlag=o.auth?'<span class="flag green">Authorized</span>':'<span class="flag amber">Awaiting auth</span>';
+    var auth='<div class="ck-authstack">'+_ckEC(o.id,'authStatus',statusFlag)+(o.auth?_ckEC(o.id,'authDate','<span class="ck-authd">obtained '+_ckFmt(_ckFromIso(o.auth))+'</span>'):'')+'</div>';
+    var issue=o.issue?'<span class="ck-note">'+_esc(o.issue)+'</span>':'<span class="ck-ph">— add note</span>';
+    var outcome;
+    if(o.deposited) outcome=_ckEC(o.id,'deposited','<span class="flag green">Dep '+_ckFmt(_ckFromIso(o.deposited))+'</span>');
+    else if(o.voided) outcome='<span class="ck-ecell" data-id="'+o.id+'" data-act="reopen"><span class="flag gray">Void '+_ckFmt(_ckFromIso(o.voided))+'</span></span>';
+    else outcome='<a class="ck-olink" data-act="deposit" data-id="'+o.id+'">Deposit</a><span class="ck-sep">·</span><a class="ck-olink vd" data-act="void" data-id="'+o.id+'">Void</a>';
+    var cls=_ckRowClass(o);
+    return '<tr'+(cls?' class="'+cls+'"':'')+'>'+
+      '<td class="name" style="font-size:12px">'+_caseLink(o.caseName, o.caseId)+'</td>'+
+      '<td>'+_ckEC(o.id,'neg',neg)+'</td>'+
+      '<td>'+_ckEC(o.id,'received',recv)+'</td>'+
+      '<td class="num">'+waitCell+'</td>'+
+      '<td>'+auth+'</td>'+
+      '<td>'+_ckEC(o.id,'issue',issue)+'</td>'+
+      '<td>'+outcome+'</td>'+
+      '<td><button class="ck-delx" data-act="del" data-id="'+o.id+'" title="Remove">✕</button></td>'+
+    '</tr>';
+  }
+  function renderCheckTracker(){
+    var all=_ckAll();
+    var awaiting=all.filter(function(o){return _ckActive(o)&&!o.auth;}).length;
+    var issues=all.filter(function(o){return _ckActive(o)&&o.issue;}).length;
+    var oldest=all.filter(function(o){return _ckActive(o)&&!o.auth;}).reduce(function(m,o){return Math.max(m,_ckWait(o));},0);
+    var kp=document.getElementById('ck-kpis');
+    if(kp) kp.innerHTML=
+      _ckKpi(awaiting>0?'warn':'','Awaiting Authorization',awaiting,'Checks received, not yet cleared to deposit')+
+      _ckKpi(issues>0?'alert':'','Issues / Needs Reissue',issues,'Wrong payee or other problem — flagged below')+
+      _ckKpi(oldest>14?'alert':(oldest>7?'warn':''),'Oldest Waiting',oldest+'<span style="font-size:15px;color:var(--ink-4);margin-left:3px">d</span>','Sitting longest without authorization');
+    var list=all.filter(_ckPass);
+    list.sort(function(a,b){var ca=_ckFromIso(_ckClosed(a)),cb=_ckFromIso(_ckClosed(b));if(ca&&cb)return cb-ca;if(ca)return 1;if(cb)return -1;return _ckWait(b)-_ckWait(a);});
+    var tb=document.getElementById('ck-body');if(!tb)return;
+    if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink-3)">No checks in this view. Click <b>+ Add check</b> to log one.</td></tr>';return;}
+    tb.innerHTML=list.map(_ckRow).join('');
+  }
+  function _ckBegin(id,field,cell){
+    if(_ckEditing)return;
+    var o=_ckGet(id);if(!o)return;var html='';
+    if(field==='neg'){var negs=['','Bianca','Lorgia','Cinthya','Alison','Nubia'];html='<select class="ck-ie">'+negs.map(function(n){return '<option'+(n===(o.neg||'')?' selected':'')+'>'+(n||'—')+'</option>';}).join('')+'</select>';}
+    else if(field==='received')html='<input class="ck-ie" type="date" value="'+_ckIso(_ckFromIso(o.recv))+'">';
+    else if(field==='authStatus')html='<select class="ck-ie"><option value="awaiting"'+(!o.auth?' selected':'')+'>Awaiting</option><option value="authorized"'+(o.auth?' selected':'')+'>Authorized</option></select>';
+    else if(field==='authDate')html='<input class="ck-ie" type="date" value="'+_ckIso(_ckFromIso(o.auth)||_ckToday())+'">';
+    else if(field==='issue')html='<input class="ck-ie" type="text" value="'+String(o.issue||'').replace(/"/g,'&quot;')+'" placeholder="note / issue…">';
+    else if(field==='deposited')html='<input class="ck-ie" type="date" value="'+_ckIso(_ckFromIso(o.deposited))+'">';
+    else return;
+    _ckEditing={id:id,field:field};
+    cell.outerHTML='<span class="ck-editing">'+html+'</span>';
+    var ctrl=document.querySelector('.ck-editing .ck-ie');if(!ctrl){_ckEditing=null;renderCheckTracker();return;}
+    ctrl.focus();
+    if(ctrl.showPicker&&ctrl.type==='date'){try{ctrl.showPicker();}catch(e){}}
+    if(ctrl.tagName==='INPUT'&&ctrl.type==='text'){try{ctrl.select();}catch(e){}}
+    function done(){_ckCommit(id,field,ctrl.value);}
+    ctrl.addEventListener('change',done);
+    ctrl.addEventListener('blur',done);
+    ctrl.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();done();}else if(e.key==='Escape'){e.preventDefault();_ckEditing=null;renderCheckTracker();}});
+  }
+  function _ckCommit(id,field,val){
+    if(!_ckEditing)return;_ckEditing=null;
+    var o=_ckGet(id);if(!o){renderCheckTracker();return;}
+    if(field==='neg') o.neg=(val==='—'?'':val);
+    else if(field==='received'){if(_ckFromIso(val))o.recv=val;}
+    else if(field==='authStatus'){if(val==='authorized'){if(!o.auth)o.auth=_ckIso(_ckToday());}else{o.auth=null;}}
+    else if(field==='authDate'){if(_ckFromIso(val))o.auth=val;}
+    else if(field==='issue') o.issue=(val||'').trim();
+    else if(field==='deposited'){o.deposited=val?val:null;if(o.deposited&&!o.auth)o.auth=o.deposited;}
+    _ckSave(o);renderCheckTracker();
+  }
+  function _ckOpenModal(){
+    document.getElementById('ck-fcase').value='';_ckTAvalid=false;_ckTAcaseId=null;
+    document.getElementById('ck-fneg').value='';
+    document.getElementById('ck-frecv').value=_ckIso(_ckToday());
+    document.getElementById('ck-talist').classList.remove('show');
+    document.getElementById('ck-overlay').classList.add('show');
+    document.getElementById('ck-fcase').focus();
+  }
+  function _ckCloseModal(){document.getElementById('ck-overlay').classList.remove('show');}
+  function _ckRenderTA(q){
+    q=(q||'').trim().toLowerCase();var list=document.getElementById('ck-talist');
+    _ckTAmatches=q.length<1?[]:_ckCaseIndex.filter(function(r){return String(r.name||'').toLowerCase().indexOf(q)>=0;}).slice(0,8);
+    _ckTAactive=-1;
+    if(!q.length){list.classList.remove('show');list.innerHTML='';return;}
+    if(!_ckTAmatches.length){list.innerHTML='<div class="ck-taempty">No matching CasePeer case</div>';list.classList.add('show');return;}
+    list.innerHTML=_ckTAmatches.map(function(r,i){return '<div class="ck-taitem" data-i="'+i+'">'+_esc(r.name)+'</div>';}).join('');
+    list.classList.add('show');
+  }
+  function _ckUpdTA(){var list=document.getElementById('ck-talist');[].forEach.call(list.children,function(el,i){el.classList.toggle('active',i===_ckTAactive);});}
+  function _ckPickTA(i){var r=_ckTAmatches[i];if(!r)return;document.getElementById('ck-fcase').value=r.name;_ckTAvalid=true;_ckTAcaseId=r.id;document.getElementById('ck-talist').classList.remove('show');}
+  function _ckSaveNew(){
+    var name=document.getElementById('ck-fcase').value.trim();
+    if(!name||!_ckTAvalid){alert('Pick a case from the list — it must match a CasePeer case.');return;}
+    var recv=document.getElementById('ck-frecv').value||_ckIso(_ckToday());
+    var o={id:_ckId(),caseId:_ckTAcaseId,caseName:name,neg:document.getElementById('ck-fneg').value,recv:recv,auth:null,issue:'',deposited:null,voided:null};
+    _ckSave(o);_ckCloseModal();
+    _ckFilter='active';var chips=document.getElementById('ck-chips');if(chips)[].forEach.call(chips.children,function(c){c.classList.toggle('on',c.getAttribute('data-f')==='active');});
+    renderCheckTracker();
+  }
+  function initCheckTracker(){
+    var body=document.getElementById('ck-body');
+    if(body) body.addEventListener('click',function(e){
+      var act=e.target.closest('[data-act]');
+      if(act){
+        var idEl=act.closest('[data-id]');var id=idEl?idEl.getAttribute('data-id'):act.getAttribute('data-id');
+        var a=act.getAttribute('data-act');var o=_ckGet(id);
+        if(a==='del'){if(o&&confirm('Remove this check from the tracker entirely?')){_ckDelete(id);renderCheckTracker();}return;}
+        if(!o)return;
+        if(a==='deposit'){o.deposited=_ckIso(_ckToday());if(!o.auth)o.auth=o.deposited;_ckSave(o);renderCheckTracker();return;}
+        if(a==='void'){if(confirm('Void this check (returned / reissue)? It leaves the active board.')){o.voided=_ckIso(_ckToday());_ckSave(o);}renderCheckTracker();return;}
+        if(a==='reopen'){if(confirm('Reopen this check to the active board?')){o.deposited=null;o.voided=null;_ckSave(o);}renderCheckTracker();return;}
+      }
+      var cell=e.target.closest('.ck-ecell');
+      if(cell&&cell.getAttribute('data-field')){_ckBegin(cell.getAttribute('data-id'),cell.getAttribute('data-field'),cell);}
+    });
+    var chips=document.getElementById('ck-chips');
+    if(chips) chips.addEventListener('click',function(e){var t=e.target.closest('.chip');if(!t)return;_ckFilter=t.getAttribute('data-f');[].forEach.call(this.children,function(c){c.classList.toggle('on',c===t);});renderCheckTracker();});
+    var add=document.getElementById('ck-add');if(add)add.addEventListener('click',_ckOpenModal);
+    var cancel=document.getElementById('ck-cancel');if(cancel)cancel.addEventListener('click',_ckCloseModal);
+    var ov=document.getElementById('ck-overlay');if(ov)ov.addEventListener('click',function(e){if(e.target===ov)_ckCloseModal();});
+    var save=document.getElementById('ck-save');if(save)save.addEventListener('click',_ckSaveNew);
+    var inp=document.getElementById('ck-fcase'),list=document.getElementById('ck-talist');
+    if(inp&&list){
+      inp.addEventListener('input',function(){_ckTAvalid=false;_ckTAcaseId=null;_ckRenderTA(this.value);});
+      inp.addEventListener('keydown',function(e){
+        if(!list.classList.contains('show'))return;
+        if(e.key==='ArrowDown'){e.preventDefault();_ckTAactive=Math.min(_ckTAactive+1,_ckTAmatches.length-1);_ckUpdTA();}
+        else if(e.key==='ArrowUp'){e.preventDefault();_ckTAactive=Math.max(_ckTAactive-1,0);_ckUpdTA();}
+        else if(e.key==='Enter'){e.preventDefault();if(_ckTAactive>=0)_ckPickTA(_ckTAactive);}
+      });
+      list.addEventListener('click',function(e){var it=e.target.closest('.ck-taitem');if(it)_ckPickTA(+it.getAttribute('data-i'));});
+    }
+  }
+
   async function init(){
     bindEvents();
-    setSubtab('cases');
+    setSubtab('cases'); initCheckTracker();
 
     // Load shared flags, notes, contacts, and junior fields from Railway
     await _loadFlags();
@@ -5914,6 +6203,7 @@ function renderDataQuality(raw){
       renderLienActivityFeed(disbursement, _lienActivityDays);
       renderCaseCare(Object.assign({}, raw, { notes: cpNotes, clients: cpClients }), _juniorFields);
       bindLienActivityToggle(disbursement);
+      buildCheckCaseIndex(); renderCheckTracker();
       renderSOL(raw);
       _captureAttribution(raw);
       if(window.updateLiveStamp) window.updateLiveStamp();
