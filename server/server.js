@@ -177,6 +177,10 @@ const server = http.createServer(async (req, res) => {
         emailLog:      'email_log'
       };
 
+      // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
+      const unknown = Object.keys(body).filter(k => k !== 'caseName' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
+      if (unknown.length) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown field(s): ' + unknown.join(', ') + '. Add the key to COLMAP + a column in server.js before sending this field.' })); return; }
+
       const cols = [], vals = [];
       Object.keys(COLMAP).forEach(key => {
         if (!Object.prototype.hasOwnProperty.call(body, key)) return; // absent -> leave unchanged
