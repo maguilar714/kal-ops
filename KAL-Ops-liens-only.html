@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v5.1</title>
+<title>KAL Operations · v5.2</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -1044,7 +1044,7 @@
   
 
   <footer class="foot">
-    <div>KAL Operations · v5.1 · live data</div>
+    <div>KAL Operations · v5.2 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -4008,9 +4008,14 @@ function renderDataQuality(raw){
   function buildCheckCaseIndex(){
     var seen={}, idx=[];
     function add(id,name){if(!name)return;var key=(id||'')+'|'+name;if(seen[key])return;seen[key]=1;idx.push({id:id||null,name:name});}
+    // All case stages — a check (e.g. TP paid) can arrive while the case is still
+    // pre-settlement or pending UIM, so the picker spans every feed we can see.
+    (state.raw.treating||[]).forEach(function(r){add(r.id,r._casename);});
+    (state.raw.settlement||[]).forEach(function(r){add(r.id,r._casename);});
     (state.raw.lienOverview||[]).forEach(function(r){add(r.id,r._casename);});
     (state.raw.disbursement||[]).forEach(function(r){add(r.id,r._casename);});
     (state.raw.lienMgmt||[]).forEach(function(r){if(r.case)add(r.case.id,r.case._casename);});
+    (state.raw.demands||[]).forEach(function(r){if(r.case)add(r.case.id,r.case._casename);});
     (state.raw.deposits||[]).forEach(function(r){add(r.case_id,r.casename);});
     idx.sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));});
     _ckCaseIndex=idx;
@@ -4177,6 +4182,12 @@ function renderDataQuality(raw){
         console.warn('[KAL Lien Ops] fees-in unavailable ('+((feErr&&feErr.message)||'error')+')');
       }
       state.raw.lienMgmt=results[0]; state.raw.lienOverview=results[1]; state.raw.disbursement=results[2]; state.raw.deposits=results[3]; _depositsData=results[3]; state.raw.feesIn=feesIn; _feesInData=feesIn;
+      // Check Tracker case picker spans all stages — a TP check can arrive while the
+      // case is still treating or pending UIM, so pull treating + settlement too.
+      var _ckTreating=[], _ckSettlement=[];
+      try { _ckTreating = await fetchAll('/api/v1/case/treating-overview/'); } catch(e){ console.warn('[KAL Lien Ops] treating-overview unavailable for check picker'); }
+      try { _ckSettlement = await fetchAll('/api/v1/case/settlement-overview/'); } catch(e){ console.warn('[KAL Lien Ops] settlement-overview unavailable for check picker'); }
+      state.raw.treating=_ckTreating; state.raw.settlement=_ckSettlement;
       processData(); renderAll();
       renderLienActivityFeed(results[2],_lienActivityDays);
       bindLienActivityToggle(results[2]);
