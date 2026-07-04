@@ -6019,7 +6019,7 @@ function renderDataQuality(raw){
     var opened='<span class="ck-dt">'+_ckFmt(_ckFromIso(o.openedOn))+'</span>';
     var statusBadge='<span class="flag '+_ckStatusCls(o.status)+'">'+_ckStatusLabel(o.status)+'</span>';
     var statusSub=(o.status==='requested'&&o.requestedOn)?'<span class="ck-authd">requested '+_ckFmt(_ckFromIso(o.requestedOn))+'</span>'
-      :((o.status==='authorized'&&o.authOn)?'<span class="ck-authd">blessed '+_ckFmt(_ckFromIso(o.authOn))+'</span>':'');
+      :((o.status==='authorized'&&o.authOn)?'<span class="ck-authd">authorized '+_ckFmt(_ckFromIso(o.authOn))+'</span>':'');
     var status='<div class="ck-authstack">'+_ckEC(o.id,'status',statusBadge)+statusSub+'</div>';
     var noteTxt=_ckNote(o);
     var noteInner=noteTxt?'<span class="ck-note">'+_esc(noteTxt)+'</span>':'<span class="ck-ph">— add note</span>';
