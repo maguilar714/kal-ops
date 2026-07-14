@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Settlement · Team · v5.5</title>
+<title>KAL Settlement · Team · v5.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -969,6 +969,24 @@ var _trackerSortDir = 1; // 1=asc, -1=desc
 
 // --- Case status flags (localStorage, migrates to Railway later) ---
 var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+// --- Dashboard token injection (v5.6) -----------------------------------------
+// Attaches Authorization: Bearer <window.KAL_TOKEN> to backend calls only. Token
+// is set by the bookmarklet (window.KAL_TOKEN), never stored in this public HTML.
+(function(){
+  if(window._kalFetchPatched) return; window._kalFetchPatched=true;
+  var _o = window.fetch.bind(window);
+  window.fetch = function(u, opt){
+    try{
+      if(typeof u==='string' && u.indexOf('kal-ops-production.up.railway.app')!==-1){
+        opt = opt || {};
+        var h = new Headers(opt.headers||{});
+        if(window.KAL_TOKEN) h.set('Authorization','Bearer '+window.KAL_TOKEN);
+        opt.headers = h;
+      }
+    }catch(e){}
+    return _o(u, opt);
+  };
+})();
 
 // --- Forward attribution capture (set-once snapshot) — mirror of main dashboard ---
 function _captureAttribution(raw){
