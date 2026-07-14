@@ -275,7 +275,7 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
     </div>
     <div style="position:absolute;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;">
       <div style="font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--ink)">Case Care</div>
-      <div style="font-size:11px;color:var(--ink-3);margin-top:1px">Management Dashboard &middot; <span style="font-family:monospace;font-size:10px;opacity:.7">v5.6</span></div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:1px">Management Dashboard &middot; <span style="font-family:monospace;font-size:10px;opacity:.7">v5.7</span></div>
     </div>
     <div class="meta">
       <button id="kal-refresh-hdr" title="Re-pull live CasePeer data" style="display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 11px;cursor:pointer;margin-right:12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
@@ -393,7 +393,7 @@ td.flagcol .stack{display:flex;flex-direction:column;align-items:flex-start;gap:
 'use strict';
 
 var _RAILWAY = 'https://kal-ops-production.up.railway.app';
-// --- Dashboard token injection (v5.6) -----------------------------------------
+// --- Dashboard token injection (v5.7) -----------------------------------------
 // Attaches Authorization: Bearer <window.KAL_TOKEN> to backend calls only. Token
 // is set by the bookmarklet (window.KAL_TOKEN), never stored in this public HTML.
 (function(){
@@ -410,6 +410,30 @@ var _RAILWAY = 'https://kal-ops-production.up.railway.app';
     }catch(e){}
     return _o(u, opt);
   };
+})();
+// --- Fail-safe brick wall (v5.7) ----------------------------------------------
+// If the backend rejects our token (401), this bookmarklet is out of date — saves
+// would silently fail. Hard-block the dashboard with an un-dismissable overlay.
+// ONLY 401 triggers it (a network error / 500 is an outage, not a bad token).
+(function(){
+  function _kalWall(){
+    if(document.getElementById('kal-authwall')) return;
+    var d=document.createElement('div');
+    d.id='kal-authwall';
+    d.setAttribute('style','position:fixed;inset:0;z-index:2147483647;background:rgba(8,8,10,.97);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:system-ui,Arial,sans-serif;padding:24px');
+    d.innerHTML='<div style="max-width:540px">'
+      +'<div style="font-size:60px;line-height:1;margin-bottom:16px">⛔</div>'
+      +'<div style="font-size:25px;font-weight:800;margin-bottom:12px">Your dashboard bookmark is out of date</div>'
+      +'<div style="font-size:17px;font-weight:700;line-height:1.5;color:#e5c67a;margin-bottom:18px">STOP — your changes will NOT save on this version. Do not enter data.</div>'
+      +'<div style="font-size:15px;line-height:1.6;color:#cfcfcf">Delete your old bookmark, install the new one Moises sent, then reload from my.casepeer.com. Message Moises if you don’t have the new bookmark.</div>'
+      +'</div>';
+    (document.body||document.documentElement).appendChild(d);
+  }
+  try{
+    fetch('https://kal-ops-production.up.railway.app/flags',{method:'GET'})
+      .then(function(r){ if(r.status===401) _kalWall(); })
+      .catch(function(){});
+  }catch(e){}
 })();
 var _today = new Date(); _today.setHours(0,0,0,0);
 var _cfg = { assignWindow: 7, staleThreshold: 14 };

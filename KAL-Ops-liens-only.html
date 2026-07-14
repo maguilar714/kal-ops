@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v5.6</title>
+<title>KAL Operations · v5.7</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -1048,7 +1048,7 @@
   
 
   <footer class="foot">
-    <div>KAL Operations · v5.6 · live data</div>
+    <div>KAL Operations · v5.7 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -1573,7 +1573,7 @@ var _trackerSortDir = 1; // 1=asc, -1=desc
 
 // --- Case status flags (localStorage, migrates to Railway later) ---
 var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
-// --- Dashboard token injection (v5.6) -----------------------------------------
+// --- Dashboard token injection (v5.7) -----------------------------------------
 // Attaches Authorization: Bearer <window.KAL_TOKEN> to backend calls only. Token
 // is set by the bookmarklet (window.KAL_TOKEN), never stored in this public HTML.
 (function(){
@@ -1590,6 +1590,30 @@ var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
     }catch(e){}
     return _o(u, opt);
   };
+})();
+// --- Fail-safe brick wall (v5.7) ----------------------------------------------
+// If the backend rejects our token (401), this bookmarklet is out of date — saves
+// would silently fail. Hard-block the dashboard with an un-dismissable overlay.
+// ONLY 401 triggers it (a network error / 500 is an outage, not a bad token).
+(function(){
+  function _kalWall(){
+    if(document.getElementById('kal-authwall')) return;
+    var d=document.createElement('div');
+    d.id='kal-authwall';
+    d.setAttribute('style','position:fixed;inset:0;z-index:2147483647;background:rgba(8,8,10,.97);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:system-ui,Arial,sans-serif;padding:24px');
+    d.innerHTML='<div style="max-width:540px">'
+      +'<div style="font-size:60px;line-height:1;margin-bottom:16px">⛔</div>'
+      +'<div style="font-size:25px;font-weight:800;margin-bottom:12px">Your dashboard bookmark is out of date</div>'
+      +'<div style="font-size:17px;font-weight:700;line-height:1.5;color:#e5c67a;margin-bottom:18px">STOP — your changes will NOT save on this version. Do not enter data.</div>'
+      +'<div style="font-size:15px;line-height:1.6;color:#cfcfcf">Delete your old bookmark, install the new one Moises sent, then reload from my.casepeer.com. Message Moises if you don’t have the new bookmark.</div>'
+      +'</div>';
+    (document.body||document.documentElement).appendChild(d);
+  }
+  try{
+    fetch('https://kal-ops-production.up.railway.app/flags',{method:'GET'})
+      .then(function(r){ if(r.status===401) _kalWall(); })
+      .catch(function(){});
+  }catch(e){}
 })();
 
 // --- Forward attribution capture (set-once snapshot) — mirror of main dashboard ---
