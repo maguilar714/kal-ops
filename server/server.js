@@ -10,6 +10,15 @@ const ALLOWED_ORIGIN = 'https://my.casepeer.com';
 // never called from a browser, so the token never lands in client code.
 const SHARED_SECRET = process.env.SHARED_SECRET;
 
+// Separate token gating the browser-facing dashboard data endpoints (/flags,
+// /notes, /contacts, /quo-calls, /junior). Kept DISTINCT from SHARED_SECRET on
+// purpose: this token rides along in staff bookmarklets, so a leak of it must not
+// expose the encrypted transcript pipeline (which stays on SHARED_SECRET). The
+// dashboards send it as `Authorization: Bearer <DASHBOARD_TOKEN>`; the bookmarklet
+// sets window.KAL_TOKEN, never the public dashboard HTML. Fail-closed: if this env
+// var is unset, every dashboard data endpoint returns 401 (better broken than open).
+const DASHBOARD_TOKEN = process.env.DASHBOARD_TOKEN;
+
 // Transcript retention window. Rows older than this are purged on a sweep.
 const TRANSCRIPT_TTL_HOURS = 48;
 
@@ -21,6 +30,25 @@ function requireAuth(req, res) {
   const header = req.headers['authorization'] || '';
   const presented = header.startsWith('Bearer ') ? header.slice(7) : '';
   const expected = SHARED_SECRET || '';
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  const ok = expected.length > 0 && a.length === b.length &&
+             require('crypto').timingSafeEqual(a, b);
+  if (!ok) {
+    res.writeHead(401);
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+  return true;
+}
+
+// Same constant-time check as requireAuth, but against DASHBOARD_TOKEN — the
+// browser-facing dashboard endpoints. Separate function so the two secrets can
+// never be confused or share a blast radius.
+function requireDashAuth(req, res) {
+  const header = req.headers['authorization'] || '';
+  const presented = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const expected = DASHBOARD_TOKEN || '';
   const a = Buffer.from(presented);
   const b = Buffer.from(expected);
   const ok = expected.length > 0 && a.length === b.length &&
@@ -78,6 +106,15 @@ const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
 
   if (req.method === 'GET' && url === '/health') { res.writeHead(200); res.end(JSON.stringify({ status: 'ok' })); return; }
+
+  // Gate the browser-facing data endpoints behind the dashboard token. One check
+  // here covers GET/POST/DELETE for all five paths — the OPTIONS preflight already
+  // returned above, so this never blocks CORS. /health stays open; /quo-data keeps
+  // its own SHARED_SECRET check inside its handlers below.
+  const DASH_PROTECTED = ['/flags', '/notes', '/contacts', '/quo-calls', '/junior'];
+  if (DASH_PROTECTED.indexOf(url) !== -1) {
+    if (!requireDashAuth(req, res)) return;
+  }
 
   // FLAGS
   if (req.method === 'GET' && url === '/flags') {
