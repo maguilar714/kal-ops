@@ -159,7 +159,15 @@ def _params_to_pairs(params):
     for k, v in params.items():
         if isinstance(v, list):
             for item in v:
-                pairs.append((f'{k}[]', item))
+                # Quo (rebranded OpenPhone) tightened query-param validation ~Aug 2026:
+                # /calls and /messages now REJECT the bracket-array form `participants[]=`
+                # with HTTP 400 ("Expected array"). They require the plain repeated form
+                # `participants=`. /conversations still accepts `phoneNumbers[]=`, so only
+                # emit the no-bracket form for `participants`. (verified live 2026-08-09)
+                if k == 'participants':
+                    pairs.append((k, item))
+                else:
+                    pairs.append((f'{k}[]', item))
         else:
             pairs.append((k, v))
     return pairs
