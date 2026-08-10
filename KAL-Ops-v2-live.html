@@ -2759,6 +2759,11 @@ var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
 // Attaches Authorization: Bearer <window.KAL_TOKEN> to backend calls only. The
 // bookmarklet sets window.KAL_TOKEN before writing this page, so the token never
 // lives in this (publicly served) HTML. CasePeer API calls are left untouched.
+// EXCEPTION: writes to /goal (POST/DELETE) send window.KAL_ADMIN_TOKEN instead —
+// that token only exists in Moises's personal bookmarklet. Everyone else's
+// bookmarklet never sets it, so their goal-write requests carry no admin token
+// and the backend 401s them. Reads of /goal are untouched — still KAL_TOKEN,
+// same as every other endpoint, so everyone sees the same shared number.
 (function(){
   if(window._kalFetchPatched) return; window._kalFetchPatched=true;
   var _o = window.fetch.bind(window);
@@ -2767,7 +2772,14 @@ var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
       if(typeof u==='string' && u.indexOf('kal-ops-production.up.railway.app')!==-1){
         opt = opt || {};
         var h = new Headers(opt.headers||{});
-        if(window.KAL_TOKEN) h.set('Authorization','Bearer '+window.KAL_TOKEN);
+        var method = (opt.method||'GET').toUpperCase();
+        var isGoalWrite = u.indexOf('/goal')!==-1 && method!=='GET';
+        if(isGoalWrite){
+          if(window.KAL_ADMIN_TOKEN) h.set('Authorization','Bearer '+window.KAL_ADMIN_TOKEN);
+          // no admin token set -> leave Authorization off entirely; backend 401s cleanly
+        } else if(window.KAL_TOKEN){
+          h.set('Authorization','Bearer '+window.KAL_TOKEN);
+        }
         opt.headers = h;
       }
     }catch(e){}
@@ -2828,6 +2840,36 @@ var _FLAG_COLORS = {
   'Referred':'amber',
   'Drop':    'red'
 };
+
+// --- Monthly attorney fee goal (Railway, shared, admin-write-only) ---
+// One number for the whole team. Everyone reads it via GET /goal (normal
+// dashboard token). Only Moises's bookmarklet can change it, via POST /goal
+// with an admin token the backend checks separately — see fetch wrapper above
+// and _saveGoal() below. Falls back to 225000 if the load fails so the KPI
+// tile never shows blank.
+var _feeGoal = 225000;
+
+function _loadGoal(){
+  return fetch(_RAILWAY_URL + '/goal')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data && typeof data.goal === 'number' && data.goal > 0) _feeGoal = data.goal;
+    })
+    .catch(function(e){
+      console.warn('Could not load goal from Railway:', e.message);
+    });
+}
+
+function _saveGoal(num){
+  return fetch(_RAILWAY_URL + '/goal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ goal: num })
+  }).then(function(r){
+    if(!r.ok) throw new Error(r.status === 401 ? 'not authorized to change the goal' : 'save failed');
+    _feeGoal = num;
+  });
+}
 
 // In-memory cache — loaded from Railway at startup
 var _flagCache = {};
@@ -5512,7 +5554,7 @@ function renderDataQuality(raw){
       : mtd.source === 'override' ? 'manual'
       : mtd.source === 'frozen' ? 'frozen'
       : 'no fees taken yet';
-    var feeGoal = parseFloat(localStorage.getItem('lien_fee_goal') || '225000');
+    var feeGoal = _feeGoal; // shared team goal, loaded from Railway via _loadGoal()
     var feePct = feeGoal > 0 ? Math.min(100, Math.round(mtdFee / feeGoal * 100)) : 0;
     var barColor = feePct >= 100 ? 'var(--green)' : feePct >= 75 ? 'var(--amber)' : 'var(--blue)';
     var barEl = document.getElementById('lien-fee-bar');
@@ -5923,20 +5965,29 @@ function renderDataQuality(raw){
       renderKPIs();
     });
 
-    // Monthly goal edit
+    // Monthly goal edit — admin-only. No window.KAL_ADMIN_TOKEN means this
+    // browser's bookmarklet isn't the admin one, so hide the control entirely
+    // rather than let someone click it and hit a confusing 401. The real lock
+    // is server-side (POST /goal checks ADMIN_TOKEN) — this is just UX, not
+    // the security boundary.
     var goalBtn = document.getElementById('lien-fee-goal-edit');
     if(goalBtn){
-      goalBtn.addEventListener('click', function(){
-        var cur = localStorage.getItem('lien_fee_goal') || '225000';
-        var val = prompt('Monthly attorney fee goal ($):', cur);
-        if(val !== null){
+      if(!window.KAL_ADMIN_TOKEN){
+        goalBtn.style.display = 'none';
+      } else if(!goalBtn.dataset.bd){
+        goalBtn.dataset.bd = '1';
+        goalBtn.addEventListener('click', function(){
+          var val = prompt('Monthly attorney fee goal ($):', String(_feeGoal));
+          if(val === null) return;
           var num = parseFloat(String(val).replace(/[$,]/g,''));
-          if(!isNaN(num) && num > 0){
-            localStorage.setItem('lien_fee_goal', String(num));
+          if(isNaN(num) || num <= 0){ alert('Enter a valid dollar amount.'); return; }
+          _saveGoal(num).then(function(){
             renderKPIs();
-          }
-        }
-      });
+          }).catch(function(e){
+            alert('Could not save goal: ' + e.message);
+          });
+        });
+      }
     }
     ['mtd','ytd'].forEach(function(v){ var el=document.getElementById('lien-fee-tog-'+v); if(el && !el.dataset.bd){ el.dataset.bd='1'; el.addEventListener('click', function(){ _lienFeeView=v; renderKPIs(); }); } });
   }
@@ -6201,10 +6252,11 @@ function renderDataQuality(raw){
     bindEvents();
     setSubtab('cases'); initCheckTracker();
 
-    // Load shared flags, notes, contacts, and junior fields from Railway
+    // Load shared flags, notes, contacts, goal, and junior fields from Railway
     await _loadFlags();
     await _loadNotes();
     await _loadContacts();
+    await _loadGoal();
     // Load junior fields (Case Care tab) — non-blocking, graceful on failure
     var _juniorFields = {};
     try { var _jRes = await fetch(_RAILWAY_URL+'/junior'); _juniorFields = await _jRes.json(); } catch(e) {}
