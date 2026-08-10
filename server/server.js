@@ -19,6 +19,14 @@ const SHARED_SECRET = process.env.SHARED_SECRET;
 // var is unset, every dashboard data endpoint returns 401 (better broken than open).
 const DASHBOARD_TOKEN = process.env.DASHBOARD_TOKEN;
 
+// Third token, gating WRITES to /goal only. Everyone with DASHBOARD_TOKEN can
+// still read the goal (GET /goal uses requireDashAuth like every other
+// browser-facing endpoint) — this token exists so exactly one person can change
+// it. It lives only in Moises's personal bookmarklet as window.KAL_ADMIN_TOKEN,
+// never in the public dashboard HTML, never in the shared bookmarklets the rest
+// of the team uses. Fail-closed: unset means POST /goal always 401s.
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+
 // Transcript retention window. Rows older than this are purged on a sweep.
 const TRANSCRIPT_TTL_HOURS = 48;
 
@@ -61,6 +69,25 @@ function requireDashAuth(req, res) {
   return true;
 }
 
+// Same constant-time check, but against ADMIN_TOKEN — gates POST /goal only.
+// Deliberately does NOT accept DASHBOARD_TOKEN as a fallback: having the
+// regular dashboard token must never be enough to change the shared goal.
+function requireAdminAuth(req, res) {
+  const header = req.headers['authorization'] || '';
+  const presented = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const expected = ADMIN_TOKEN || '';
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  const ok = expected.length > 0 && a.length === b.length &&
+             require('crypto').timingSafeEqual(a, b);
+  if (!ok) {
+    res.writeHead(401);
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+  return true;
+}
+
 async function initDb() {
   await pool.query(`CREATE TABLE IF NOT EXISTS case_flags (case_name TEXT PRIMARY KEY, flag TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_notes (case_name TEXT PRIMARY KEY, note TEXT NOT NULL, updated_at TIMESTAMPTZ DEFAULT NOW())`);
@@ -78,6 +105,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS note TEXT`);
   await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS treatment TEXT`);
   await pool.query(`ALTER TABLE case_junior ADD COLUMN IF NOT EXISTS main_tasks TEXT`);
+  // Single shared value — everyone reads the same row. id is always 1; there is
+  // exactly one goal, not one per case or per user.
+  await pool.query(`CREATE TABLE IF NOT EXISTS dashboard_goal (id INT PRIMARY KEY DEFAULT 1, goal NUMERIC NOT NULL DEFAULT 225000, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS quo_calls (phone TEXT PRIMARY KEY, cm_name TEXT, call_date TEXT, duration_sec INT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Encrypted daily Quo extract. `payload` is a Fernet token (ciphertext) — the
   // server never decrypts it. created_at drives the 48h purge.
@@ -140,6 +170,32 @@ const server = http.createServer(async (req, res) => {
       if (!caseName) { res.writeHead(400); res.end(JSON.stringify({ error: 'caseName required' })); return; }
       await pool.query('DELETE FROM case_flags WHERE case_name=$1', [caseName]);
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+
+  // GOAL — single shared value. GET uses the same DASHBOARD_TOKEN as every
+  // other browser-facing endpoint (already checked above via DASH_PROTECTED),
+  // so every dashboard sees the same number. POST requires ADMIN_TOKEN instead
+  // — DASHBOARD_TOKEN alone is NOT sufficient to write this one. That's the
+  // whole point: everyone reads, only the admin-token holder writes.
+  if (req.method === 'GET' && url === '/goal') {
+    if (!requireDashAuth(req, res)) return;
+    try {
+      const result = await pool.query('SELECT goal FROM dashboard_goal WHERE id = 1');
+      const goal = result.rows.length ? Number(result.rows[0].goal) : 225000;
+      res.writeHead(200); res.end(JSON.stringify({ goal: goal }));
+    } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
+    return;
+  }
+  if (req.method === 'POST' && url === '/goal') {
+    if (!requireAdminAuth(req, res)) return;
+    try {
+      const { goal } = await readBody(req);
+      const num = Number(goal);
+      if (!goal || isNaN(num) || num <= 0) { res.writeHead(400); res.end(JSON.stringify({ error: 'goal must be a positive number' })); return; }
+      await pool.query(`INSERT INTO dashboard_goal (id, goal, updated_at) VALUES (1, $1, NOW()) ON CONFLICT (id) DO UPDATE SET goal=$1, updated_at=NOW()`, [num]);
+      res.writeHead(200); res.end(JSON.stringify({ ok: true, goal: num }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
     return;
   }
