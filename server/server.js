@@ -98,6 +98,10 @@ async function initDb() {
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS adjuster_phone TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_amount TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS fee_rate TEXT`);
+  // Contact Log fields (CM Performance rebuild, 2026-09) — CM call-attempt log + handoff-to-Settlement marker.
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS contact_log TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS handoff_status TEXT`);
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS handoff_at TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, note TEXT, treatment TEXT, main_tasks TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Backfill columns for deployments created before these fields existed.
   // The dashboards send note/treatment/mainTasks to /junior; without these
@@ -231,7 +235,7 @@ const server = http.createServer(async (req, res) => {
   // CONTACTS
   if (req.method === 'GET' && url === '/contacts') {
     try {
-      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log FROM case_contacts');
+      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log, contact_log, handoff_status, handoff_at FROM case_contacts');
       const contacts = {};
       result.rows.forEach(r => {
         contacts[r.case_name] = {
@@ -241,7 +245,10 @@ const server = http.createServer(async (req, res) => {
           adjusterPhone: r.adjuster_phone,
           feeAmount: r.fee_amount,
           feeRate: r.fee_rate,
-          emailLog: r.email_log ? JSON.parse(r.email_log) : null
+          emailLog: r.email_log ? JSON.parse(r.email_log) : null,
+          contactLog: r.contact_log ? JSON.parse(r.contact_log) : [],
+          handoffStatus: r.handoff_status,
+          handoffAt: r.handoff_at
         };
       });
       res.writeHead(200); res.end(JSON.stringify(contacts));
@@ -267,7 +274,10 @@ const server = http.createServer(async (req, res) => {
         adjusterPhone: 'adjuster_phone',
         feeAmount:     'fee_amount',
         feeRate:       'fee_rate',
-        emailLog:      'email_log'
+        emailLog:      'email_log',
+        contactLog:    'contact_log',
+        handoffStatus: 'handoff_status',
+        handoffAt:     'handoff_at'
       };
 
       // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
@@ -279,7 +289,7 @@ const server = http.createServer(async (req, res) => {
         if (!Object.prototype.hasOwnProperty.call(body, key)) return; // absent -> leave unchanged
         let v = body[key];
         if (v === null || v === undefined) v = null;
-        else if (key === 'emailLog') v = JSON.stringify(v);
+        else if (key === 'emailLog' || key === 'contactLog') v = JSON.stringify(v);
         else v = String(v);
         cols.push(COLMAP[key]);
         vals.push(v);
