@@ -480,7 +480,7 @@ async function loadAndRender(){
 
   try{
     var [demands, settlement, calendar] = await Promise.all([
-      fetchAll('/api/v1/case/demands/'),
+      fetchAll('/api/v1/case/demands/?datesent__gte=2024-01-01&datesent__lte=2026-12-31'),
       fetchAll('/api/v1/case/settlement-overview/'),
       fetchAll('/api/v1/case/calendar/'),
       _loadContacts()
