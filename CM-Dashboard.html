@@ -197,7 +197,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <!-- ============ MY ASSIGNED FILES ============ -->
   <div class="section-title">
-    <div class="left"><div class="accent-rule"></div><h2>My assigned files &middot; expired-demand follow-up</h2></div>
+    <div class="left"><div class="accent-rule"></div><h2>My assigned files &middot; open-file follow-up</h2></div>
     <div class="hint">Only your files &mdash; refills automatically</div>
   </div>
 
@@ -273,7 +273,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
 
-  <div class="foot">KAL Ops &middot; CM Performance &middot; v1.0 (new dashboard, first build) &middot; <span id="live-status">connecting&hellip;</span></div>
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.0 &middot; <span id="live-status">connecting&hellip;</span></div>
 </div>
 
 <script>
@@ -340,7 +340,7 @@ function _cmPickerConfirm(){
   _cmSetIdentity(sel.value);
   document.getElementById('cm-picker').hidden = true;
   _cmApplyIdentityToHeader();
-  loadAndRender();
+  loadAndRender().then(renderBriefing);
 }
 function _cmApplyIdentityToHeader(){
   var name = _cmGetIdentity();
@@ -409,6 +409,7 @@ function _getContact(caseName){ return _contactCache[caseName] || {}; }
    uses: /api/v1/case/demands/, session-cookie auth, paginated via fetchAll).
    ========================================================================== */
 var _allDemands = [];
+var _dataLoadFailed = false;
 
 function _parseDate(s){
   if(!s) return null;
@@ -476,6 +477,7 @@ async function loadAndRender(){
 
   document.getElementById('live-status').textContent = 'loading live CasePeer data…';
   document.getElementById('stamp-date').textContent = 'Through ' + _fmtDate(new Date());
+  _dataLoadFailed = false;
 
   try{
     var [demands, settlement, calendar] = await Promise.all([
@@ -488,9 +490,11 @@ async function loadAndRender(){
     _buildSolMap(settlement||[], calendar||[]);
     document.getElementById('live-status').textContent = 'live — ' + _allDemands.length + ' demands loaded';
   }catch(e){
+    _dataLoadFailed = true;
     document.getElementById('live-status').textContent = 'could not reach CasePeer (' + e.message + ') — is this open on my.casepeer.com with an active session?';
     document.getElementById('myfiles-body').innerHTML = '<tr><td colspan="6" class="empty-state">Couldn\'t load live data. Open this from my.casepeer.com with an active session, then Refresh.</td></tr>';
     document.getElementById('standings-body').innerHTML = '<tr><td colspan="4" class="empty-state">Couldn\'t load live data.</td></tr>';
+    document.getElementById('briefing-items').innerHTML = '<b style="color:var(--red)">Not connected to CasePeer</b> — open this from my.casepeer.com with an active session, then Refresh.';
     return;
   }
 
@@ -756,13 +760,14 @@ function setPeriod(period){
 
 /* ----- Briefing ------------------------------------------------------------ */
 function renderBriefing(){
+  if(_dataLoadFailed) return; // loadAndRender() already rendered the not-connected message
   var name = _cmGetIdentity();
   if(!name) return;
   var mine = _allDemands.filter(function(d){ return d.case_manager === name; });
   var open = mine.filter(function(d){ var c=_getContact(d.case._casename); return !_isResolved(d,c) && !c.handoffStatus; });
   var noContact = open.filter(function(d){ var c=_getContact(d.case._casename); return !(c.contactLog||[]).length; });
   document.getElementById('briefing-items').innerHTML =
-    'You have <b>' + open.length + ' open files</b> in your expired-demand queue'
+    'You have <b>' + open.length + ' open files</b> in your queue'
     + (open.length ? ' · ' + noContact.length + ' with no contact attempt logged yet.' : '.');
 }
 
