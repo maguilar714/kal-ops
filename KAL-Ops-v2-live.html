@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v5.10</title>
+<title>KAL Operations · v6.0</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -576,6 +576,51 @@
   .case-cell .case-name{font-weight:500;color:var(--ink)}
   .case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
 
+  /* ===== CM Performance tab -- v6.0, ported byte-for-byte from the CM-facing
+     dashboard / Gus's Settlement tab so all three surfaces render identically ===== */
+  .empty-state{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:13px}
+  .not-mine{font-size:10.5px;color:var(--ink-4);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;cursor:pointer;margin-top:3px;display:inline-block;background:none;border:0;padding:0;font-family:inherit}
+  .not-mine:hover{color:var(--blue)}
+  .clog{display:flex;flex-direction:column;gap:5px;min-width:190px}
+  .clog-entry{display:flex;gap:7px;font-size:11.5px;line-height:1.35}
+  .clog-entry .cd{color:var(--ink-4);font-family:var(--num);white-space:nowrap;font-size:11px;padding-top:1px}
+  .clog-entry .ct2{color:var(--ink-2)}
+  .clog-add{border:1px dashed var(--line-strong);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--ink-4);cursor:pointer;width:fit-content;background:none}
+  .clog-add:hover{color:var(--blue);border-color:var(--blue)}
+  .sync-chip{font-family:var(--num);font-size:12px;color:var(--ink-2);background:var(--surface-3);border-radius:6px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .sync-chip .tag{font-size:8.5px;font-family:var(--ui);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);background:var(--surface);border-radius:4px;padding:1px 4px}
+  tr.row-done{background:var(--surface-2)}
+  tr.row-done td{color:var(--ink-4)}
+  tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
+  .action-btn{display:block;margin-top:6px;border:1px solid;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;background:var(--surface);cursor:pointer;white-space:nowrap}
+  .action-btn.blue{border-color:var(--blue);color:var(--blue)}
+  .action-btn.blue:hover{background:var(--blue-soft)}
+  .action-btn.red{border-color:var(--red);color:var(--red)}
+  .action-btn.red:hover{background:var(--red-bg)}
+  .clog-form{position:absolute;z-index:80;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:14px;width:260px}
+  .clog-form[hidden]{display:none}
+  .clog-form label{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:8px 0 4px}
+  .clog-form label:first-child{margin-top:0}
+  .clog-form select,.clog-form input{width:100%;font-family:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px}
+  .clog-form .row-btns{display:flex;gap:8px;margin-top:12px}
+  .clog-form .row-btns button{flex:1;padding:7px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer}
+  .clog-form .row-btns button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+  .cmp-panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:clip;margin-bottom:10px}
+  .cmp-panel + .cmp-panel{margin-top:0}
+  .cmp-panel > summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface-2)}
+  .cmp-panel > summary::-webkit-details-marker{display:none}
+  .cmp-panel > summary .cmp-name{font-size:13.5px;font-weight:600;color:var(--ink)}
+  .cmp-panel > summary .cmp-counts{font-size:12px;color:var(--ink-3);font-family:var(--num)}
+  .cmp-panel > summary .cmp-chev{color:var(--ink-4);transition:transform .15s}
+  .cmp-panel[open] > summary .cmp-chev{transform:rotate(90deg)}
+  .cmp-panel table.t{border-top:1px solid var(--line)}
+  .cmp-toggle-row td{padding:0!important;background:var(--surface-2)}
+  .cmp-toggle-btn{width:100%;text-align:left;padding:9px 16px;border:none;background:transparent;color:var(--ink-3);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .cmp-toggle-btn:hover{background:rgba(0,0,0,.04);color:var(--ink)}
+  .cmp-toggle-all{width:auto;padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+  .cmp-toggle-all:hover{background:var(--surface-2)}
+
   /* ── Case Care tab: dropdowns ── */
   .jdrop{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-family:var(--ui);font-size:11.5px;padding:3px 6px;border-radius:6px;cursor:pointer;min-width:72px;max-width:100%;outline:none;transition:border-color .12s,color .12s}
   .jdrop[data-field="liability"]{min-width:90px}
@@ -1002,7 +1047,7 @@
         <div class="accent-rule"></div>
         <h2>CM Standings · 2026 YTD</h2>
       </div>
-      <div class="hint">Sorted by Settlement Revenue ↓ · non-dollar version lives on the CM tab</div>
+      <div class="hint">Sorted by Settlement Revenue ↓ · demand/pop-rate detail below</div>
     </div>
     <div class="panel">
       <table class="t">
@@ -1019,6 +1064,105 @@
         </tbody>
       </table>
     </div>
+
+    <!-- ===== CM output (demands / pop rate / month-by-month) -- relocated from
+         the CM Performance tab 2026-09-14 (v6.0). That tab is now the same
+         per-CM open-files worklist every CM and Gus see; the aggregate
+         rate/volume tables live here instead, alongside CM Standings $. ===== -->
+
+
+    <div class="briefing" id="cm-output-briefing">
+      <div class="head"><span class="pulse"></span>CM Output</div>
+      <div class="items">
+        <div class="item blue"><span class="marker">—</span><span>demands sent YTD across the CM team.</span></div>
+        <div class="item amber"><span class="marker">Kausar</span><span>Exec Team cases, tracked separately — not comparable to standard CMs.</span></div>
+      </div>
+      <div class="stamp"><b>Loading&hellip;</b></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-top:4px">
+      <div class="seg" id="cm-seg">
+        <button class="on" data-period="2026">2026 YTD</button>
+        <button data-period="2025">2025</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--ink-3);max-width:640px">
+        <b style="color:var(--ink-2)">Pop Rate</b> = pops ÷ analyzable demands.
+      </div>
+    </div>
+
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
+        <h2 id="cm-title">CM output · 2026 YTD</h2>
+      </div>
+      <div class="hint" id="cm-sort-hint">Sorted by Demands ↓</div>
+    </div>
+
+    <!-- 2026 -->
+    <div class="panel" id="cm-2026">
+      <table class="t">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" data-k="cm" onclick="__cmYtdSort('cm')">Case Manager<span class="cm-arr"></span></th>
+            <th class="num" style="cursor:pointer" data-k="dmd" onclick="__cmYtdSort('dmd')" data-tip="Demands sent by this CM (handling CM at send), selected year.&#10;Jan-May 2026 seeded from Kausar; live capture after go-live.">Demands<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" style="cursor:pointer" data-k="pop" onclick="__cmYtdSort('pop')" data-tip="Settlement-based pop rate: of cases that SETTLED with a known policy, the share that settled at or above the limit.&#10;Credited to the demand submitter, counted in the settlement month.">Pop Rate<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">settled cases</div></th>
+          </tr>
+        </thead>
+        <tbody id="cm-2026-body"></tbody>
+      </table>
+    </div>
+    <div class="note" id="cm-2026-note">
+      <b>2026 YTD.</b> loading&hellip;
+    </div>
+
+    <!-- Month-by-month scoreboard (2026 only) -->
+    <style>
+      #cm-2026 td.name em, #cm-month-card td.name em{font-style:italic;color:var(--ink-2)}
+      .cm-mk{color:var(--ink-4);font-weight:400;margin-left:2px;font-size:11px;vertical-align:3px}
+      .cm-role{display:inline-block;margin-left:8px;padding:2px 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;background:var(--surface-3);color:var(--ink-3);border-radius:6px;vertical-align:2px}
+      .cm-arr{font-size:10px;color:var(--ink-3);font-weight:400}
+      .cm-frac{font-size:10px;font-weight:400;color:var(--ink-3);margin-left:3px}
+      #cm-month-card table.t td.cm-mcell, #cm-month-card table.t th.cm-mcol{text-align:center;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:60px}
+      #cm-month-card table.t td.cm-ytd, #cm-month-card table.t th.cm-ytd{border-left:2px solid var(--line-strong);font-weight:700}
+      #cm-month-card table.t tr.cm-firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
+    </style>
+    <div id="cm-month-card">
+      <div class="section-title">
+        <div class="left"><div class="accent-rule"></div><h2>Month-by-month</h2></div>
+        <div class="seg" id="cm-metric-seg">
+          <button class="on" data-m="dmd">Demands</button>
+          <button data-m="pop">Pop Rate</button>
+        </div>
+      </div>
+      <div class="panel">
+        <table class="t">
+          <thead><tr id="cm-mtx-head"></tr></thead>
+          <tbody id="cm-mtx-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2025 -->
+    <div class="panel" id="cm-2025" style="display:none">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case Manager</th>
+            <th class="num" data-tip="All active cases assigned to this CM.&#10;Source: treating-overview · No date filter — live count.">Active Cases<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
+            <th class="num" data-tip="Cases currently in the treating phase.&#10;Source: treating-overview · No date filter — live count.">In Treating<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
+            <th class="num" data-tip="Cases retained this calendar month only.&#10;Source: treating-overview · Filter: retainref_date in current month.">New Intakes<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">this month</div></th>
+            <th class="num" data-tip="Demands sent by this CM in the selected year.&#10;Source: demands · Filter: datesent in selected year.">Demands<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Demands where offer met or exceeded the policy limit.&#10;Source: demands · Requires both offer_amount and insurance_policy.">Pops<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
+            <th class="num" data-tip="Pops ÷ analyzable demands (those with both policy limit and offer).&#10;Fraction shown in cell. Denominator is smaller than total demands.">Pop Rate<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD · analyzable</div></th>
+          </tr>
+        </thead>
+        <tbody id="cm-2025-body"></tbody>
+      </table>
+    </div>
+    <div class="note" id="cm-2025-note" style="display:none">
+      <b>2025 full year.</b> loading&hellip;
+    </div>
+
 
   </section>
 
@@ -1302,95 +1446,203 @@
     <div class="briefing">
       <div class="head"><span class="pulse"></span>CM Performance</div>
       <div class="items">
-        <div class="item blue"><span class="marker">—</span><span>demands sent YTD across the CM team.</span></div>
-        <div class="item amber"><span class="marker">Kausar</span><span>Exec Team cases, tracked separately — not comparable to standard CMs.</span></div>
+        <div class="item blue"><span class="marker">&mdash;</span><span>open files across all 9 CMs, expired demands awaiting a first answer.</span></div>
+        <div class="item amber"><span class="marker">Kausar</span><span>Exec Team cases included below, tracked separately &mdash; her rate/volume numbers live on Pipeline &rarr; CM Standings.</span></div>
       </div>
       <div class="stamp"><b>Loading&hellip;</b></div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-top:4px">
-      <div class="seg" id="cm-seg">
-        <button class="on" data-period="2026">2026 YTD</button>
-        <button data-period="2025">2025</button>
-      </div>
-      <div style="font-size:12.5px;color:var(--ink-3);max-width:640px">
-        <b style="color:var(--ink-2)">Pop Rate</b> = pops ÷ analyzable demands.
-        Dollar figures (Settlement Revenue, Attorney Fees) live on Pipeline → CM Standings.
-      </div>
     </div>
 
     <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
-        <h2 id="cm-title">CM output · 2026 YTD</h2>
+        <h2>Every CM's open files</h2>
       </div>
-      <div class="hint" id="cm-sort-hint">Sorted by Demands ↓</div>
+      <div class="hint">Click a name to expand &middot; the same view a CM sees on their own dashboard, and Gus sees on Settlement</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin:-4px 0 10px">
+      <button id="cmp-toggle-all-btn" class="cmp-toggle-btn cmp-toggle-all" onclick="_cmpToggleAllHandled()">Show handled files (all CMs)</button>
     </div>
 
-    <!-- 2026 -->
-    <div class="panel" id="cm-2026">
-      <table class="t">
-        <thead>
-          <tr>
-            <th style="cursor:pointer" data-k="cm" onclick="__cmYtdSort('cm')">Case Manager<span class="cm-arr"></span></th>
-            <th class="num" style="cursor:pointer" data-k="dmd" onclick="__cmYtdSort('dmd')" data-tip="Demands sent by this CM (handling CM at send), selected year.&#10;Jan-May 2026 seeded from Kausar; live capture after go-live.">Demands<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" style="cursor:pointer" data-k="pop" onclick="__cmYtdSort('pop')" data-tip="Settlement-based pop rate: of cases that SETTLED with a known policy, the share that settled at or above the limit.&#10;Credited to the demand submitter, counted in the settlement month.">Pop Rate<span class="cm-arr"></span><div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">settled cases</div></th>
-          </tr>
-        </thead>
-        <tbody id="cm-2026-body"></tbody>
-      </table>
-    </div>
-    <div class="note" id="cm-2026-note">
-      <b>2026 YTD.</b> loading&hellip;
-    </div>
-
-    <!-- Month-by-month scoreboard (2026 only) -->
-    <style>
-      #cm-2026 td.name em, #cm-month-card td.name em{font-style:italic;color:var(--ink-2)}
-      .cm-mk{color:var(--ink-4);font-weight:400;margin-left:2px;font-size:11px;vertical-align:3px}
-      .cm-role{display:inline-block;margin-left:8px;padding:2px 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;background:var(--surface-3);color:var(--ink-3);border-radius:6px;vertical-align:2px}
-      .cm-arr{font-size:10px;color:var(--ink-3);font-weight:400}
-      .cm-frac{font-size:10px;font-weight:400;color:var(--ink-3);margin-left:3px}
-      #cm-month-card table.t td.cm-mcell, #cm-month-card table.t th.cm-mcol{text-align:center;font-family:var(--num);font-variant-numeric:tabular-nums;min-width:60px}
-      #cm-month-card table.t td.cm-ytd, #cm-month-card table.t th.cm-ytd{border-left:2px solid var(--line-strong);font-weight:700}
-      #cm-month-card table.t tr.cm-firm td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--surface-2)}
-    </style>
-    <div id="cm-month-card">
-      <div class="section-title">
-        <div class="left"><div class="accent-rule"></div><h2>Month-by-month</h2></div>
-        <div class="seg" id="cm-metric-seg">
-          <button class="on" data-m="dmd">Demands</button>
-          <button data-m="pop">Pop Rate</button>
-        </div>
-      </div>
-      <div class="panel">
+      <details class="cmp-panel" data-cmp="jose-duarte">
+        <summary>
+          <span class="cmp-name">Jose Duarte</span>
+          <span class="cmp-counts" id="cmp-count-jose-duarte">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
         <table class="t">
-          <thead><tr id="cm-mtx-head"></tr></thead>
-          <tbody id="cm-mtx-body"></tbody>
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-jose-duarte"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- 2025 -->
-    <div class="panel" id="cm-2025" style="display:none">
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Case Manager</th>
-            <th class="num" data-tip="All active cases assigned to this CM.&#10;Source: treating-overview · No date filter — live count.">Active Cases<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases currently in the treating phase.&#10;Source: treating-overview · No date filter — live count.">In Treating<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">live</div></th>
-            <th class="num" data-tip="Cases retained this calendar month only.&#10;Source: treating-overview · Filter: retainref_date in current month.">New Intakes<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">this month</div></th>
-            <th class="num" data-tip="Demands sent by this CM in the selected year.&#10;Source: demands · Filter: datesent in selected year.">Demands<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Demands where offer met or exceeded the policy limit.&#10;Source: demands · Requires both offer_amount and insurance_policy.">Pops<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD</div></th>
-            <th class="num" data-tip="Pops ÷ analyzable demands (those with both policy limit and offer).&#10;Fraction shown in cell. Denominator is smaller than total demands.">Pop Rate<div style="font-size:11px;font-weight:400;color:var(--ink-3);margin-top:1px;">YTD · analyzable</div></th>
-          </tr>
-        </thead>
-        <tbody id="cm-2025-body"></tbody>
-      </table>
-    </div>
-    <div class="note" id="cm-2025-note" style="display:none">
-      <b>2025 full year.</b> loading&hellip;
-    </div>
+      </details>
+      <details class="cmp-panel" data-cmp="icela-parra">
+        <summary>
+          <span class="cmp-name">Icela Parra</span>
+          <span class="cmp-counts" id="cmp-count-icela-parra">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-icela-parra"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="rashel-prieto">
+        <summary>
+          <span class="cmp-name">Rashel Prieto</span>
+          <span class="cmp-counts" id="cmp-count-rashel-prieto">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-rashel-prieto"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="damny-castro">
+        <summary>
+          <span class="cmp-name">Damny Castro</span>
+          <span class="cmp-counts" id="cmp-count-damny-castro">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-damny-castro"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="cris-urbina">
+        <summary>
+          <span class="cmp-name">Cris Urbina</span>
+          <span class="cmp-counts" id="cmp-count-cris-urbina">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-cris-urbina"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="ronald-agresott">
+        <summary>
+          <span class="cmp-name">Ronald Agresott</span>
+          <span class="cmp-counts" id="cmp-count-ronald-agresott">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-ronald-agresott"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="jesus-parra">
+        <summary>
+          <span class="cmp-name">Jesus Parra</span>
+          <span class="cmp-counts" id="cmp-count-jesus-parra">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-jesus-parra"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="maybis-cantillo">
+        <summary>
+          <span class="cmp-name">Maybis Cantillo</span>
+          <span class="cmp-counts" id="cmp-count-maybis-cantillo">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-maybis-cantillo"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
+      <details class="cmp-panel" data-cmp="kausar-sarwari">
+        <summary>
+          <span class="cmp-name">Kausar Sarwari</span>
+          <span class="cmp-counts" id="cmp-count-kausar-sarwari">&mdash;</span>
+          <span class="cmp-chev">&#9656;</span>
+        </summary>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Client / Carrier</th>
+              <th>Contact log</th>
+              <th>Answer</th>
+              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th>Outcome</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-body-kausar-sarwari"><tr><td colspan="6" class="empty-state">Loading&hellip;</td></tr></tbody>
+        </table>
+      </details>
 
   </section>
 
@@ -2078,7 +2330,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v5.10 · live data</div>
+    <div>KAL Operations · v6.0 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3019,7 +3271,7 @@ function _loadContacts(){
 function _setContact(caseName, fields){
   if(!_contactCache[caseName]) _contactCache[caseName] = {};
   Object.assign(_contactCache[caseName], fields);
-  fetch(_RAILWAY_URL + '/contacts', {
+  return fetch(_RAILWAY_URL + '/contacts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
@@ -4725,7 +4977,7 @@ function renderCMPerformance(raw){
     var firmPopPct=totalAna?Math.round(totalPops/totalAna*100):0;
     var note=document.getElementById('cm-'+year+'-note');
     if(note){
-      note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+totalDemands+' demands · firm pop rate '+firmPopPct+'% ('+totalPops+'/'+totalAna+'). <span style="color:var(--ink-3)">Active Cases / In Treating / New Intakes pulled from treating-overview. High-intake months shown in green — explains low demand counts. Dollar figures live on Pipeline → CM Standings.</span>';
+      note.innerHTML='<b>'+year+(year==='2026'?' YTD':' full year')+'.</b> '+totalDemands+' demands · firm pop rate '+firmPopPct+'% ('+totalPops+'/'+totalAna+'). <span style="color:var(--ink-3)">Active Cases / In Treating / New Intakes pulled from treating-overview. High-intake months shown in green — explains low demand counts. Dollar/fee detail is in the CM Standings table above.</span>';
     }
   });
 
@@ -4733,11 +4985,13 @@ function renderCMPerformance(raw){
 
   var dep2026=deposits.filter(function(d){return d.check_date&&d.check_date.indexOf('/2026')>0;});
   var rev2026=dep2026.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
-  var cmItems=document.querySelectorAll('[data-page="cm"] .briefing .items .item');
+  var cmItems=document.querySelectorAll('#cm-output-briefing .items .item');
   if(cmItems[0]){var m=cmItems[0].querySelector('.marker');if(m) m.textContent=_fmtCurrency(rev2026);}
-  var stamp=document.querySelector('[data-page="cm"] .briefing .stamp');
+  var stamp=document.querySelector('#cm-output-briefing .stamp');
   if(stamp) stamp.innerHTML='<b>Through '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>est. fees ~'+_fmtCurrency(Math.round(rev2026/3));
   renderCM2026();
+  _cmpDemands = (demands||[]).filter(function(d){ return d.case_manager !== 'Junior Alvarez'; });
+  try{ renderCMPerfTab(); }catch(e){ console.warn('[KAL Ops] renderCMPerfTab failed:', e.message); }
 }
 
 /* =========================================================
@@ -4849,10 +5103,10 @@ function renderCM2026(){
   var tD=0,tP=0,tA=0; rows.forEach(function(r){tD+=r.ytd.dmd;tP+=r.ytd.pop;tA+=r.ytd.ana;});
   var firmPop=(tA?Math.round(tP/tA*100):0);
   var note=document.getElementById('cm-2026-note');
-  if(note) note.innerHTML='<b>2026 YTD.</b> '+tD+' demands &middot; firm pop rate '+firmPop+'% ('+tP+'/'+tA+'). <span style="color:var(--ink-3)">Jan&ndash;May seeded from Kausar (frozen); Jun onward live from CasePeer via the attribution snapshot. Exec Team tracked separately. Dollar figures live on Pipeline &rarr; CM Standings.</span>';
-  var cmItems=document.querySelectorAll('[data-page="cm"] .briefing .items .item');
+  if(note) note.innerHTML='<b>2026 YTD.</b> '+tD+' demands &middot; firm pop rate '+firmPop+'% ('+tP+'/'+tA+'). <span style="color:var(--ink-3)">Jan&ndash;May seeded from Kausar (frozen); Jun onward live from CasePeer via the attribution snapshot. Exec Team tracked separately. Dollar/fee detail is in the CM Standings table above.</span>';
+  var cmItems=document.querySelectorAll('#cm-output-briefing .items .item');
   if(cmItems[0]){var mk0=cmItems[0].querySelector('.marker'); if(mk0) mk0.textContent=String(tD);}
-  var stamp=document.querySelector('[data-page="cm"] .briefing .stamp');
+  var stamp=document.querySelector('#cm-output-briefing .stamp');
   if(stamp) stamp.innerHTML='<b>'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>credit follows the demand submitter';
   var _h2=document.getElementById('cm-sort-hint'); if(_h2) _h2.textContent='Sorted by '+(_CM_YTD_LABELS[_cmYtdSort.key]||_cmYtdSort.key)+' '+(_cmYtdSort.dir==='asc'?'↑':'↓');
   renderCMMatrix(_cmMetric);
@@ -4917,6 +5171,245 @@ function renderPipelineCMStandings(raw){
   var tb=document.getElementById('pipe-cm-standings-body');
   if(tb) tb.innerHTML=body||'<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-3)">No data.</td></tr>';
 }
+
+/* =========================================================
+   CM Performance tab -- v6.0. Same per-CM open-files worklist as
+   CM-Dashboard.html (each CM's own view) and Gus's Settlement tab --
+   ported deliberately, not reinvented, so all three render identically
+   off the same rules. Reuses this file's own _contactCache / _setContact /
+   _getContact / _parseDate / _esc / _fmtCurrency / _RAILWAY_URL.
+   ========================================================= */
+var CMP_ROSTER = [
+  {name:'Jose Duarte',      slug:'jose-duarte'},
+  {name:'Icela Parra',      slug:'icela-parra'},
+  {name:'Rashel Prieto',    slug:'rashel-prieto'},
+  {name:'Damny Castro',     slug:'damny-castro'},
+  {name:'Cris Urbina',      slug:'cris-urbina'},
+  {name:'Ronald Agresott',  slug:'ronald-agresott'},
+  {name:'Jesus Parra',      slug:'jesus-parra'},
+  {name:'Maybis Cantillo',  slug:'maybis-cantillo'},
+  {name:'Kausar Sarwari',   slug:'kausar-sarwari'}
+];
+var _cmpDemands = [];
+var _cmpShowHandled = {};       // per-slug show/hide state for handled files
+var _cmpShowHandledAll = false; // global "show handled" override
+
+function _cmpFmtMoney(v){
+  var n = parseFloat(v);
+  if(!n && n!==0) return null;
+  return '$' + Math.round(n).toLocaleString();
+}
+function _cmpEscJs(s){ return String(s).replace(/'/g,"\\'"); }
+
+function _cmpIsResolved(d){
+  var offer = parseFloat(d.offer_amount);
+  var limit = parseFloat(d.insurance_policy);
+  return !!(offer && limit && offer >= limit);
+}
+function _cmpOutcomeFor(d, contact){
+  if(_cmpIsResolved(d)) return {label:'\u2192 CM Credit', cls:'green', action:null};
+  if(contact.handoffStatus === 'transferred') return {label:'Transferred \u2013 w/ offer', cls:'blue', action:null};
+  if(contact.handoffStatus === 'escalated') return {label:'Escalated \u2013 SOL', cls:'red', action:null};
+  var offer = parseFloat(d.offer_amount);
+  if(offer) return {label:'\u2014 pending', cls:'gray', action:'transfer'};
+  return {label:'\u2014 pending', cls:'gray', action:null};
+}
+function _cmpAnswerFor(d){
+  var offer = parseFloat(d.offer_amount);
+  var limit = parseFloat(d.insurance_policy);
+  if(offer && limit && offer >= limit) return {label:'Tendered '+_cmpFmtMoney(offer), cls:'green'};
+  if(offer) return {label:'Offered '+_cmpFmtMoney(offer), cls:'amber'};
+  return {label:'No answer yet', cls:'gray'};
+}
+
+function renderCMPerfTab(){
+  var totalOpen = 0, totalNoContact = 0;
+  CMP_ROSTER.forEach(function(cm){
+    var stats = _cmpRenderPanel(cm.name, cm.slug);
+    totalOpen += stats.open;
+    totalNoContact += stats.noContact;
+  });
+  var items = document.querySelectorAll('[data-page="cm"] .briefing .items .item');
+  if(items[0]){ var m=items[0].querySelector('.marker'); if(m) m.textContent=String(totalOpen); }
+  var stamp = document.querySelector('[data-page="cm"] .briefing .stamp');
+  if(stamp) stamp.innerHTML = '<b>'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</b>'+totalNoContact+' with no contact logged yet';
+}
+
+function _cmpRenderPanel(name, slug){
+  var mine = _cmpDemands.filter(function(d){ return d.case_manager === name; });
+  var open = mine.filter(function(d){
+    var c = _getContact(d.case._casename);
+    return !_cmpIsResolved(d) && !c.handoffStatus;
+  });
+  var handled = mine.filter(function(d){
+    var c = _getContact(d.case._casename);
+    return _cmpIsResolved(d) || c.handoffStatus;
+  });
+  var noContact = open.filter(function(d){
+    var c = _getContact(d.case._casename);
+    return !(c.contactLog||[]).length;
+  });
+
+  var countEl = document.getElementById('cmp-count-'+slug);
+  if(countEl) countEl.textContent = open.length + ' open \u00b7 ' + handled.length + ' handled';
+
+  var body = document.getElementById('cmp-body-'+slug);
+  if(!body) return {open:open.length, noContact:noContact.length};
+
+  if(mine.length === 0){
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">No demands found for '+_esc(name)+' in CasePeer.</td></tr>';
+    return {open:0, noContact:0};
+  }
+
+  function sortByExpiry(arr){
+    return arr.slice().sort(function(a,b){
+      var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
+      var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
+      if(!ea) return 1; if(!eb) return -1;
+      return ea - eb;
+    });
+  }
+
+  function rowHtml(d, hidden){
+    var caseName = d.case._casename;
+    var c = _getContact(caseName);
+    var log = c.contactLog || [];
+    var answer = _cmpAnswerFor(d);
+    var outcome = _cmpOutcomeFor(d, c);
+    var resolved = _cmpIsResolved(d) || c.handoffStatus;
+
+    var logHtml = log.length
+      ? log.map(function(e){ return '<div class="clog-entry"><span class="cd">'+_esc(e.date||'')+'</span><span class="ct2">'+_esc(e.note||'')+'</span></div>'; }).join('')
+      : '<div class="clog-entry"><span class="ct2" style="color:var(--ink-4);font-style:italic">no attempts logged yet</span></div>';
+    var addBtn = resolved ? '' : '<button class="clog-add" onclick="_cmpOpenClogForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">+ log attempt</button>';
+
+    var offerLimitHtml = (function(){
+      var offer = _cmpFmtMoney(d.offer_amount);
+      var limit = _cmpFmtMoney(d.insurance_policy);
+      if(!offer && !limit) return '<span class="sync-chip">\u2014 <span class="tag">n/a</span></span>';
+      return '<span class="sync-chip">'+(offer||'\u2014')+' / '+(limit||'\u2014')+' <span class="tag">synced</span></span>';
+    })();
+
+    var actionBtn = '';
+    if(outcome.action === 'transfer') actionBtn = '<button class="action-btn blue" onclick="_cmpHandoff(\''+_cmpEscJs(caseName)+'\',\'transferred\',\''+_cmpEscJs(slug)+'\')">Transfer \u2013 w/ offer \u2192</button>';
+
+    var notesVal = c.handoffNote || '';
+    var rowClass = resolved ? 'row-done cmp-handled-row' : '';
+
+    return '<tr class="'+rowClass+'"'+(hidden?' hidden':'')+'>'
+      + '<td class="case-cell"><div class="case-name">'+_esc(d.case._casename)+'</div>'
+        + '<div class="case-meta">'+_esc(d.insurance||'')+' \u2014 '+_esc(d.demandtype||'')+' \u00b7 expires '+_esc(d.dateexpires||'\u2014')+'</div>'
+        + (resolved ? '' : '<button class="not-mine" onclick="_cmpFlagNotMine(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">not '+_esc(name.split(' ')[0])+'\'s case?</button>')
+      + '</td>'
+      + '<td><div class="clog">'+logHtml+addBtn+'</div></td>'
+      + '<td><span class="flag '+answer.cls+'">'+answer.label+'</span></td>'
+      + '<td>'+offerLimitHtml+'</td>'
+      + '<td><span class="flag '+outcome.cls+'">'+outcome.label+'</span>'+actionBtn+'</td>'
+      + '<td>'+_esc(notesVal || '\u2014')+'</td>'
+      + '</tr>';
+  }
+
+  var openSorted = sortByExpiry(open);
+  var handledSorted = sortByExpiry(handled);
+  var showHandled = _cmpShowHandledAll || !!_cmpShowHandled[slug];
+
+  var emptyOpenHtml = (openSorted.length===0 && handledSorted.length>0)
+    ? '<tr><td colspan="6" class="empty-state">No open files right now \u2014 nice work.</td></tr>'
+    : '';
+  var openHtml = openSorted.map(function(d){ return rowHtml(d, false); }).join('');
+  var toggleHtml = (handledSorted.length && !_cmpShowHandledAll)
+    ? '<tr class="cmp-toggle-row"><td colspan="6"><button class="cmp-toggle-btn" onclick="_cmpToggleHandled(\''+slug+'\')">'
+      + (showHandled ? '\u2212 Hide '+handledSorted.length+' handled' : '+ Show '+handledSorted.length+' handled')
+      + '</button></td></tr>'
+    : '';
+  var handledHtml = handledSorted.map(function(d){ return rowHtml(d, !showHandled); }).join('');
+
+  body.innerHTML = emptyOpenHtml + openHtml + toggleHtml + handledHtml;
+
+  return {open:open.length, noContact:noContact.length};
+}
+
+function _cmpToggleHandled(slug){
+  _cmpShowHandled[slug] = !_cmpShowHandled[slug];
+  var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0];
+  if(cm) _cmpRenderPanel(cm.name, slug);
+}
+function _cmpToggleAllHandled(){
+  _cmpShowHandledAll = !_cmpShowHandledAll;
+  var btn = document.getElementById('cmp-toggle-all-btn');
+  if(btn) btn.textContent = _cmpShowHandledAll ? 'Hide handled files (all CMs)' : 'Show handled files (all CMs)';
+  CMP_ROSTER.forEach(function(cm){ _cmpRenderPanel(cm.name, cm.slug); });
+}
+
+function _cmpOpenClogForm(evt, caseName, slug){
+  var existing = document.getElementById('clog-form-live');
+  if(existing) existing.remove();
+  var form = document.createElement('div');
+  form.className = 'clog-form';
+  form.id = 'clog-form-live';
+  form.innerHTML =
+    '<label>What happened</label>'
+    + '<select id="clog-type">'
+    + '<option value="no_answer">No answer / left message</option>'
+    + '<option value="reached_no_offer">Reached them, no offer yet</option>'
+    + '<option value="offer">They offered $</option>'
+    + '<option value="tendered">Tendered full policy limit</option>'
+    + '</select>'
+    + '<label id="clog-amt-label" style="display:none">Amount</label>'
+    + '<input id="clog-amt" type="text" inputmode="numeric" placeholder="e.g. 30000" style="display:none">'
+    + '<label>Date</label>'
+    + '<input id="clog-date" type="text" value="'+_esc(new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}))+'">'
+    + '<div class="row-btns"><button onclick="_cmpCloseClogForm()">Cancel</button><button class="primary" onclick="_cmpSaveClogEntry(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">Save</button></div>';
+  document.body.appendChild(form);
+  var rect = evt.target.getBoundingClientRect();
+  form.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+  form.style.left = (window.scrollX + rect.left) + 'px';
+  document.getElementById('clog-type').addEventListener('change', function(){
+    var showAmt = this.value === 'offer';
+    document.getElementById('clog-amt-label').style.display = showAmt ? 'block' : 'none';
+    document.getElementById('clog-amt').style.display = showAmt ? 'block' : 'none';
+  });
+}
+function _cmpCloseClogForm(){ var f=document.getElementById('clog-form-live'); if(f) f.remove(); }
+function _cmpSaveClogEntry(caseName, slug){
+  var type = document.getElementById('clog-type').value;
+  var amt = document.getElementById('clog-amt').value;
+  var date = document.getElementById('clog-date').value;
+  var LABELS = {
+    no_answer:'Called, left VM \u2014 no answer',
+    reached_no_offer:'Reached adjuster, reviewing file',
+    offer:'Adjuster offered $' + amt,
+    tendered:'Adjuster tendered full policy limit'
+  };
+  var c = _getContact(caseName);
+  var log = (c.contactLog || []).slice();
+  log.push({date:date, note:LABELS[type] || type, type:type});
+  _cmpCloseClogForm();
+  _setContact(caseName, {contactLog: log}).then(function(){
+    _cmpRenderPanel(CMP_ROSTER.filter(function(x){return x.slug===slug;})[0].name, slug);
+  });
+}
+function _cmpHandoff(caseName, status, slug){
+  _setContact(caseName, {handoffStatus: status, handoffAt: new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})}).then(function(){
+    var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0];
+    if(cm) _cmpRenderPanel(cm.name, slug);
+  });
+}
+function _cmpFlagNotMine(caseName, slug){
+  var note = prompt('Whose case is this actually? (optional note)');
+  if(note === null) return;
+  _setContact(caseName, {handoffNote: note}).then(function(){
+    var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0];
+    if(cm) _cmpRenderPanel(cm.name, slug);
+  });
+}
+window._cmpOpenClogForm = _cmpOpenClogForm;
+window._cmpCloseClogForm = _cmpCloseClogForm;
+window._cmpSaveClogEntry = _cmpSaveClogEntry;
+window._cmpHandoff = _cmpHandoff;
+window._cmpFlagNotMine = _cmpFlagNotMine;
+window._cmpToggleHandled = _cmpToggleHandled;
+window._cmpToggleAllHandled = _cmpToggleAllHandled;
 
 (function(){
   var seg=document.getElementById('cm-metric-seg');
