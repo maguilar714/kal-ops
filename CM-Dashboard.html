@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>KAL · CM Performance · v5.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7; --surface:#ffffff; --surface-2:#fafafa; --surface-3:#f0f0f2;
+  --surface-glass:rgba(255,255,255,0.78);
+  --line:#e5e5e7; --line-strong:#d2d2d7;
+  --ink:#1d1d1f; --ink-2:#424245; --ink-3:#6e6e73; --ink-4:#8e8e93;
+  --blue:#0071e3; --blue-soft:#e8f1fc;
+  --indigo:#5e5ce6; --indigo-soft:#ecebfb;
+  --amber:#b25e09; --amber-bg:#fff4e0; --amber-mark:#f5a524;
+  --green:#0a7d3b; --green-bg:#e6f5ec; --green-mark:#34c759;
+  --red:#b3261e; --red-bg:#fdecea; --red-mark:#d70015;
+  --purple:#5b3aa8; --purple-bg:#efeaf9; --purple-mark:#7e5bd1;
+  --neutral-mark:#a1a1a6;
+  --accent:#0071e3;
+  --ui: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --num: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --row-pad-y: 11px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased}
+body{line-height:1.45}
+button{font-family:inherit}
+
+.topbar-wrap{position:sticky;top:0;z-index:50;background:var(--surface-glass);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid var(--line)}
+.topbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 32px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:28px;height:28px;border-radius:6px;background:#1d1d1f;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
+.brand-title{font-weight:600;font-size:15px;letter-spacing:-0.01em}
+.brand-sub{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.meta{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:12px}
+.meta .dot{width:6px;height:6px;border-radius:50%;background:var(--green-mark);display:inline-block;margin-right:6px}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#8fb8ea,#0071e3);color:#fff;display:grid;place-items:center;font-size:10.5px;font-weight:600}
+.who-pill{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+#kal-refresh-hdr{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 11px;cursor:pointer}
+
+.app{max-width:1200px;margin:0 auto;padding:22px 24px 64px}
+
+/* first-run / switch-CM picker overlay */
+#cm-picker{position:fixed;inset:0;z-index:200;background:rgba(20,20,22,.55);display:flex;align-items:center;justify-content:center;padding:24px}
+#cm-picker[hidden]{display:none}
+.picker-card{background:var(--surface);border-radius:14px;padding:26px 28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.picker-card h2{margin:0 0 4px;font-size:17px;font-weight:600}
+.picker-card p{margin:0 0 16px;font-size:13px;color:var(--ink-3);line-height:1.5}
+.picker-card select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);margin-bottom:14px}
+.picker-card button{width:100%;padding:10px;border:0;border-radius:8px;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.picker-card button:disabled{background:var(--line-strong);cursor:not-allowed}
+.picker-note{font-size:11px;color:var(--ink-4);margin-top:10px;line-height:1.5}
+
+.accent-rule{height:2px;width:36px;background:var(--accent);border-radius:6px;margin-bottom:8px}
+.section-title{display:flex;align-items:flex-end;justify-content:space-between;margin:26px 0 10px;flex-wrap:wrap;gap:8px}
+.section-title h2{margin:0;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.section-title .hint{font-size:12px;color:var(--ink-4)}
+.section-title:first-of-type{margin-top:4px}
+
+.briefing{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:14px 18px;margin-bottom:6px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center}
+.briefing .head{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:8px;border-right:1px solid var(--line);padding-right:18px;white-space:nowrap}
+.briefing .head .pulse{width:8px;height:8px;border-radius:50%;background:var(--green-mark)}
+.briefing .items{font-size:13px;color:var(--ink-2);line-height:1.5}
+.briefing .stamp{font-size:11px;color:var(--ink-4);text-align:right;white-space:nowrap}
+.briefing .stamp b{display:block;color:var(--ink-2);font-weight:600;font-size:12px}
+@media (max-width:720px){.briefing{grid-template-columns:1fr}.briefing .head{border-right:0;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:8px}.briefing .stamp{text-align:left}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:clip}
+.panel-head{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.panel-head h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-0.01em}
+.panel-head .meta-r{font-size:12px;color:var(--ink-3)}
+.empty-state{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:13px}
+
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+table.t td{padding:var(--row-pad-y) 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:hover{background:var(--surface-3)}
+td.num,th.num{text-align:right;font-family:var(--num);font-variant-numeric:tabular-nums}
+td.name{font-weight:500;color:var(--ink)}
+tr.row-you td{background:#eff5fd}
+tr.row-you td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+.you-badge{display:inline-block;margin-left:7px;padding:2px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--blue);color:#fff;border-radius:6px;vertical-align:2px}
+
+th[data-tip],td[data-tip]{cursor:help}
+.tip-wrap{position:relative;display:inline-block}
+.tip-wrap[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);z-index:60;background:#1d1d1f;color:#f5f5f7;font-size:11.5px;line-height:1.5;font-weight:400;text-transform:none;letter-spacing:0;padding:9px 11px;border-radius:6px;width:260px;white-space:pre-line;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none}
+
+.flag{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;font-size:11px;font-weight:600;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.flag.green{background:var(--green-bg);color:var(--green)}
+.flag.amber{background:var(--amber-bg);color:var(--amber)}
+.flag.red{background:var(--red-bg);color:var(--red)}
+.flag.gray{background:var(--surface-3);color:var(--ink-3)}
+.flag.blue{background:var(--blue-soft);color:var(--blue)}
+
+.bic{position:relative;display:inline-block;min-width:120px}
+.bic .barfill{position:absolute;left:0;top:50%;transform:translateY(-50%);height:18px;border-radius:6px;background:var(--accent);opacity:.14;z-index:0}
+.bic .barlbl{position:relative;z-index:1;display:block;text-align:right;padding:1px 8px;font-family:var(--num);font-variant-numeric:tabular-nums}
+.bic.green .barfill{background:var(--green-mark)}
+.th-sub{display:block;font-weight:400;font-size:10.5px;text-transform:none;letter-spacing:0;margin-top:1px}
+
+.sol-chip{display:inline-block;margin-left:8px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;font-family:var(--num);vertical-align:1px}
+.sol-chip.urgent{background:var(--red-bg);color:var(--red)}
+.sol-chip.soon{background:var(--amber-bg);color:var(--amber)}
+.sol-chip.pending{background:var(--surface-3);color:var(--ink-4)}
+.not-mine{font-size:10.5px;color:var(--ink-4);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;cursor:pointer;margin-top:3px;display:inline-block;background:none;border:0;padding:0;font-family:inherit}
+.not-mine:hover{color:var(--blue)}
+.clog{display:flex;flex-direction:column;gap:5px;min-width:190px}
+.clog-entry{display:flex;gap:7px;font-size:11.5px;line-height:1.35}
+.clog-entry .cd{color:var(--ink-4);font-family:var(--num);white-space:nowrap;font-size:11px;padding-top:1px}
+.clog-entry .ct2{color:var(--ink-2)}
+.clog-add{border:1px dashed var(--line-strong);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--ink-4);cursor:pointer;width:fit-content;background:none}
+.clog-add:hover{color:var(--blue);border-color:var(--blue)}
+.sync-chip{font-family:var(--num);font-size:12px;color:var(--ink-2);background:var(--surface-3);border-radius:6px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.sync-chip .tag{font-size:8.5px;font-family:var(--ui);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);background:var(--surface);border-radius:4px;padding:1px 4px}
+tr.row-done{background:var(--surface-2)}
+tr.row-done td{color:var(--ink-4)}
+tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
+.escalate-hint{margin-top:6px;font-size:10.5px;background:var(--red-bg);color:var(--red);border-radius:6px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.action-btn{display:block;margin-top:6px;border:1px solid;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;background:var(--surface);cursor:pointer;white-space:nowrap}
+.action-btn.blue{border-color:var(--blue);color:var(--blue)}
+.action-btn.blue:hover{background:var(--blue-soft)}
+.action-btn.red{border-color:var(--red);color:var(--red)}
+.action-btn.red:hover{background:var(--red-bg)}
+.case-cell{line-height:1.25}
+.case-cell .case-name{font-weight:500;color:var(--ink)}
+.case-cell .case-meta{font-size:11.5px;color:var(--ink-4);margin-top:2px}
+
+/* contact-log entry popover */
+.clog-form{position:absolute;z-index:80;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:14px;width:260px}
+.clog-form[hidden]{display:none}
+.clog-form label{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:8px 0 4px}
+.clog-form label:first-child{margin-top:0}
+.clog-form select,.clog-form input{width:100%;font-family:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px}
+.clog-form .row-btns{display:flex;gap:8px;margin-top:12px}
+.clog-form .row-btns button{flex:1;padding:7px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer}
+.clog-form .row-btns button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.note{font-size:12.5px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.5}
+.note b{color:var(--ink-2);font-weight:600}
+
+.rule-card{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px}
+.rule-card .rule-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
+.rule-row{display:grid;grid-template-columns:184px 1fr;gap:14px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.rule-row .flag{white-space:normal;text-align:center;line-height:1.3}
+.rule-row:first-of-type{border-top:0;padding-top:0}
+.rule-row .rr-text{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.rule-row .rr-text b{color:var(--ink);font-weight:600}
+.rule-foot{font-size:12px;color:var(--ink-3);line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+@media (max-width:640px){.rule-row{grid-template-columns:1fr}}
+.foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-4)}
+</style>
+</head>
+<body>
+
+<!-- CM picker — first run only; no in-UI way to reopen this (see _cmCheckAdminReset) -->
+<div id="cm-picker" hidden>
+  <div class="picker-card">
+    <h2>Which case manager are you?</h2>
+    <p>This dashboard highlights your own queue. Pick your name once — it's remembered on this computer.</p>
+    <select id="cm-picker-select"></select>
+    <button id="cm-picker-go" onclick="_cmPickerConfirm()">Continue</button>
+    <div class="picker-note">This is a one-time setup for this computer. If it's wrong, ask Moises to reset it — there's no switch button in the dashboard on purpose.</div>
+  </div>
+</div>
+
+<div class="topbar-wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <div>
+        <div class="brand-title">KAL Ops &middot; CM Performance</div>
+        <div class="brand-sub">Your standing, and your assigned follow-ups &middot; <span style="font-family:monospace;opacity:.7">v5.9</span></div>
+      </div>
+    </div>
+    <div class="meta">
+      <button id="kal-refresh-hdr" onclick="location.reload()"><span style="width:7px;height:7px;border-radius:50%;background:var(--green-mark)"></span>Refresh</button>
+      <div class="who-pill">
+        <span class="avatar" id="who-avatar">&mdash;</span>
+        <span id="who-name">Loading&hellip;</span>
+      </div>
+    </div>
+  </header>
+</div>
+
+<div class="app">
+
+  <div class="briefing">
+    <div class="head"><span class="pulse"></span>This week</div>
+    <div class="items" id="briefing-items">Loading your queue&hellip;</div>
+    <div class="stamp"><b id="stamp-date">&mdash;</b>updates nightly</div>
+  </div>
+
+  <!-- ============ MY ASSIGNED FILES ============ -->
+  <div class="section-title">
+    <div class="left"><div class="accent-rule"></div><h2>My assigned files &middot; expired-demand follow-up</h2></div>
+    <div class="hint">Only your files &mdash; refills automatically</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3 id="myfiles-count">&mdash; open</h3>
+      <div class="meta-r">Updates nightly &middot; summary to Mark &amp; Moises every Friday</div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="t" style="min-width:1080px" id="myfiles-table">
+      <thead>
+        <tr>
+          <th>Client / Carrier</th>
+          <th>Contact log</th>
+          <th>Answer</th>
+          <th>Offer / limit <span class="dsub" style="text-transform:none;font-weight:400">from CasePeer</span></th>
+          <th>Outcome</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="myfiles-body">
+        <tr><td colspan="6" class="empty-state">Loading live demands from CasePeer&hellip;</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-title">The rule — outcome isn't something you pick, it follows from the log</div>
+    <div class="rule-row">
+      <div><span class="flag green">→ CM Credit</span></div>
+      <div class="rr-text"><b>Full policy limit tendered.</b> Closed. Nothing else to do — still counts as your workup.</div>
+    </div>
+    <div class="rule-row">
+      <div><span class="flag blue">Transferred – w/ offer</span></div>
+      <div class="rr-text"><b>Any offer below limit.</b> Click the button to send it to Gus/Mark with a real number to negotiate.</div>
+    </div>
+    <div class="rule-row">
+      <div><span class="flag red">Escalated – SOL</span></div>
+      <div class="rr-text"><b>No answer, and SOL is closing in.</b> Click to send it to Gus/Mark as a "we can't reach the carrier" problem — not a negotiation. Same Settlement queue as above, different reason, so they know which one they're picking up.</div>
+    </div>
+    <div class="rule-foot">Offer $ and the policy limit sync from CasePeer once you log them there. You only type the contact log — nothing CasePeer already has.</div>
+  </div>
+  <div class="note" id="sol-todo-note"><b>SOL wired 2026-09-14:</b> the countdown next to each case pulls from the exact same statute-of-limitations calculation the SOL tab uses (settlement-overview’s statute date, overridden by a manual CasePeer calendar entry when one exists) &mdash; not a separate guess. Escalate appears once a file has no answer and SOL is inside 30 days. Not yet live-verified against a real CasePeer session.</div>
+
+  <!-- ============ WHERE YOU STAND ============ -->
+  <div class="section-title">
+    <div class="left"><div class="accent-rule"></div><h2>Where you stand</h2></div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="seg" id="wys-seg" style="display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:3px;gap:2px">
+        <button class="on" data-period="ytd" onclick="setPeriod('ytd')" style="border:0;background:#fff;padding:6px 14px;font-size:12.5px;font-weight:500;color:var(--ink);border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06)">2026 YTD</button>
+        <button data-period="mtd" onclick="setPeriod('mtd')" style="border:0;background:transparent;padding:6px 14px;font-size:12.5px;font-weight:500;color:var(--ink-2);border-radius:6px;cursor:pointer">This month</button>
+      </div>
+      <div class="hint">All case managers</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <table class="t">
+      <thead>
+        <tr>
+          <th>Case Manager</th>
+          <th class="num"><span class="tip-wrap" data-tip="Demands you sent, for the period selected above. Credited to whoever sent the demand, even if the case was later reassigned.">Demands<br><span class="th-sub" id="th-period-1">YTD</span></span></th>
+          <th class="num"><span class="tip-wrap" data-tip="Of your demands that SETTLED with a known policy limit, the share that settled at or above that limit — whether the tender came on your call or after the file transferred to Settlement. This measures your workup, not who closed it.">Pop Rate<br><span class="th-sub" id="th-period-2">settled cases</span></span></th>
+          <th class="num"><span class="tip-wrap" data-tip="Median business days from a file entering your queue to your first logged contact attempt. Rolling — moves with the YTD/MTD toggle above.">Response Time<br><span class="th-sub" id="th-period-3">median days</span></span></th>
+        </tr>
+      </thead>
+      <tbody id="standings-body">
+        <tr><td colspan="4" class="empty-state">Loading&hellip;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
+
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v1.0 (new dashboard, first build) &middot; <span id="live-status">connecting&hellip;</span></div>
+</div>
+
+<script>
+/* ============================================================================
+   ROSTER — from KAL Context/CLAUDE.md "Case Managers (mostly remote)" section
+   + Kausar Sarwari (Executive Team, carries her own CM caseload on $250k+ cases).
+   Junior Alvarez is deliberately excluded everywhere — Client Care Supervisor,
+   not a CM (see CLAUDE.md line ~503: excluded from CM Performance table).
+   Keep this list in sync with CLAUDE.md when CMs are hired/promoted/leave.
+   ========================================================================== */
+var CM_ROSTER = [
+  {name:'Jose Duarte',     email:'jose@kalattorneys.com'},
+  {name:'Icela Parra',     email:'icela@kalattorneys.com'},
+  {name:'Rashel Prieto',   email:'rashel@kalattorneys.com'}, // CasePeer case_manager field says 'Prieto' (verified against KAL-Ops-v2-live.html's live ACTIVE_CMS roster) even though her firm email/HR name is 'Carey' -- this is the string CasePeer demands actually carry
+  {name:'Damny Castro',    email:'damny@kalattorneys.com'},
+  {name:'Cris Urbina',     email:'cris@kalattorneys.com'},
+  {name:'Ronald Agresott', email:'ronald@kalattorneys.com'},
+  {name:'Jesus Parra',     email:'jesus@kalattorneys.com'},
+  {name:'Maybis Cantillo', email:'maybis@kalattorneys.com'},
+  {name:'Kausar Sarwari',  email:'kausar@kalattorneys.com'}
+];
+
+/* ============================================================================
+   IDENTITY — no CasePeer "current user" API exists (confirmed against
+   reference/casepeer-api-map.md), and the bookmarklet's document.write
+   replaces the page DOM on load, so we can't scrape it from CasePeer's own UI
+   either. Resolution (Moises approved 2026-09-14): one shared bookmarklet for
+   all 9 CMs, self-reported identity via localStorage, remembered per browser.
+   Low stakes if wrong — this only decides which queue gets highlighted, it's
+   not a security boundary.
+   ========================================================================== */
+var CM_STORAGE_KEY = 'kal_cm_identity';
+
+// Deliberately no "switch identity" button in the UI — Moises does not want
+// CMs casually flipping into each other's queue (e.g. Jose picking Damny).
+// The only reset path is this admin-only URL flag: navigate the browser to
+// https://my.casepeer.com/?resetcm=1 BEFORE clicking the bookmarklet, and the
+// picker reopens once. Not discoverable by casual clicking — meant for
+// Moises to walk a CM through if a pick was wrong or they get a new machine.
+function _cmCheckAdminReset(){
+  try{
+    if(location.search.indexOf('resetcm=1') !== -1) localStorage.removeItem(CM_STORAGE_KEY);
+  }catch(e){}
+}
+
+function _cmGetIdentity(){
+  try{ return localStorage.getItem(CM_STORAGE_KEY) || null; } catch(e){ return null; }
+}
+function _cmSetIdentity(name){
+  try{ localStorage.setItem(CM_STORAGE_KEY, name); } catch(e){}
+}
+function _cmInitials(name){
+  return (name||'').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+}
+function _cmPickerOpen(){
+  var sel = document.getElementById('cm-picker-select');
+  sel.innerHTML = CM_ROSTER.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+  var current = _cmGetIdentity();
+  if(current) sel.value = current;
+  document.getElementById('cm-picker').hidden = false;
+}
+function _cmPickerConfirm(){
+  var sel = document.getElementById('cm-picker-select');
+  _cmSetIdentity(sel.value);
+  document.getElementById('cm-picker').hidden = true;
+  _cmApplyIdentityToHeader();
+  loadAndRender();
+}
+function _cmApplyIdentityToHeader(){
+  var name = _cmGetIdentity();
+  document.getElementById('who-name').textContent = name || 'Choose your name';
+  document.getElementById('who-avatar').textContent = name ? _cmInitials(name) : '?';
+}
+
+/* ============================================================================
+   BACKEND — same Railway service + token-injection pattern as every other
+   KAL dashboard. Bookmarklet sets window.KAL_TOKEN before writing this page.
+   ========================================================================== */
+var _RAILWAY_URL = 'https://kal-ops-production.up.railway.app';
+
+(function(){
+  if(window._kalFetchPatched) return; window._kalFetchPatched=true;
+  var _o = window.fetch.bind(window);
+  window.fetch = function(u, opt){
+    try{
+      if(typeof u==='string' && u.indexOf('kal-ops-production.up.railway.app')!==-1){
+        opt = opt || {};
+        var h = new Headers(opt.headers||{});
+        if(window.KAL_TOKEN) h.set('Authorization','Bearer '+window.KAL_TOKEN);
+        opt.headers = h;
+      }
+    }catch(e){}
+    return _o(u, opt);
+  };
+})();
+
+async function fetchAll(pathWithQuery){
+  var all=[], page=1, hasMore=true, guard=0;
+  while(hasMore && guard++ < 200){
+    var sep = pathWithQuery.indexOf('?')>=0 ? '&' : '?';
+    var url = pathWithQuery + sep + 'page=' + page;
+    var resp = await fetch(url, {credentials:'include', mode:'cors'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status+' on '+url);
+    var json = await resp.json();
+    if(json && json.results) all = all.concat(json.results);
+    else if(Array.isArray(json)) { all = all.concat(json); hasMore=false; break; }
+    hasMore = !!(json && json.next);
+    page++;
+  }
+  return all;
+}
+
+var _contactCache = {};
+function _loadContacts(){
+  return fetch(_RAILWAY_URL + '/contacts')
+    .then(function(r){ return r.json(); })
+    .then(function(data){ _contactCache = data || {}; })
+    .catch(function(e){ console.warn('Could not load contacts from Railway:', e.message); _contactCache = {}; });
+}
+function _setContact(caseName, fields){
+  if(!_contactCache[caseName]) _contactCache[caseName] = {};
+  Object.assign(_contactCache[caseName], fields);
+  return fetch(_RAILWAY_URL + '/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
+  }).catch(function(e){ console.warn('Contact save failed:', e.message); });
+}
+function _getContact(caseName){ return _contactCache[caseName] || {}; }
+
+/* ============================================================================
+   DATA — pulls real demands from CasePeer (same endpoint every KAL dashboard
+   uses: /api/v1/case/demands/, session-cookie auth, paginated via fetchAll).
+   ========================================================================== */
+var _allDemands = [];
+
+function _parseDate(s){
+  if(!s) return null;
+  var p = s.split('/');
+  if(p.length!==3) return null;
+  return new Date(+p[2], +p[0]-1, +p[1]);
+}
+function _fmtDate(d){
+  if(!d) return '—';
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var dd = String(d.getDate()).padStart(2,'0');
+  return mm+'/'+dd+'/'+d.getFullYear();
+}
+function _fmtMoney(v){
+  var n = parseFloat(v);
+  if(!n && n!==0) return null;
+  return '$' + Math.round(n).toLocaleString();
+}
+
+/* ----- SOL (statute of limitations) -------------------------------------
+   Reuses the EXACT same computation as the SOL tab in KAL-Ops-v2-live.html
+   (settlement-overview's `statutedate`, optionally overridden by a CasePeer
+   calendar event typed "Statute" or titled with "sol") -- not a fresh guess.
+   Same date parser, same "manual override wins" rule, same day-count math. */
+var _solByCase = {};
+function _parseSOLDate(str){
+  if(!str) return null;
+  var p = str.split('/');
+  if(p.length===3) return new Date(parseInt(p[2]),parseInt(p[0])-1,parseInt(p[1]));
+  var p2 = str.split('-');
+  if(p2.length===3) return new Date(parseInt(p2[0]),parseInt(p2[1])-1,parseInt(p2[2]));
+  return null;
+}
+function _buildSolMap(settlement, calendar){
+  var solManual = {};
+  (calendar||[]).filter(function(e){
+    return e.type==='Statute' || (e.title && e.title.toLowerCase().indexOf('sol')>=0);
+  }).forEach(function(e){
+    if(e.case) solManual[e.case.id] = e.event_date ? e.event_date.split(' - ')[0] : null;
+  });
+  _solByCase = {};
+  (settlement||[]).forEach(function(r){
+    if(!r._casename || !r.statutedate) return;
+    var manualDate = solManual[r.id];
+    var sol = _parseSOLDate(manualDate || r.statutedate);
+    if(!sol) return;
+    _solByCase[r._casename] = Math.ceil((sol - new Date())/86400000);
+  });
+}
+function _solDaysFor(caseName){
+  var v = _solByCase[caseName];
+  return (v===undefined) ? null : v;
+}
+function _solChip(solDays){
+  if(solDays===null) return '';
+  if(solDays<0) return ' &middot; <span style="color:var(--red);font-weight:600">SOL past due</span>';
+  if(solDays<=30) return ' &middot; <span style="color:var(--red);font-weight:600">SOL '+solDays+'d</span>';
+  if(solDays<=90) return ' &middot; <span style="color:var(--amber)">SOL '+solDays+'d</span>';
+  return ' &middot; SOL '+solDays+'d';
+}
+
+async function loadAndRender(){
+  var name = _cmGetIdentity();
+  if(!name){ _cmPickerOpen(); return; }
+
+  document.getElementById('live-status').textContent = 'loading live CasePeer data…';
+  document.getElementById('stamp-date').textContent = 'Through ' + _fmtDate(new Date());
+
+  try{
+    var [demands, settlement, calendar] = await Promise.all([
+      fetchAll('/api/v1/case/demands/'),
+      fetchAll('/api/v1/case/settlement-overview/'),
+      fetchAll('/api/v1/case/calendar/'),
+      _loadContacts()
+    ]);
+    _allDemands = (demands||[]).filter(function(d){ return d.case_manager !== 'Junior Alvarez'; });
+    _buildSolMap(settlement||[], calendar||[]);
+    document.getElementById('live-status').textContent = 'live — ' + _allDemands.length + ' demands loaded';
+  }catch(e){
+    document.getElementById('live-status').textContent = 'could not reach CasePeer (' + e.message + ') — is this open on my.casepeer.com with an active session?';
+    document.getElementById('myfiles-body').innerHTML = '<tr><td colspan="6" class="empty-state">Couldn\'t load live data. Open this from my.casepeer.com with an active session, then Refresh.</td></tr>';
+    document.getElementById('standings-body').innerHTML = '<tr><td colspan="4" class="empty-state">Couldn\'t load live data.</td></tr>';
+    return;
+  }
+
+  renderMyFiles(name);
+  renderStandings('ytd');
+}
+
+/* ----- My assigned files ------------------------------------------------- */
+// "My queue" = my demands where I haven't been handed off yet (no handoffStatus
+// recorded) and the file isn't already resolved (full-limit tender). Broader
+// than the old dashboard's "expired, no offer" bucket on purpose — a demand
+// with an offer already in hand is still mine until I click Transfer.
+function _isResolved(d, contact){
+  var offer = parseFloat(d.offer_amount);
+  var limit = parseFloat(d.insurance_policy);
+  return !!(offer && limit && offer >= limit);
+}
+function _outcomeFor(d, contact, solDays){
+  if(_isResolved(d, contact)) return {label:'→ CM Credit', cls:'green', action:null};
+  if(contact.handoffStatus === 'transferred') return {label:'Transferred – w/ offer', cls:'blue', action:null};
+  if(contact.handoffStatus === 'escalated') return {label:'Escalated – SOL', cls:'red', action:null};
+  var offer = parseFloat(d.offer_amount);
+  if(offer) return {label:'— pending', cls:'gray', action:'transfer'};
+  // Escalate = no answer yet AND SOL within 30 days -- same red-alert threshold the SOL tab itself uses.
+  if(solDays!=null && solDays<=30) return {label:'— pending', cls:'red', action:'escalate'};
+  return {label:'— pending', cls:'gray', action:null};
+}
+function _answerFor(d){
+  var offer = parseFloat(d.offer_amount);
+  var limit = parseFloat(d.insurance_policy);
+  if(offer && limit && offer >= limit) return {label:'Tendered '+_fmtMoney(offer), cls:'green'};
+  if(offer) return {label:'Offered '+_fmtMoney(offer), cls:'amber'};
+  return {label:'No answer yet', cls:'gray'};
+}
+
+function renderMyFiles(name){
+  var mine = _allDemands.filter(function(d){ return d.case_manager === name; });
+  var open = mine.filter(function(d){
+    var c = _getContact(d.case._casename);
+    return !_isResolved(d, c) && !c.handoffStatus;
+  });
+  var resolvedThisMonth = mine.filter(function(d){
+    var c = _getContact(d.case._casename);
+    return _isResolved(d, c) || c.handoffStatus;
+  });
+
+  document.getElementById('myfiles-count').textContent = open.length + ' open · ' + resolvedThisMonth.length + ' handled';
+
+  var urgentBits = [];
+  var body = document.getElementById('myfiles-body');
+  if(open.length === 0 && resolvedThisMonth.length === 0){
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">No demands found for ' + name + ' in CasePeer. If that\'s wrong, check the name matches CasePeer\'s case_manager field exactly.</td></tr>';
+  } else {
+    var rows = mine.slice().sort(function(a,b){
+      var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
+      var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
+      if(!ea) return 1; if(!eb) return -1;
+      return ea - eb;
+    });
+    body.innerHTML = rows.map(function(d){
+      var caseName = d.case._casename;
+      var c = _getContact(caseName);
+      var log = c.contactLog || [];
+      var solDays = _solDaysFor(caseName);
+      var answer = _answerFor(d);
+      var outcome = _outcomeFor(d, c, solDays);
+      var resolved = _isResolved(d, c) || c.handoffStatus;
+
+      var logHtml = log.length
+        ? log.map(function(e){ return '<div class="clog-entry"><span class="cd">'+(e.date||'')+'</span><span class="ct2">'+_escapeHtml(e.note||'')+'</span></div>'; }).join('')
+        : '<div class="clog-entry"><span class="ct2" style="color:var(--ink-4);font-style:italic">no attempts logged yet</span></div>';
+      var addBtn = resolved ? '' : '<button class="clog-add" onclick="_openClogForm(event,\''+_escJs(caseName)+'\')">+ log attempt</button>';
+
+      var offerLimitHtml = (function(){
+        var offer = _fmtMoney(d.offer_amount);
+        var limit = _fmtMoney(d.insurance_policy);
+        if(!offer && !limit) return '<span class="sync-chip">— <span class="tag">n/a</span></span>';
+        return '<span class="sync-chip">'+(offer||'—')+' / '+(limit||'—')+' <span class="tag">synced</span></span>';
+      })();
+
+      var actionBtn = '';
+      if(outcome.action === 'transfer') actionBtn = '<button class="action-btn blue" onclick="_handoff(\''+_escJs(caseName)+'\',\'transferred\')">Transfer – w/ offer →</button>';
+      if(outcome.action === 'escalate') actionBtn = '<button class="action-btn red" onclick="_handoff(\''+_escJs(caseName)+'\',\'escalated\')">Escalate – SOL →</button>';
+
+      var notesVal = c.handoffNote || '';
+
+      return '<tr class="'+(resolved?'row-done':'')+'" id="row-'+_escJs(caseName)+'">'
+        + '<td class="case-cell"><div class="case-name">'+_escapeHtml(d.case._casename)+'</div>'
+          + '<div class="case-meta">'+_escapeHtml(d.insurance||'')+' — '+_escapeHtml(d.demandtype||'')+' · expires '+(d.dateexpires||'—')+_solChip(solDays)+'</div>'
+          + (resolved ? '' : '<button class="not-mine" onclick="_flagNotMine(\''+_escJs(caseName)+'\')">not my case?</button>')
+        + '</td>'
+        + '<td><div class="clog">'+logHtml+addBtn+'</div></td>'
+        + '<td><span class="flag '+answer.cls+'">'+answer.label+'</span></td>'
+        + '<td>'+offerLimitHtml+'</td>'
+        + '<td><span class="flag '+outcome.cls+'">'+outcome.label+'</span>'+actionBtn+'</td>'
+        + '<td>'+_escapeHtml(notesVal || '—')+'</td>'
+        + '</tr>';
+    }).join('');
+  }
+}
+
+function _escapeHtml(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+function _escJs(s){ return String(s).replace(/'/g,"\\'"); }
+
+/* contact-log entry — 4 fixed outcomes, matching the finalized design (CMs
+   don't negotiate; they get ONE answer, then hand off). */
+function _openClogForm(evt, caseName){
+  var existing = document.getElementById('clog-form-live');
+  if(existing) existing.remove();
+  var form = document.createElement('div');
+  form.className = 'clog-form';
+  form.id = 'clog-form-live';
+  form.innerHTML =
+    '<label>What happened</label>'
+    + '<select id="clog-type">'
+    + '<option value="no_answer">No answer / left message</option>'
+    + '<option value="reached_no_offer">Reached them, no offer yet</option>'
+    + '<option value="offer">They offered $</option>'
+    + '<option value="tendered">Tendered full policy limit</option>'
+    + '</select>'
+    + '<label id="clog-amt-label" style="display:none">Amount</label>'
+    + '<input id="clog-amt" type="text" inputmode="numeric" placeholder="e.g. 30000" style="display:none">'
+    + '<label>Date</label>'
+    + '<input id="clog-date" type="text" value="'+_fmtDate(new Date())+'">'
+    + '<div class="row-btns"><button onclick="_closeClogForm()">Cancel</button><button class="primary" onclick="_saveClogEntry(\''+_escJs(caseName)+'\')">Save</button></div>';
+  document.body.appendChild(form);
+  var rect = evt.target.getBoundingClientRect();
+  form.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+  form.style.left = (window.scrollX + rect.left) + 'px';
+  document.getElementById('clog-type').addEventListener('change', function(){
+    var showAmt = this.value === 'offer';
+    document.getElementById('clog-amt-label').style.display = showAmt ? 'block' : 'none';
+    document.getElementById('clog-amt').style.display = showAmt ? 'block' : 'none';
+  });
+}
+function _closeClogForm(){ var f=document.getElementById('clog-form-live'); if(f) f.remove(); }
+function _saveClogEntry(caseName){
+  var type = document.getElementById('clog-type').value;
+  var amt = document.getElementById('clog-amt').value;
+  var date = document.getElementById('clog-date').value;
+  var LABELS = {
+    no_answer:'Called, left VM — no answer',
+    reached_no_offer:'Reached adjuster, reviewing file',
+    offer:'Adjuster offered $' + amt,
+    tendered:'Adjuster tendered full policy limit'
+  };
+  var c = _getContact(caseName);
+  var log = (c.contactLog || []).slice();
+  log.push({date:date, type:type, amount: type==='offer'?amt:null, note: LABELS[type]});
+  _setContact(caseName, {contactLog: log}).then(function(){
+    _closeClogForm();
+    renderMyFiles(_cmGetIdentity());
+  });
+}
+function _handoff(caseName, status){
+  _setContact(caseName, {handoffStatus: status, handoffAt: _fmtDate(new Date())}).then(function(){
+    renderMyFiles(_cmGetIdentity());
+  });
+}
+function _flagNotMine(caseName){
+  var note = prompt('What should Icela/whoever this really belongs to know? (e.g. "reassigned to me from X on 09/10")');
+  if(note === null) return;
+  _setContact(caseName, {handoffNote: note}).then(function(){
+    renderMyFiles(_cmGetIdentity());
+  });
+}
+
+/* ----- Where you stand ---------------------------------------------------- */
+// Pop Rate: of a CM's SETTLED demands with a known policy limit, the share
+// that settled at or above that limit. Matches the existing live-dashboard
+// formula (pops / analyzable), extended here to read handoffStatus so credit
+// still lands on whoever sent the demand after a transfer.
+var _standingsCache = null;
+
+function computeStandings(period){
+  var now = new Date();
+  var byRep = {};
+  CM_ROSTER.forEach(function(c){ byRep[c.name] = {demands:0, analyzable:0, pops:0, firstContactDays:[]}; });
+
+  _allDemands.forEach(function(d){
+    var rep = d.case_manager;
+    if(!byRep[rep]) return; // not on the roster (departed CM, etc.) — skip
+
+    // Real YTD/MTD split, both keyed off datesent (when the demand went out).
+    var sent = d.datesent ? _parseDate(d.datesent) : null;
+    if(!sent || sent.getFullYear() !== now.getFullYear()) return;
+    if(period === 'mtd' && sent.getMonth() !== now.getMonth()) return;
+
+    byRep[rep].demands++;
+
+    var offer = parseFloat(d.offer_amount);
+    var limit = parseFloat(d.insurance_policy);
+    var c = _getContact(d.case._casename);
+    var resolved = !!(offer && limit); // "settled with known limit" proxy — see note below
+    if(resolved){
+      byRep[rep].analyzable++;
+      if(offer >= limit) byRep[rep].pops++;
+    }
+
+    var log = c.contactLog || [];
+    if(log.length && d.dateexpires){
+      var queueEntry = _parseDate(d.dateexpires);
+      var firstContact = _parseDate(log[0].date);
+      if(queueEntry && firstContact){
+        var days = Math.round((firstContact - queueEntry) / 86400000);
+        if(days >= 0) byRep[rep].firstContactDays.push(days);
+      }
+    }
+  });
+
+  return CM_ROSTER.map(function(c){
+    var r = byRep[c.name];
+    var popRate = r.analyzable > 0 ? Math.round(r.pops / r.analyzable * 100) : null;
+    var respDays = r.firstContactDays.length
+      ? _median(r.firstContactDays)
+      : null;
+    return {cm:c.name, demands:r.demands, popRate:popRate, analyzable:r.analyzable, respDays:respDays};
+  });
+}
+function _median(arr){
+  var s = arr.slice().sort(function(a,b){return a-b;});
+  var mid = Math.floor(s.length/2);
+  return s.length % 2 ? s[mid] : (s[mid-1]+s[mid])/2;
+}
+
+function renderStandings(period){
+  var name = _cmGetIdentity();
+  var rows = computeStandings(period);
+  var body = document.getElementById('standings-body');
+  body.innerHTML = rows.map(function(r){
+    var isYou = r.cm === name;
+    var popCell = r.analyzable === 0
+      ? '<span class="flag gray">— no demands</span>'
+      : '<span class="bic'+(r.popRate>=70?' green':'')+'"><span class="barfill" style="width:'+Math.min(r.popRate+8,100)+'%"></span><span class="barlbl">'+r.popRate+'%</span></span>';
+    var respCell = r.respDays === null
+      ? '<span class="flag gray">— no data yet</span>'
+      : (function(){ var cls = r.respDays<=2?'green':(r.respDays<=4?'amber':'red'); return '<span class="flag '+cls+'">'+r.respDays.toFixed(1)+'d</span>'; })();
+    return '<tr class="'+(isYou?'row-you':'')+'"><td class="name">'+r.cm+(isYou?'<span class="you-badge">You</span>':'')+'</td>'
+      + '<td class="num">'+r.demands+'</td>'
+      + '<td class="num">'+popCell+'</td>'
+      + '<td class="num">'+respCell+'</td></tr>';
+  }).join('');
+}
+function setPeriod(period){
+  document.querySelectorAll('#wys-seg button').forEach(function(b){
+    var on = b.dataset.period === period;
+    b.classList.toggle('on', on);
+    b.style.background = on ? '#fff' : 'transparent';
+    b.style.color = on ? 'var(--ink)' : 'var(--ink-2)';
+    b.style.boxShadow = on ? '0 1px 2px rgba(0,0,0,.06)' : 'none';
+  });
+  document.getElementById('th-period-1').textContent = period.toUpperCase();
+  document.getElementById('th-period-2').textContent = 'settled cases · ' + period.toUpperCase();
+  document.getElementById('th-period-3').textContent = 'median days · ' + period.toUpperCase();
+  renderStandings(period);
+}
+
+/* ----- Briefing ------------------------------------------------------------ */
+function renderBriefing(){
+  var name = _cmGetIdentity();
+  if(!name) return;
+  var mine = _allDemands.filter(function(d){ return d.case_manager === name; });
+  var open = mine.filter(function(d){ var c=_getContact(d.case._casename); return !_isResolved(d,c) && !c.handoffStatus; });
+  var noContact = open.filter(function(d){ var c=_getContact(d.case._casename); return !(c.contactLog||[]).length; });
+  document.getElementById('briefing-items').innerHTML =
+    'You have <b>' + open.length + ' open files</b> in your expired-demand queue'
+    + (open.length ? ' · ' + noContact.length + ' with no contact attempt logged yet.' : '.');
+}
+
+/* ----- Boot ----------------------------------------------------------------- */
+(function init(){
+  _cmCheckAdminReset();
+  _cmApplyIdentityToHeader();
+  var name = _cmGetIdentity();
+  if(!name){ _cmPickerOpen(); return; }
+  loadAndRender().then(renderBriefing);
+})();
+</script>
+</body>
+</html>
