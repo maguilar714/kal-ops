@@ -5272,6 +5272,7 @@ function _cmpRenderPanel(name, slug){
 
   function rowHtml(d, hidden){
     var caseName = d.case._casename;
+    var caseId = (d.case && d.case.id) || null;
     var c = _getContact(caseName);
     var log = c.contactLog || [];
     var answer = _cmpAnswerFor(d);
@@ -5297,7 +5298,7 @@ function _cmpRenderPanel(name, slug){
     var rowClass = resolved ? 'row-done cmp-handled-row' : '';
 
     return '<tr class="'+rowClass+'"'+(hidden?' hidden':'')+'>'
-      + '<td class="case-cell"><div class="case-name">'+_esc(d.case._casename)+'</div>'
+      + '<td class="case-cell"><div class="case-name">'+_caseLink(d.case._casename, caseId)+'</div>'
         + '<div class="case-meta">'+_esc(d.insurance||'')+' \u2014 '+_esc(d.demandtype||'')+' \u00b7 expires '+_esc(d.dateexpires||'\u2014')+'</div>'
         + (resolved ? '' : '<button class="not-mine" onclick="_cmpFlagNotMine(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">not '+_esc(name.split(' ')[0])+'\'s case?</button>')
       + '</td>'
