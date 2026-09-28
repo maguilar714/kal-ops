@@ -296,7 +296,8 @@ const server = http.createServer(async (req, res) => {
       };
 
       // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
-      const unknown = Object.keys(body).filter(k => k !== 'caseName' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
+      // clearTouch is a directive, not a column -- allowed through here, handled below.
+      const unknown = Object.keys(body).filter(k => k !== 'caseName' && k !== 'clearTouch' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
       if (unknown.length) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown field(s): ' + unknown.join(', ') + '. Add the key to COLMAP + a column in server.js before sending this field.' })); return; }
 
       // "Last touched" label -- derived here from which fields THIS write actually
@@ -304,8 +305,16 @@ const server = http.createServer(async (req, res) => {
       // call sends handoffStatus+handoffAt together, so handoffStatus is checked before
       // the generic info-fields case. Unrecognized/empty writes leave the prior label
       // alone (COALESCE below) rather than clobbering a good label with null.
+      //
+      // clearTouch (2026-09-28): the CM-Dashboard contact-log undo sends contactLog
+      // (the shortened log) AND clearTouch:true together -- without this check the
+      // contactLog branch below would relabel an undo as a fresh "Logged attempt".
+      // clearTouch means "actually clear the chip", so it skips COALESCE entirely
+      // (see updateSet below) instead of just leaving the prior label alone.
+      const clearTouch = body.clearTouch === true;
       let touchLabel = null;
-      if (Object.prototype.hasOwnProperty.call(body, 'contactLog')) touchLabel = 'Logged attempt';
+      if (clearTouch) touchLabel = null;
+      else if (Object.prototype.hasOwnProperty.call(body, 'contactLog')) touchLabel = 'Logged attempt';
       else if (Object.prototype.hasOwnProperty.call(body, 'handoffNote')) touchLabel = 'Note updated';
       else if (Object.prototype.hasOwnProperty.call(body, 'handoffStatus')) {
         const hs = body.handoffStatus;
@@ -334,7 +343,7 @@ const server = http.createServer(async (req, res) => {
       const insertCols = ['case_name'].concat(cols).concat(['updated_at', 'last_touch_action']);
       const insertVals = ['$1'].concat(cols.map((_, i) => '$' + (i + 2))).concat(['NOW()', '$' + touchIdx]);
       const updateSet  = cols.map((c, i) => c + ' = $' + (i + 2))
-        .concat(['updated_at = NOW()', 'last_touch_action = COALESCE($' + touchIdx + ', case_contacts.last_touch_action)'])
+        .concat(['updated_at = NOW()', 'last_touch_action = ' + (clearTouch ? 'NULL' : ('COALESCE($' + touchIdx + ', case_contacts.last_touch_action)'))])
         .join(', ');
 
       await pool.query(
