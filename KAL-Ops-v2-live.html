@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v6.0</title>
+<title>KAL Operations · v6.2</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -597,6 +597,8 @@
   .action-btn.blue:hover{background:var(--blue-soft)}
   .action-btn.red{border-color:var(--red);color:var(--red)}
   .action-btn.red:hover{background:var(--red-bg)}
+  .action-btn.gray{border-color:var(--ink-4);color:var(--ink-3)}
+  .action-btn.gray:hover{background:var(--surface-2)}
   .clog-form{position:absolute;z-index:80;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:14px;width:260px}
   .clog-form[hidden]{display:none}
   .clog-form label{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:8px 0 4px}
@@ -2330,7 +2332,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v6.0 · live data</div>
+    <div>KAL Operations · v6.2 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3268,14 +3270,32 @@ function _loadContacts(){
     });
 }
 
+// Mirrors server.js's own priority-ordered touch-label derivation (see /contacts POST
+// handler) so the "last touched" chip updates immediately, without waiting on a reload.
+function _deriveTouchLabel(fields){
+  if(Object.prototype.hasOwnProperty.call(fields, 'contactLog')) return 'Logged attempt';
+  if(Object.prototype.hasOwnProperty.call(fields, 'handoffNote')) return 'Note updated';
+  if(Object.prototype.hasOwnProperty.call(fields, 'handoffStatus')){
+    var hs = fields.handoffStatus;
+    return hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : 'Undo';
+  }
+  if(['adjusterEmail','adjusterName','adjusterPhone','claimNumber'].some(function(k){ return Object.prototype.hasOwnProperty.call(fields, k); })) return 'Info updated';
+  return null;
+}
 function _setContact(caseName, fields){
   if(!_contactCache[caseName]) _contactCache[caseName] = {};
   Object.assign(_contactCache[caseName], fields);
+  var label = _deriveTouchLabel(fields);
+  if(label){
+    _contactCache[caseName].lastTouchedAction = label;
+    _contactCache[caseName].lastTouchedAt = new Date().toISOString();
+  }
   return fetch(_RAILWAY_URL + '/contacts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
-  }).catch(function(e){ console.warn('Contact save failed:', e.message); });
+  }).then(function(r){ if(!r.ok) console.warn('Contact save rejected by server:', r.status); return r; })
+    .catch(function(e){ console.warn('Contact save failed:', e.message); });
 }
 
 function _getContact(caseName){
@@ -5221,6 +5241,13 @@ function _cmpAnswerFor(d){
   if(offer) return {label:'Offered '+_cmpFmtMoney(offer), cls:'amber'};
   return {label:'No answer yet', cls:'gray'};
 }
+// "Last touched" -- a labeled action + date, never a bare timestamp.
+function _cmpTouchChip(at, action){
+  if(!action || !at) return '';
+  var d = new Date(at);
+  var dateStr = isNaN(d) ? '' : (' ' + (d.getMonth()+1) + '/' + d.getDate());
+  return ' · <span style="color:var(--ink-4)">'+_esc(action)+dateStr+'</span>';
+}
 
 function renderCMPerfTab(){
   var totalOpen = 0, totalNoContact = 0;
@@ -5293,20 +5320,35 @@ function _cmpRenderPanel(name, slug){
 
     var actionBtn = '';
     if(outcome.action === 'transfer') actionBtn = '<button class="action-btn blue" onclick="_cmpHandoff(\''+_cmpEscJs(caseName)+'\',\'transferred\',\''+_cmpEscJs(slug)+'\')">Transfer \u2013 w/ offer \u2192</button>';
+    // Undo only applies to a handoff this dashboard made (Transfer). A case CasePeer
+    // itself shows as resolved isn't something to "undo" -- that's real synced data.
+    var undoBtn = (c.handoffStatus === 'transferred' || c.handoffStatus === 'escalated')
+      ? '<button class="action-btn gray" onclick="_cmpUndoHandoff(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">Undo</button>'
+      : '';
 
-    var notesVal = c.handoffNote || '';
+    var noteVal = _getNote(caseName);
+    var noteCellHtml = noteVal
+      ? '<div class="note-wrap" data-tip="'+_esc(noteVal)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" onclick="_cmpOpenNoteForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">'+_esc(noteVal)+'</span></div>'
+      : '<span onclick="_cmpOpenNoteForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
+
+    var adjBits = [];
+    if(c.adjusterName) adjBits.push(_esc(c.adjusterName));
+    if(c.adjusterPhone) adjBits.push(_esc(c.adjusterPhone));
+    if(c.adjusterEmail) adjBits.push(_esc(c.adjusterEmail));
+    var adjLine = '<div class="case-meta" style="cursor:pointer" onclick="_cmpOpenAdjForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">Adjuster: '+(adjBits.length ? adjBits.join(' \u00b7 ') : '<span style="color:var(--ink-4)">+ add</span>')+'</div>';
+
     var rowClass = resolved ? 'row-done cmp-handled-row' : '';
 
     return '<tr class="'+rowClass+'"'+(hidden?' hidden':'')+'>'
       + '<td class="case-cell"><div class="case-name">'+_caseLink(d.case._casename, caseId)+'</div>'
-        + '<div class="case-meta">'+_esc(d.insurance||'')+' \u2014 '+_esc(d.demandtype||'')+' \u00b7 expires '+_esc(d.dateexpires||'\u2014')+'</div>'
-        + (resolved ? '' : '<button class="not-mine" onclick="_cmpFlagNotMine(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">not '+_esc(name.split(' ')[0])+'\'s case?</button>')
+        + '<div class="case-meta">'+_esc(d.insurance||'')+' \u2014 '+_esc(d.demandtype||'')+' \u00b7 expires '+_esc(d.dateexpires||'\u2014')+_cmpTouchChip(c.lastTouchedAt, c.lastTouchedAction)+'</div>'
+        + adjLine
       + '</td>'
       + '<td><div class="clog">'+logHtml+addBtn+'</div></td>'
       + '<td><span class="flag '+answer.cls+'">'+answer.label+'</span></td>'
       + '<td>'+offerLimitHtml+'</td>'
-      + '<td><span class="flag '+outcome.cls+'">'+outcome.label+'</span>'+actionBtn+'</td>'
-      + '<td>'+_esc(notesVal || '\u2014')+'</td>'
+      + '<td><span class="flag '+outcome.cls+'">'+outcome.label+'</span>'+actionBtn+undoBtn+'</td>'
+      + '<td>'+noteCellHtml+'</td>'
       + '</tr>';
   }
 
@@ -5396,10 +5438,74 @@ function _cmpHandoff(caseName, status, slug){
     if(cm) _cmpRenderPanel(cm.name, slug);
   });
 }
-function _cmpFlagNotMine(caseName, slug){
-  var note = prompt('Whose case is this actually? (optional note)');
-  if(note === null) return;
-  _setContact(caseName, {handoffNote: note}).then(function(){
+function _cmpUndoHandoff(caseName, slug){
+  if(!confirm('Undo this and put the file back in the open queue?')) return;
+  _setContact(caseName, {handoffStatus: null, handoffAt: null}).then(function(){
+    var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0];
+    if(cm) _cmpRenderPanel(cm.name, slug);
+  });
+}
+function _cmpOpenNoteForm(evt, caseName, slug){
+  var td = evt.target.closest('td');
+  if(!td || td.querySelector('textarea')) return;
+  var current = _getNote(caseName) || '';
+  td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
+  var ta = td.querySelector('textarea');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  var done = false;
+  function commit(){
+    if(done) return; done = true;
+    var val = ta.value.trim();
+    function redraw(){ var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0]; if(cm) _cmpRenderPanel(cm.name, slug); }
+    if(val && val !== current){
+      _setNote(caseName, val);
+      _setContact(caseName, {handoffNote: 'touch'}).then(redraw);
+    } else if(!val && current){
+      _clearNote(caseName);
+      _setContact(caseName, {handoffNote: 'touch'}).then(redraw);
+    } else {
+      redraw();
+    }
+  }
+  ta.addEventListener('blur', commit);
+  ta.addEventListener('keydown', function(ev){
+    if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+    if(ev.key === 'Escape'){ ta.value = current; ta.blur(); }
+  });
+}
+function _cmpOpenAdjForm(evt, caseName, slug){
+  var existing = document.getElementById('adj-form-live');
+  if(existing) existing.remove();
+  var c = _getContact(caseName);
+  var form = document.createElement('div');
+  form.className = 'clog-form';
+  form.id = 'adj-form-live';
+  form.innerHTML =
+    '<label>Adjuster name</label>'
+    + '<input id="adj-name" type="text" value="'+_esc(c.adjusterName||'')+'">'
+    + '<label>Phone</label>'
+    + '<input id="adj-phone" type="text" value="'+_esc(c.adjusterPhone||'')+'">'
+    + '<label>Email</label>'
+    + '<input id="adj-email" type="text" value="'+_esc(c.adjusterEmail||'')+'">'
+    + '<label>Claim #</label>'
+    + '<input id="adj-claim" type="text" value="'+_esc(c.claimNumber||'')+'">'
+    + '<div class="row-btns"><button onclick="_cmpCloseAdjForm()">Cancel</button><button class="primary" onclick="_cmpSaveAdjForm(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">Save</button></div>';
+  document.body.appendChild(form);
+  var rect = evt.target.getBoundingClientRect();
+  form.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+  form.style.left = (window.scrollX + rect.left) + 'px';
+}
+function _cmpCloseAdjForm(){ var f=document.getElementById('adj-form-live'); if(f) f.remove(); }
+function _cmpSaveAdjForm(caseName, slug){
+  var fields = {
+    adjusterName: document.getElementById('adj-name').value.trim(),
+    adjusterPhone: document.getElementById('adj-phone').value.trim(),
+    adjusterEmail: document.getElementById('adj-email').value.trim(),
+    claimNumber: document.getElementById('adj-claim').value.trim()
+  };
+  _cmpCloseAdjForm();
+  _setContact(caseName, fields).then(function(){
     var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0];
     if(cm) _cmpRenderPanel(cm.name, slug);
   });
@@ -5408,7 +5514,11 @@ window._cmpOpenClogForm = _cmpOpenClogForm;
 window._cmpCloseClogForm = _cmpCloseClogForm;
 window._cmpSaveClogEntry = _cmpSaveClogEntry;
 window._cmpHandoff = _cmpHandoff;
-window._cmpFlagNotMine = _cmpFlagNotMine;
+window._cmpUndoHandoff = _cmpUndoHandoff;
+window._cmpOpenNoteForm = _cmpOpenNoteForm;
+window._cmpOpenAdjForm = _cmpOpenAdjForm;
+window._cmpCloseAdjForm = _cmpCloseAdjForm;
+window._cmpSaveAdjForm = _cmpSaveAdjForm;
 window._cmpToggleHandled = _cmpToggleHandled;
 window._cmpToggleAllHandled = _cmpToggleAllHandled;
 

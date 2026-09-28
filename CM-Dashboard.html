@@ -142,6 +142,8 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 .clog-form .row-btns{display:flex;gap:8px;margin-top:12px}
 .clog-form .row-btns button{flex:1;padding:7px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer}
 .clog-form .row-btns button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.note-wrap{position:relative;display:inline-block;max-width:100%}
+.note-wrap[data-tip]:not([data-tip=""]):hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface-3);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:11.5px;font-family:var(--ui);white-space:pre-wrap;word-break:break-word;max-width:280px;min-width:100px;z-index:200;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
 .note{font-size:12.5px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.5}
 .note b{color:var(--ink-2);font-weight:600}
@@ -275,7 +277,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
 
-  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.1 &middot; <span id="live-status">connecting&hellip;</span></div>
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.2 &middot; <span id="live-status">connecting&hellip;</span></div>
 </div>
 
 <script>
@@ -395,16 +397,62 @@ function _loadContacts(){
     .then(function(data){ _contactCache = data || {}; })
     .catch(function(e){ console.warn('Could not load contacts from Railway:', e.message); _contactCache = {}; });
 }
+// Mirrors server.js's own priority-ordered touch-label derivation (see /contacts POST
+// handler) so the "last touched" chip updates immediately on this device, without
+// waiting on a reload. The server remains the source of truth on next load.
+function _deriveTouchLabel(fields){
+  if(Object.prototype.hasOwnProperty.call(fields, 'contactLog')) return 'Logged attempt';
+  if(Object.prototype.hasOwnProperty.call(fields, 'handoffNote')) return 'Note updated';
+  if(Object.prototype.hasOwnProperty.call(fields, 'handoffStatus')){
+    var hs = fields.handoffStatus;
+    return hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : 'Undo';
+  }
+  if(['adjusterEmail','adjusterName','adjusterPhone','claimNumber'].some(function(k){ return Object.prototype.hasOwnProperty.call(fields, k); })) return 'Info updated';
+  return null;
+}
 function _setContact(caseName, fields){
   if(!_contactCache[caseName]) _contactCache[caseName] = {};
   Object.assign(_contactCache[caseName], fields);
+  var label = _deriveTouchLabel(fields);
+  if(label){
+    _contactCache[caseName].lastTouchedAction = label;
+    _contactCache[caseName].lastTouchedAt = new Date().toISOString();
+  }
   return fetch(_RAILWAY_URL + '/contacts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ caseName: caseName }, fields))
-  }).catch(function(e){ console.warn('Contact save failed:', e.message); });
+  }).then(function(r){ if(!r.ok) console.warn('Contact save rejected by server:', r.status); return r; })
+    .catch(function(e){ console.warn('Contact save failed:', e.message); });
 }
 function _getContact(caseName){ return _contactCache[caseName] || {}; }
+
+/* ----- Shared notes (same /notes store Ops & Settlement use on their pipeline
+   tables) -- freeform per-case field, click to edit, independent of handoffNote. */
+var _noteCache = {};
+function _loadNotes(){
+  return fetch(_RAILWAY_URL + '/notes')
+    .then(function(r){ return r.json(); })
+    .then(function(data){ _noteCache = data || {}; })
+    .catch(function(e){ console.warn('Could not load notes from Railway:', e.message); _noteCache = {}; });
+}
+function _setNote(caseName, note){
+  _noteCache[caseName] = note;
+  return fetch(_RAILWAY_URL + '/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({caseName: caseName, note: note})
+  }).catch(function(e){ console.warn('Note save failed:', e.message); });
+}
+function _clearNote(caseName){
+  delete _noteCache[caseName];
+  return fetch(_RAILWAY_URL + '/notes', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({caseName: caseName})
+  }).catch(function(e){ console.warn('Note clear failed:', e.message); });
+}
+function _getNote(caseName){ return _noteCache[caseName] || null; }
 
 /* ============================================================================
    DATA — pulls real demands from CasePeer (same endpoint every KAL dashboard
@@ -480,6 +528,14 @@ function _solChip(solDays){
   if(solDays<=90) return ' &middot; <span style="color:var(--amber)">SOL '+solDays+'d</span>';
   return ' &middot; SOL '+solDays+'d';
 }
+// "Last touched" -- a labeled action + date, never a bare timestamp (a bare date
+// reads as false progress; see server.js's last_touch_action derivation).
+function _touchChip(at, action){
+  if(!action || !at) return '';
+  var d = new Date(at);
+  var dateStr = isNaN(d) ? '' : (' ' + (d.getMonth()+1) + '/' + d.getDate());
+  return ' &middot; <span style="color:var(--ink-4)">'+_escapeHtml(action)+dateStr+'</span>';
+}
 
 async function loadAndRender(){
   var name = _cmGetIdentity();
@@ -494,7 +550,8 @@ async function loadAndRender(){
       fetchAll('/api/v1/case/demands/?datesent__gte=2024-01-01&datesent__lte=2026-12-31'),
       fetchAll('/api/v1/case/settlement-overview/'),
       fetchAll('/api/v1/case/calendar/'),
-      _loadContacts()
+      _loadContacts(),
+      _loadNotes()
     ]);
     _allDemands = (demands||[]).filter(function(d){ return d.case_manager !== 'Junior Alvarez'; });
     _buildSolMap(settlement||[], calendar||[]);
@@ -596,18 +653,27 @@ function renderMyFiles(name){
         ? '<button class="action-btn gray" onclick="_undoHandoff(\''+_escJs(caseName)+'\')">Undo</button>'
         : '';
 
-      var notesVal = c.handoffNote || '';
+      var noteVal = _getNote(caseName);
+      var noteCellHtml = noteVal
+        ? '<div class="note-wrap" data-tip="'+_escapeHtml(noteVal)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" onclick="_openNoteForm(event,\''+_escJs(caseName)+'\')">'+_escapeHtml(noteVal)+'</span></div>'
+        : '<span onclick="_openNoteForm(event,\''+_escJs(caseName)+'\')" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
+
+      var adjBits = [];
+      if(c.adjusterName) adjBits.push(_escapeHtml(c.adjusterName));
+      if(c.adjusterPhone) adjBits.push(_escapeHtml(c.adjusterPhone));
+      if(c.adjusterEmail) adjBits.push(_escapeHtml(c.adjusterEmail));
+      var adjLine = '<div class="case-meta" style="cursor:pointer" onclick="_openAdjForm(event,\''+_escJs(caseName)+'\')">Adjuster: '+(adjBits.length ? adjBits.join(' · ') : '<span style="color:var(--ink-4)">+ add</span>')+'</div>';
 
       return '<tr class="'+(resolved?'row-done':'')+'" id="row-'+_escJs(caseName)+'">'
         + '<td class="case-cell"><div class="case-name">'+_caseLink(d.case._casename, caseId)+'</div>'
-          + '<div class="case-meta">'+_escapeHtml(d.insurance||'')+' — '+_escapeHtml(d.demandtype||'')+' · expires '+(d.dateexpires||'—')+_solChip(solDays)+'</div>'
-          + (resolved ? '' : '<button class="not-mine" onclick="_flagNotMine(\''+_escJs(caseName)+'\')">not my case?</button>')
+          + '<div class="case-meta">'+_escapeHtml(d.insurance||'')+' — '+_escapeHtml(d.demandtype||'')+' · expires '+(d.dateexpires||'—')+_solChip(solDays)+_touchChip(c.lastTouchedAt, c.lastTouchedAction)+'</div>'
+          + adjLine
         + '</td>'
         + '<td><div class="clog">'+logHtml+addBtn+'</div></td>'
         + '<td><span class="flag '+answer.cls+'">'+answer.label+'</span></td>'
         + '<td>'+offerLimitHtml+'</td>'
         + '<td><span class="flag '+outcome.cls+'">'+outcome.label+'</span>'+actionBtn+undoBtn+'</td>'
-        + '<td>'+_escapeHtml(notesVal || '—')+'</td>'
+        + '<td>'+noteCellHtml+'</td>'
         + '</tr>';
     }).join('');
   }
@@ -682,10 +748,66 @@ function _undoHandoff(caseName){
     renderMyFiles(_cmGetIdentity());
   });
 }
-function _flagNotMine(caseName){
-  var note = prompt('What should Icela/whoever this really belongs to know? (e.g. "reassigned to me from X on 09/10")');
-  if(note === null) return;
-  _setContact(caseName, {handoffNote: note}).then(function(){
+function _openNoteForm(evt, caseName){
+  var td = evt.target.closest('td');
+  if(!td || td.querySelector('textarea')) return;
+  var current = _getNote(caseName) || '';
+  td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_escapeHtml(current)+'</textarea>';
+  var ta = td.querySelector('textarea');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  var done = false;
+  function commit(){
+    if(done) return; done = true;
+    var val = ta.value.trim();
+    if(val && val !== current){
+      _setNote(caseName, val);
+      _setContact(caseName, {handoffNote: 'touch'}).then(function(){ renderMyFiles(_cmGetIdentity()); });
+    } else if(!val && current){
+      _clearNote(caseName);
+      _setContact(caseName, {handoffNote: 'touch'}).then(function(){ renderMyFiles(_cmGetIdentity()); });
+    } else {
+      renderMyFiles(_cmGetIdentity());
+    }
+  }
+  ta.addEventListener('blur', commit);
+  ta.addEventListener('keydown', function(ev){
+    if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+    if(ev.key === 'Escape'){ ta.value = current; ta.blur(); }
+  });
+}
+function _openAdjForm(evt, caseName){
+  var existing = document.getElementById('adj-form-live');
+  if(existing) existing.remove();
+  var c = _getContact(caseName);
+  var form = document.createElement('div');
+  form.className = 'clog-form';
+  form.id = 'adj-form-live';
+  form.innerHTML =
+    '<label>Adjuster name</label>'
+    + '<input id="adj-name" type="text" value="'+_escapeHtml(c.adjusterName||'')+'">'
+    + '<label>Phone</label>'
+    + '<input id="adj-phone" type="text" value="'+_escapeHtml(c.adjusterPhone||'')+'">'
+    + '<label>Email</label>'
+    + '<input id="adj-email" type="text" value="'+_escapeHtml(c.adjusterEmail||'')+'">'
+    + '<label>Claim #</label>'
+    + '<input id="adj-claim" type="text" value="'+_escapeHtml(c.claimNumber||'')+'">'
+    + '<div class="row-btns"><button onclick="_closeAdjForm()">Cancel</button><button class="primary" onclick="_saveAdjForm(\''+_escJs(caseName)+'\')">Save</button></div>';
+  document.body.appendChild(form);
+  var rect = evt.target.getBoundingClientRect();
+  form.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+  form.style.left = (window.scrollX + rect.left) + 'px';
+}
+function _closeAdjForm(){ var f=document.getElementById('adj-form-live'); if(f) f.remove(); }
+function _saveAdjForm(caseName){
+  var fields = {
+    adjusterName: document.getElementById('adj-name').value.trim(),
+    adjusterPhone: document.getElementById('adj-phone').value.trim(),
+    adjusterEmail: document.getElementById('adj-email').value.trim(),
+    claimNumber: document.getElementById('adj-claim').value.trim()
+  };
+  _closeAdjForm();
+  _setContact(caseName, fields).then(function(){
     renderMyFiles(_cmGetIdentity());
   });
 }
