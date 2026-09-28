@@ -5227,7 +5227,7 @@ function _cmpIsResolved(d){
   return !!(offer && limit && offer >= limit);
 }
 function _cmpOutcomeFor(d, contact){
-  if(_cmpIsResolved(d)) return {label:'\u2192 CM Credit', cls:'green', action:null};
+  if(_cmpIsResolved(d)) return {label:'\u2192 CM Resolved', cls:'green', action:null};
   if(contact.handoffStatus === 'transferred') return {label:'Transferred \u2013 w/ offer', cls:'blue', action:null};
   if(contact.handoffStatus === 'escalated') return {label:'Escalated \u2013 SOL', cls:'red', action:null};
   var offer = parseFloat(d.offer_amount);
