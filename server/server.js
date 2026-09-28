@@ -102,6 +102,15 @@ async function initDb() {
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS contact_log TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS handoff_status TEXT`);
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS handoff_at TEXT`);
+  // handoff_note: the client has sent this since "not my case?" shipped, but it was
+  // never given a column or COLMAP entry -- every save has been silently rejected
+  // (400) server-side. Fixing that here (2026-09).
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS handoff_note TEXT`);
+  // "Last touched" (2026-09) -- last_touch_action is server-derived (never sent by a
+  // client) from which fields a /contacts POST carried; updated_at (already bumped on
+  // every write above) is the timestamp half. Together: "what happened, and when" --
+  // not just a bare date, which by itself would misleadingly imply real progress.
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS last_touch_action TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, note TEXT, treatment TEXT, main_tasks TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Backfill columns for deployments created before these fields existed.
   // The dashboards send note/treatment/mainTasks to /junior; without these
@@ -235,7 +244,7 @@ const server = http.createServer(async (req, res) => {
   // CONTACTS
   if (req.method === 'GET' && url === '/contacts') {
     try {
-      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log, contact_log, handoff_status, handoff_at FROM case_contacts');
+      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log, contact_log, handoff_status, handoff_at, handoff_note, updated_at, last_touch_action FROM case_contacts');
       const contacts = {};
       result.rows.forEach(r => {
         contacts[r.case_name] = {
@@ -248,7 +257,12 @@ const server = http.createServer(async (req, res) => {
           emailLog: r.email_log ? JSON.parse(r.email_log) : null,
           contactLog: r.contact_log ? JSON.parse(r.contact_log) : [],
           handoffStatus: r.handoff_status,
-          handoffAt: r.handoff_at
+          handoffAt: r.handoff_at,
+          handoffNote: r.handoff_note,
+          // "Last touched" -- updated_at is bumped on every write to this row
+          // regardless of which fields changed; last_touch_action (below) says which.
+          lastTouchedAt: r.updated_at ? r.updated_at.toISOString() : null,
+          lastTouchedAction: r.last_touch_action || null
         };
       });
       res.writeHead(200); res.end(JSON.stringify(contacts));
@@ -277,12 +291,27 @@ const server = http.createServer(async (req, res) => {
         emailLog:      'email_log',
         contactLog:    'contact_log',
         handoffStatus: 'handoff_status',
-        handoffAt:     'handoff_at'
+        handoffAt:     'handoff_at',
+        handoffNote:   'handoff_note'
       };
 
       // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
       const unknown = Object.keys(body).filter(k => k !== 'caseName' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
       if (unknown.length) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown field(s): ' + unknown.join(', ') + '. Add the key to COLMAP + a column in server.js before sending this field.' })); return; }
+
+      // "Last touched" label -- derived here from which fields THIS write actually
+      // carried, never sent by the client. Priority order matters: a transfer/escalate
+      // call sends handoffStatus+handoffAt together, so handoffStatus is checked before
+      // the generic info-fields case. Unrecognized/empty writes leave the prior label
+      // alone (COALESCE below) rather than clobbering a good label with null.
+      let touchLabel = null;
+      if (Object.prototype.hasOwnProperty.call(body, 'contactLog')) touchLabel = 'Logged attempt';
+      else if (Object.prototype.hasOwnProperty.call(body, 'handoffNote')) touchLabel = 'Note updated';
+      else if (Object.prototype.hasOwnProperty.call(body, 'handoffStatus')) {
+        const hs = body.handoffStatus;
+        touchLabel = hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : 'Undo';
+      }
+      else if (['adjusterEmail','adjusterName','adjusterPhone','claimNumber'].some(k => Object.prototype.hasOwnProperty.call(body, k))) touchLabel = 'Info updated';
 
       const cols = [], vals = [];
       Object.keys(COLMAP).forEach(key => {
@@ -301,14 +330,17 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
       }
 
-      const insertCols = ['case_name'].concat(cols).concat('updated_at');
-      const insertVals = ['$1'].concat(cols.map((_, i) => '$' + (i + 2))).concat('NOW()');
-      const updateSet  = cols.map((c, i) => c + ' = $' + (i + 2)).concat('updated_at = NOW()').join(', ');
+      const touchIdx = cols.length + 2; // $ index for the touchLabel param
+      const insertCols = ['case_name'].concat(cols).concat(['updated_at', 'last_touch_action']);
+      const insertVals = ['$1'].concat(cols.map((_, i) => '$' + (i + 2))).concat(['NOW()', '$' + touchIdx]);
+      const updateSet  = cols.map((c, i) => c + ' = $' + (i + 2))
+        .concat(['updated_at = NOW()', 'last_touch_action = COALESCE($' + touchIdx + ', case_contacts.last_touch_action)'])
+        .join(', ');
 
       await pool.query(
         `INSERT INTO case_contacts (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})
          ON CONFLICT (case_name) DO UPDATE SET ${updateSet}`,
-        [caseName].concat(vals)
+        [caseName].concat(vals).concat([touchLabel])
       );
       res.writeHead(200); res.end(JSON.stringify({ ok: true }));
     } catch(e) { res.writeHead(500); res.end(JSON.stringify({ error: 'DB error' })); }
