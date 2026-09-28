@@ -116,6 +116,8 @@ th[data-tip],td[data-tip]{cursor:help}
 .clog-entry .ct2{color:var(--ink-2)}
 .clog-add{border:1px dashed var(--line-strong);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--ink-4);cursor:pointer;width:fit-content;background:none}
 .clog-add:hover{color:var(--blue);border-color:var(--blue)}
+.clog-undo{margin-left:auto;border:0;background:none;color:var(--ink-4);cursor:pointer;font-size:13px;line-height:1;padding:0 2px;flex-shrink:0}
+.clog-undo:hover{color:var(--red)}
 .sync-chip{font-family:var(--num);font-size:12px;color:var(--ink-2);background:var(--surface-3);border-radius:6px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .sync-chip .tag{font-size:8.5px;font-family:var(--ui);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);background:var(--surface);border-radius:4px;padding:1px 4px}
 tr.row-done{background:var(--surface-2)}
@@ -149,7 +151,14 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 .note b{color:var(--ink-2);font-weight:600}
 
 .rule-card{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px}
-.rule-card .rule-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
+.rule-card .rule-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rule-help-btn{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-3);border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:none;letter-spacing:normal}
+.rule-help-btn:hover{color:var(--blue);border-color:var(--blue)}
+.rule-help{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2);line-height:1.5}
+.rule-help.show{display:block}
+.rule-help dt{font-weight:600;color:var(--ink);margin-top:8px}
+.rule-help dt:first-child{margin-top:0}
+.rule-help dd{margin:2px 0 0 0}
 .rule-row{display:grid;grid-template-columns:184px 1fr;gap:14px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
 .rule-row .flag{white-space:normal;text-align:center;line-height:1.3}
 .rule-row:first-of-type{border-top:0;padding-top:0}
@@ -195,10 +204,43 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
     <div class="stamp"><b id="stamp-date">&mdash;</b>updates nightly</div>
   </div>
 
+  <div class="rule-card">
+    <div class="rule-title">The rule — outcome isn't something you pick, it follows from the log<button class="rule-help-btn" onclick="_toggleRuleHelp()" title="What do I do with each field?">?</button></div>
+    <div class="rule-row">
+      <div><span class="flag green">→ CM Credit</span></div>
+      <div class="rr-text"><b>Full policy limit tendered.</b> Closed. Nothing else to do — still counts as your workup.</div>
+    </div>
+    <div class="rule-row">
+      <div><span class="flag blue">Transferred – w/ offer</span></div>
+      <div class="rr-text"><b>Any offer below limit.</b> Click the button to send it to Gus/Mark with a real number to negotiate.</div>
+    </div>
+    <div class="rule-row">
+      <div><span class="flag red">Escalated – SOL</span></div>
+      <div class="rr-text"><b>No answer, and SOL is closing in.</b> Click to send it to Gus/Mark as a "we can't reach the carrier" problem — not a negotiation. Same Settlement queue as above, different reason, so they know which one they're picking up.</div>
+    </div>
+    <div class="rule-foot">Offer $ and the policy limit sync from CasePeer once you log them there. You only type the contact log — nothing CasePeer already has.</div>
+    <div class="rule-help" id="rule-help">
+      <dl style="margin:0">
+        <dt>Contact log</dt><dd>Click "+ log attempt" every time you reach out, pick what happened, save. Made a mistake? The &times; on your most recent entry undoes just that one.</dd>
+        <dt>Answer</dt><dd>Synced from CasePeer's offer amount — nothing to type here.</dd>
+        <dt>Offer / limit</dt><dd>Synced from CasePeer once you log the offer there.</dd>
+        <dt>Outcome</dt><dd>Follows automatically from the log, per the rule above. Transfer/Escalate is a button that appears when it applies. Undo reverses a mis-click and puts the file back in your open queue.</dd>
+        <dt>Notes</dt><dd>Freeform — anything worth flagging about this file. Click to type.</dd>
+        <dt>Adjuster</dt><dd>Name, phone, email, claim #. Click to add — syncs across every KAL dashboard that shows this case.</dd>
+      </dl>
+    </div>
+  </div>
+
   <!-- ============ MY ASSIGNED FILES ============ -->
   <div class="section-title">
     <div class="left"><div class="accent-rule"></div><h2>My assigned files &middot; open-file follow-up</h2></div>
-    <div class="hint">Only your files &mdash; refills automatically</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="seg" id="myfiles-scope-seg" style="display:inline-flex;background:rgba(0,0,0,0.05);border-radius:6px;padding:3px;gap:2px">
+        <button class="on" data-scope="open" onclick="setMyFilesScope('open')" style="border:0;background:#fff;padding:6px 14px;font-size:12.5px;font-weight:500;color:var(--ink);border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06)">Open only</button>
+        <button data-scope="all" onclick="setMyFilesScope('all')" style="border:0;background:transparent;padding:6px 14px;font-size:12.5px;font-weight:500;color:var(--ink-2);border-radius:6px;cursor:pointer">All</button>
+      </div>
+      <div class="hint">Only your files &mdash; refills automatically</div>
+    </div>
   </div>
 
   <div class="panel">
@@ -225,22 +267,6 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
     </div>
   </div>
 
-  <div class="rule-card">
-    <div class="rule-title">The rule — outcome isn't something you pick, it follows from the log</div>
-    <div class="rule-row">
-      <div><span class="flag green">→ CM Credit</span></div>
-      <div class="rr-text"><b>Full policy limit tendered.</b> Closed. Nothing else to do — still counts as your workup.</div>
-    </div>
-    <div class="rule-row">
-      <div><span class="flag blue">Transferred – w/ offer</span></div>
-      <div class="rr-text"><b>Any offer below limit.</b> Click the button to send it to Gus/Mark with a real number to negotiate.</div>
-    </div>
-    <div class="rule-row">
-      <div><span class="flag red">Escalated – SOL</span></div>
-      <div class="rr-text"><b>No answer, and SOL is closing in.</b> Click to send it to Gus/Mark as a "we can't reach the carrier" problem — not a negotiation. Same Settlement queue as above, different reason, so they know which one they're picking up.</div>
-    </div>
-    <div class="rule-foot">Offer $ and the policy limit sync from CasePeer once you log them there. You only type the contact log — nothing CasePeer already has.</div>
-  </div>
   <div class="note" id="sol-todo-note"><b>SOL wired 2026-09-14:</b> the countdown next to each case pulls from the exact same statute-of-limitations calculation the SOL tab uses (settlement-overview’s statute date, overridden by a manual CasePeer calendar entry when one exists) &mdash; not a separate guess. Escalate appears once a file has no answer and SOL is inside 30 days. Not yet live-verified against a real CasePeer session.</div>
 
   <!-- ============ WHERE YOU STAND ============ -->
@@ -277,7 +303,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
 
-  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.2 &middot; <span id="live-status">connecting&hellip;</span></div>
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.3 &middot; <span id="live-status">connecting&hellip;</span></div>
 </div>
 
 <script>
@@ -597,6 +623,8 @@ function _answerFor(d){
   return {label:'No answer yet', cls:'gray'};
 }
 
+// Default hides handled files -- toggled via #myfiles-scope-seg (setMyFilesScope).
+var _myFilesScope = 'open'; // 'open' | 'all'
 function renderMyFiles(name){
   var mine = _allDemands.filter(function(d){ return d.case_manager === name; });
   var open = mine.filter(function(d){
@@ -612,10 +640,13 @@ function renderMyFiles(name){
 
   var urgentBits = [];
   var body = document.getElementById('myfiles-body');
-  if(open.length === 0 && resolvedThisMonth.length === 0){
+  var scoped = _myFilesScope === 'open' ? open : mine;
+  if(mine.length === 0){
     body.innerHTML = '<tr><td colspan="6" class="empty-state">No demands found for ' + name + ' in CasePeer. If that\'s wrong, check the name matches CasePeer\'s case_manager field exactly.</td></tr>';
+  } else if(scoped.length === 0){
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">No open files right now — nice work. <button class="clog-add" style="display:inline-block;margin-left:6px" onclick="setMyFilesScope(\'all\')">Show '+resolvedThisMonth.length+' handled</button></td></tr>';
   } else {
-    var rows = mine.slice().sort(function(a,b){
+    var rows = scoped.slice().sort(function(a,b){
       var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
       var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
       if(!ea) return 1; if(!eb) return -1;
@@ -632,7 +663,11 @@ function renderMyFiles(name){
       var resolved = _isResolved(d, c) || c.handoffStatus;
 
       var logHtml = log.length
-        ? log.map(function(e){ return '<div class="clog-entry"><span class="cd">'+(e.date||'')+'</span><span class="ct2">'+_escapeHtml(e.note||'')+'</span></div>'; }).join('')
+        ? log.map(function(e, i){
+            var isLast = i === log.length - 1;
+            var undoBtn = isLast ? '<button class="clog-undo" title="Undo this entry" onclick="_undoLastClogEntry(event,\''+_escJs(caseName)+'\')">&times;</button>' : '';
+            return '<div class="clog-entry"><span class="cd">'+(e.date||'')+'</span><span class="ct2">'+_escapeHtml(e.note||'')+'</span>'+undoBtn+'</div>';
+          }).join('')
         : '<div class="clog-entry"><span class="ct2" style="color:var(--ink-4);font-style:italic">no attempts logged yet</span></div>';
       var addBtn = resolved ? '' : '<button class="clog-add" onclick="_openClogForm(event,\''+_escJs(caseName)+'\')">+ log attempt</button>';
 
@@ -734,6 +769,16 @@ function _saveClogEntry(caseName){
   log.push({date:date, type:type, amount: type==='offer'?amt:null, note: LABELS[type]});
   _setContact(caseName, {contactLog: log}).then(function(){
     _closeClogForm();
+    renderMyFiles(_cmGetIdentity());
+  });
+}
+function _undoLastClogEntry(evt, caseName){
+  if(evt) evt.stopPropagation();
+  var c = _getContact(caseName);
+  var log = (c.contactLog || []).slice();
+  if(!log.length) return;
+  log.pop();
+  _setContact(caseName, {contactLog: log}).then(function(){
     renderMyFiles(_cmGetIdentity());
   });
 }
@@ -907,6 +952,21 @@ function setPeriod(period){
   document.getElementById('th-period-2').textContent = 'settled cases · ' + period.toUpperCase();
   document.getElementById('th-period-3').textContent = 'median days · ' + period.toUpperCase();
   renderStandings(period);
+}
+function setMyFilesScope(scope){
+  _myFilesScope = scope;
+  document.querySelectorAll('#myfiles-scope-seg button').forEach(function(b){
+    var on = b.dataset.scope === scope;
+    b.classList.toggle('on', on);
+    b.style.background = on ? '#fff' : 'transparent';
+    b.style.color = on ? 'var(--ink)' : 'var(--ink-2)';
+    b.style.boxShadow = on ? '0 1px 2px rgba(0,0,0,.06)' : 'none';
+  });
+  renderMyFiles(_cmGetIdentity());
+}
+function _toggleRuleHelp(){
+  var el = document.getElementById('rule-help');
+  if(el) el.classList.toggle('show');
 }
 function setScope(scope){
   _wysScope = scope;
