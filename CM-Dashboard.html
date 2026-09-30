@@ -303,7 +303,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
 
-  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.4 &middot; <span id="live-status">connecting&hellip;</span></div>
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.5 &middot; <span id="live-status">connecting&hellip;</span></div>
 </div>
 
 <script>
@@ -693,7 +693,7 @@ function renderMyFiles(name){
         ? '<button class="action-btn gray" onclick="_undoHandoff(\''+_escJs(caseName)+'\')">Undo</button>'
         : '';
 
-      var noteVal = _getNote(caseName);
+      var noteVal = _getNote('cmnote::'+caseName); // this CM's own note; see KAL-Ops-CHANGELOG.md v6.5
       var noteCellHtml = noteVal
         ? '<div class="note-wrap" data-tip="'+_escapeHtml(noteVal)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" onclick="_openNoteForm(event,\''+_escJs(caseName)+'\')">'+_escapeHtml(noteVal)+'</span></div>'
         : '<span onclick="_openNoteForm(event,\''+_escJs(caseName)+'\')" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
@@ -804,7 +804,8 @@ function _undoHandoff(caseName){
 function _openNoteForm(evt, caseName){
   var td = evt.target.closest('td');
   if(!td || td.querySelector('textarea')) return;
-  var current = _getNote(caseName) || '';
+  var noteKey = 'cmnote::'+caseName;
+  var current = _getNote(noteKey) || '';
   td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_escapeHtml(current)+'</textarea>';
   var ta = td.querySelector('textarea');
   ta.focus();
@@ -814,10 +815,10 @@ function _openNoteForm(evt, caseName){
     if(done) return; done = true;
     var val = ta.value.trim();
     if(val && val !== current){
-      _setNote(caseName, val);
+      _setNote(noteKey, val);
       _setContact(caseName, {handoffNote: 'touch'}).then(function(){ renderMyFiles(_cmGetIdentity()); });
     } else if(!val && current){
-      _clearNote(caseName);
+      _clearNote(noteKey);
       _setContact(caseName, {handoffNote: 'touch'}).then(function(){ renderMyFiles(_cmGetIdentity()); });
     } else {
       renderMyFiles(_cmGetIdentity());

@@ -2332,7 +2332,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v6.2 · live data</div>
+    <div>KAL Operations · v6.3 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -5326,7 +5326,9 @@ function _cmpRenderPanel(name, slug){
       ? '<button class="action-btn gray" onclick="_cmpUndoHandoff(\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">Undo</button>'
       : '';
 
-    var noteVal = _getNote(caseName);
+    // This CM's own note (cmnote:: prefix) -- separate from Ops's own case note
+    // used on the main tracker tab. See KAL-Ops-CHANGELOG.md v6.5.
+    var noteVal = _getNote('cmnote::'+caseName);
     var noteCellHtml = noteVal
       ? '<div class="note-wrap" data-tip="'+_esc(noteVal)+'"><span style="display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--ink-2);font-size:12px" onclick="_cmpOpenNoteForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')">'+_esc(noteVal)+'</span></div>'
       : '<span onclick="_cmpOpenNoteForm(event,\''+_cmpEscJs(caseName)+'\',\''+_cmpEscJs(slug)+'\')" style="cursor:pointer;color:var(--ink-4);font-size:12px">+ add</span>';
@@ -5448,7 +5450,8 @@ function _cmpUndoHandoff(caseName, slug){
 function _cmpOpenNoteForm(evt, caseName, slug){
   var td = evt.target.closest('td');
   if(!td || td.querySelector('textarea')) return;
-  var current = _getNote(caseName) || '';
+  var noteKey = 'cmnote::'+caseName;
+  var current = _getNote(noteKey) || '';
   td.innerHTML = '<textarea style="width:100%;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--blue);border-radius:6px;resize:none;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;" rows="2">'+_esc(current)+'</textarea>';
   var ta = td.querySelector('textarea');
   ta.focus();
@@ -5459,10 +5462,10 @@ function _cmpOpenNoteForm(evt, caseName, slug){
     var val = ta.value.trim();
     function redraw(){ var cm = CMP_ROSTER.filter(function(x){return x.slug===slug;})[0]; if(cm) _cmpRenderPanel(cm.name, slug); }
     if(val && val !== current){
-      _setNote(caseName, val);
+      _setNote(noteKey, val);
       _setContact(caseName, {handoffNote: 'touch'}).then(redraw);
     } else if(!val && current){
-      _clearNote(caseName);
+      _clearNote(noteKey);
       _setContact(caseName, {handoffNote: 'touch'}).then(redraw);
     } else {
       redraw();
