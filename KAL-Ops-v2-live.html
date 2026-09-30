@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v6.2</title>
+<title>KAL Operations · v6.5</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -462,6 +462,9 @@
   .chip.on{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
 
   table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th.sortable{cursor:pointer;user-select:none}
+table.t th.sortable:hover{color:var(--ink-2)}
+table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:var(--blue)}
   table.t th{
     text-align:left;
     font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
@@ -1474,10 +1477,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1494,10 +1497,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1514,10 +1517,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1534,10 +1537,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1554,10 +1557,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1574,10 +1577,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1594,10 +1597,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1614,10 +1617,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -1634,10 +1637,10 @@
         <table class="t">
           <thead>
             <tr>
-              <th>Client / Carrier</th>
+              <th class="sortable" data-sortkey="case" onclick="setCmpSort('case')">Client / Carrier<span class="sort-ind"></span></th>
               <th>Contact log</th>
               <th>Answer</th>
-              <th>Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span></th>
+              <th class="sortable" data-sortkey="offer" onclick="setCmpSort('offer')">Offer / limit <span style="text-transform:none;font-weight:400;color:var(--ink-4)">from CasePeer</span><span class="sort-ind"></span></th>
               <th>Outcome</th>
               <th>Notes</th>
             </tr>
@@ -2332,7 +2335,7 @@
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v6.3 · live data</div>
+    <div>KAL Operations · v6.5 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -5213,6 +5216,7 @@ var CMP_ROSTER = [
 var _cmpDemands = [];
 var _cmpShowHandled = {};       // per-slug show/hide state for handled files
 var _cmpShowHandledAll = false; // global "show handled" override
+var _cmpSort = {key:null, dir:1}; // column sort state, shared across all CM panels
 
 function _cmpFmtMoney(v){
   var n = parseFloat(v);
@@ -5223,7 +5227,7 @@ function _cmpEscJs(s){ return String(s).replace(/'/g,"\\'"); }
 
 function _cmpIsResolved(d){
   var offer = parseFloat(d.offer_amount);
-  var limit = parseFloat(d.insurance_policy);
+  var limit = _parseLimit(d.insurance_policy);
   return !!(offer && limit && offer >= limit);
 }
 function _cmpOutcomeFor(d, contact){
@@ -5236,7 +5240,7 @@ function _cmpOutcomeFor(d, contact){
 }
 function _cmpAnswerFor(d){
   var offer = parseFloat(d.offer_amount);
-  var limit = parseFloat(d.insurance_policy);
+  var limit = _parseLimit(d.insurance_policy);
   if(offer && limit && offer >= limit) return {label:'Tendered '+_cmpFmtMoney(offer), cls:'green'};
   if(offer) return {label:'Offered '+_cmpFmtMoney(offer), cls:'amber'};
   return {label:'No answer yet', cls:'gray'};
@@ -5289,6 +5293,17 @@ function _cmpRenderPanel(name, slug){
   }
 
   function sortByExpiry(arr){
+    if(_cmpSort.key === 'case'){
+      return arr.slice().sort(function(a,b){
+        return String(a.case._casename||'').localeCompare(String(b.case._casename||'')) * _cmpSort.dir;
+      });
+    }
+    if(_cmpSort.key === 'offer'){
+      return arr.slice().sort(function(a,b){
+        var oa = parseFloat(a.offer_amount)||0, ob = parseFloat(b.offer_amount)||0;
+        return (oa-ob) * _cmpSort.dir;
+      });
+    }
     return arr.slice().sort(function(a,b){
       var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
       var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
@@ -5383,6 +5398,16 @@ function _cmpToggleAllHandled(){
   _cmpShowHandledAll = !_cmpShowHandledAll;
   var btn = document.getElementById('cmp-toggle-all-btn');
   if(btn) btn.textContent = _cmpShowHandledAll ? 'Hide handled files (all CMs)' : 'Show handled files (all CMs)';
+  CMP_ROSTER.forEach(function(cm){ _cmpRenderPanel(cm.name, cm.slug); });
+}
+function setCmpSort(key){
+  if(_cmpSort.key === key){ _cmpSort.dir *= -1; }
+  else { _cmpSort.key = key; _cmpSort.dir = 1; }
+  document.querySelectorAll('.cmp-panel [data-sortkey]').forEach(function(th){
+    var span = th.querySelector('.sort-ind');
+    if(!span) return;
+    span.textContent = th.dataset.sortkey === _cmpSort.key ? (_cmpSort.dir>0 ? ' ▲' : ' ▼') : '';
+  });
   CMP_ROSTER.forEach(function(cm){ _cmpRenderPanel(cm.name, cm.slug); });
 }
 
@@ -5524,6 +5549,7 @@ window._cmpCloseAdjForm = _cmpCloseAdjForm;
 window._cmpSaveAdjForm = _cmpSaveAdjForm;
 window._cmpToggleHandled = _cmpToggleHandled;
 window._cmpToggleAllHandled = _cmpToggleAllHandled;
+window.setCmpSort = setCmpSort;
 
 (function(){
   var seg=document.getElementById('cm-metric-seg');

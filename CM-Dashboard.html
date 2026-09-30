@@ -77,6 +77,9 @@ button{font-family:inherit}
 .empty-state{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:13px}
 
 table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th.sortable{cursor:pointer;user-select:none}
+table.t th.sortable:hover{color:var(--ink-2)}
+table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:var(--blue)}
 table.t th{text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
 table.t td{padding:var(--row-pad-y) 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 table.t tbody tr:last-child td{border-bottom:0}
@@ -252,10 +255,10 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
     <table class="t" style="min-width:1080px" id="myfiles-table">
       <thead>
         <tr>
-          <th>Client / Carrier</th>
+          <th class="sortable" data-sortkey="case" onclick="setMyFilesSort('case')">Client / Carrier<span class="sort-ind"></span></th>
           <th>Contact log</th>
           <th>Answer</th>
-          <th>Offer / limit <span class="dsub" style="text-transform:none;font-weight:400">from CasePeer</span></th>
+          <th class="sortable" data-sortkey="offer" onclick="setMyFilesSort('offer')">Offer / limit <span class="dsub" style="text-transform:none;font-weight:400">from CasePeer</span><span class="sort-ind"></span></th>
           <th>Outcome</th>
           <th>Notes</th>
         </tr>
@@ -303,7 +306,7 @@ tr.row-done .case-name,tr.row-done .ct2{color:var(--ink-3)}
 
   <div class="note"><b>Not shown here:</b> settlement dollar totals and attorney fees. Those live on the leadership Pipeline tab.</div>
 
-  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.5 &middot; <span id="live-status">connecting&hellip;</span></div>
+  <div class="foot">KAL Ops &middot; CM Performance &middot; v6.6 &middot; <span id="live-status">connecting&hellip;</span></div>
 </div>
 
 <script>
@@ -630,6 +633,27 @@ function _answerFor(d){
 
 // Default hides handled files -- toggled via #myfiles-scope-seg (setMyFilesScope).
 var _myFilesScope = 'open'; // 'open' | 'all'
+var _myFilesSort = {key:null, dir:1}; // column sort state -- null key = default SOL/expiry order
+function _sortMyFiles(rows){
+  if(_myFilesSort.key === 'case'){
+    return rows.slice().sort(function(a,b){
+      return String(a.case._casename||'').localeCompare(String(b.case._casename||'')) * _myFilesSort.dir;
+    });
+  }
+  if(_myFilesSort.key === 'offer'){
+    return rows.slice().sort(function(a,b){
+      var oa = parseFloat(a.offer_amount)||0, ob = parseFloat(b.offer_amount)||0;
+      return (oa-ob) * _myFilesSort.dir;
+    });
+  }
+  // Default: SOL/expiry ascending (soonest first) -- unchanged behavior.
+  return rows.slice().sort(function(a,b){
+    var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
+    var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
+    if(!ea) return 1; if(!eb) return -1;
+    return ea - eb;
+  });
+}
 function renderMyFiles(name){
   var mine = _allDemands.filter(function(d){ return d.case_manager === name; });
   var open = mine.filter(function(d){
@@ -651,12 +675,7 @@ function renderMyFiles(name){
   } else if(scoped.length === 0){
     body.innerHTML = '<tr><td colspan="6" class="empty-state">No open files right now — nice work. <button class="clog-add" style="display:inline-block;margin-left:6px" onclick="setMyFilesScope(\'all\')">Show '+resolvedThisMonth.length+' handled</button></td></tr>';
   } else {
-    var rows = scoped.slice().sort(function(a,b){
-      var ea = a.dateexpires ? _parseDate(a.dateexpires) : null;
-      var eb = b.dateexpires ? _parseDate(b.dateexpires) : null;
-      if(!ea) return 1; if(!eb) return -1;
-      return ea - eb;
-    });
+    var rows = _sortMyFiles(scoped);
     body.innerHTML = rows.map(function(d){
       var caseName = d.case._casename;
       var caseId = (d.case && d.case.id) || null;
@@ -970,6 +989,16 @@ function setMyFilesScope(scope){
     b.style.background = on ? '#fff' : 'transparent';
     b.style.color = on ? 'var(--ink)' : 'var(--ink-2)';
     b.style.boxShadow = on ? '0 1px 2px rgba(0,0,0,.06)' : 'none';
+  });
+  renderMyFiles(_cmGetIdentity());
+}
+function setMyFilesSort(key){
+  if(_myFilesSort.key === key){ _myFilesSort.dir *= -1; }
+  else { _myFilesSort.key = key; _myFilesSort.dir = 1; }
+  document.querySelectorAll('#myfiles-table [data-sortkey]').forEach(function(th){
+    var span = th.querySelector('.sort-ind');
+    if(!span) return;
+    span.textContent = th.dataset.sortkey === _myFilesSort.key ? (_myFilesSort.dir>0 ? ' \u25b2' : ' \u25bc') : '';
   });
   renderMyFiles(_cmGetIdentity());
 }
