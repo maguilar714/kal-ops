@@ -296,8 +296,8 @@ const server = http.createServer(async (req, res) => {
       };
 
       // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
-      // clearTouch is a directive, not a column -- allowed through here, handled below.
-      const unknown = Object.keys(body).filter(k => k !== 'caseName' && k !== 'clearTouch' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
+      // clearTouch and sentBackToCM are directives, not columns -- allowed through here, handled below.
+      const unknown = Object.keys(body).filter(k => k !== 'caseName' && k !== 'clearTouch' && k !== 'sentBackToCM' && !Object.prototype.hasOwnProperty.call(COLMAP, k));
       if (unknown.length) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown field(s): ' + unknown.join(', ') + '. Add the key to COLMAP + a column in server.js before sending this field.' })); return; }
 
       // "Last touched" label -- derived here from which fields THIS write actually
@@ -311,9 +311,16 @@ const server = http.createServer(async (req, res) => {
       // contactLog branch below would relabel an undo as a fresh "Logged attempt".
       // clearTouch means "actually clear the chip", so it skips COALESCE entirely
       // (see updateSet below) instead of just leaving the prior label alone.
+      // sentBackToCM (2026-09-30): Settlement's "Send back to CM" button sends
+      // handoffStatus:null + handoffAt:null (same shape as the CM's own Undo) plus
+      // sentBackToCM:true, so it needs to out-rank the generic handoffStatus branch
+      // below (which would otherwise label this a plain "Undo") -- the CM should see
+      // that Settlement sent it back, not that they undid their own click.
       const clearTouch = body.clearTouch === true;
+      const sentBackToCM = body.sentBackToCM === true;
       let touchLabel = null;
       if (clearTouch) touchLabel = null;
+      else if (sentBackToCM) touchLabel = 'Returned by Settlement';
       else if (Object.prototype.hasOwnProperty.call(body, 'contactLog')) touchLabel = 'Logged attempt';
       else if (Object.prototype.hasOwnProperty.call(body, 'handoffNote')) touchLabel = 'Note updated';
       else if (Object.prototype.hasOwnProperty.call(body, 'handoffStatus')) {
