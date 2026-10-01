@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v6.6</title>
+<title>KAL Operations · v6.9</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -1343,6 +1343,43 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
     <div class="section-title">
       <div class="left">
         <div class="accent-rule"></div>
+        <h2>Settlement Queue</h2>
+      </div>
+      <div class="hint">Every transferred or escalated file, oldest first</div>
+    </div>
+    <div class="queue-kpi-grid">
+      <div class="kpi alert" data-tip="Active demands (expired or in negotiation) across the whole pipeline with no owner yet. Pending demands still inside their response window do not count -- nothing to claim yet.">
+        <div class="accent">Needs owner</div>
+        <div class="label">Unclaimed</div>
+        <div class="row-v"><div class="value" id="queue-kpi-unclaimed">&mdash;</div></div>
+      </div>
+      <div class="kpi" data-tip="Handed off from a CM today.">
+        <div class="label">Transferred Today</div>
+        <div class="row-v"><div class="value" id="queue-kpi-today">&mdash;</div></div>
+      </div>
+      <div class="kpi" data-tip="Handed off from a CM in the last 7 days.">
+        <div class="label">Transferred · 7 Days</div>
+        <div class="row-v"><div class="value" id="queue-kpi-7d">&mdash;</div></div>
+      </div>
+    </div>
+    <div class="queue-panel">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th class="num">Offer / limit</th>
+            <th>Waiting</th>
+            <th>Owner</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">
+      <div class="left">
+        <div class="accent-rule"></div>
         <h2 id="set-pipe">Demand pipeline · action required</h2>
       </div>
     </div>
@@ -1410,6 +1447,7 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
             <th style="width:28px;padding:10px 8px"></th>
             <th data-sort="case" style="cursor:pointer;user-select:none">Case <span class="sort-ind"></span></th>
             <th data-sort="cm" style="cursor:pointer;user-select:none">CM <span class="sort-ind"></span></th>
+            <th data-sort="owner" style="cursor:pointer;user-select:none">Owner <span class="sort-ind"></span></th>
             <th data-sort="carrier" style="cursor:pointer;user-select:none">Carrier <span class="sort-ind"></span></th>
             <th class="num" data-sort="policy" style="cursor:pointer;user-select:none">Policy Limit <span class="sort-ind"></span></th>
             <th class="num" data-sort="meds" style="cursor:pointer;user-select:none">Specials <span class="sort-ind"></span></th>
@@ -1469,42 +1507,6 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
         <div class="item amber"><span class="marker">Kausar</span><span>Exec Team cases included below, tracked separately &mdash; her rate/volume numbers live on Pipeline &rarr; CM Standings.</span></div>
       </div>
       <div class="stamp"><b>Loading&hellip;</b></div>
-    </div>
-
-    <div class="section-title">
-      <div class="left">
-        <div class="accent-rule"></div>
-        <h2>Settlement Queue</h2>
-      </div>
-      <div class="hint">Every transferred or escalated file, oldest first</div>
-    </div>
-    <div class="queue-kpi-grid">
-      <div class="kpi alert" data-tip="Transferred or escalated files no one has claimed yet.">
-        <div class="accent">Needs owner</div>
-        <div class="label">Unclaimed</div>
-        <div class="row-v"><div class="value" id="queue-kpi-unclaimed">&mdash;</div></div>
-      </div>
-      <div class="kpi" data-tip="Handed off from a CM today.">
-        <div class="label">Transferred Today</div>
-        <div class="row-v"><div class="value" id="queue-kpi-today">&mdash;</div></div>
-      </div>
-      <div class="kpi" data-tip="Handed off from a CM in the last 7 days.">
-        <div class="label">Transferred · 7 Days</div>
-        <div class="row-v"><div class="value" id="queue-kpi-7d">&mdash;</div></div>
-      </div>
-    </div>
-    <div class="queue-panel">
-      <table class="t">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th class="num">Offer / limit</th>
-            <th>Waiting</th>
-            <th>Owner</th>
-          </tr>
-        </thead>
-        <tbody id="queue-body"></tbody>
-      </table>
     </div>
 
     <div class="section-title">
@@ -2385,7 +2387,7 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v6.6 · live data</div>
+    <div>KAL Operations · v6.9 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3673,7 +3675,8 @@ function renderSettleOffers(demands, view, settlementMap){
       _sortTouched: ltDate ? ltDate.getTime() : 0,
       _sortSol:     solDate ? solDate.getTime() : 0,
       _sortType:    dtype,
-      _sortStatus:  flag ? _FLAG_OPTIONS.indexOf(flag) : -1
+      _sortStatus:  flag ? _FLAG_OPTIONS.indexOf(flag) : -1,
+      _sortOwner:   (_getContact(caseName).queueOwner || '').toLowerCase()
     };
   });
 
@@ -3783,7 +3786,14 @@ function renderSettleOffers(demands, view, settlementMap){
     var adjName  = contact.adjusterName  || '';
     var adjPhone = contact.adjusterPhone || '';
     var claimNum = contact.claimNumber || '';
-    var colCount = 13;
+    var colCount = 14;
+
+    var ownerCellHtml = contact.queueOwner
+      ? '<span class="q-owner claimed">'+_esc(contact.queueOwner)+'</span> <a href="#" class="q-release" data-action="release-owner" data-case="'+_esc(caseName)+'">release</a>'
+      : '<select class="q-claim-sel" data-action="claim-owner" data-case="'+_esc(caseName)+'">'
+        + '<option value="">Claim\u2026</option>'
+        + QUEUE_STAFF.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('')
+        + '</select>';
 
     // Expand row
     // Email log state
@@ -3861,6 +3871,7 @@ function renderSettleOffers(demands, view, settlementMap){
       '<td style="padding:8px 8px;width:28px"><button data-action="toggle-expand" data-case="'+_esc(caseName)+'" style="width:18px;height:18px;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center;color:var(--ink-3);font-family:var(--num);line-height:1">+</button></td>'+
       '<td class="name" style="font-size:12px">'+_caseLink(caseName, _caseId)+'</td>'+
       '<td style="color:var(--ink-3)">'+_esc(cmDisp)+'</td>'+
+      '<td style="font-size:11px">'+ownerCellHtml+'</td>'+
       '<td style="color:var(--ink-3);font-size:11px">'+_esc((d.insurance||'—'))+'</td>'+
       '<td class="num">'+polDisp+'</td>'+
       '<td class="num">'+medsDisp+'</td>'+
@@ -4514,6 +4525,33 @@ function bindSettlePanelToggles(raw, settlementMap){
       });
     });
   }
+
+  // Owner claim/release on every row in the Demand tracker (2026-10) -- same
+  // queueOwner field as the Settlement Queue card, so one case has one owner
+  // everywhere it shows up. Delegated to tbody like everything else here.
+  if(trackerTbody){
+    trackerTbody.addEventListener('change', function(e){
+      var sel = e.target.closest('[data-action="claim-owner"]');
+      if(!sel) return;
+      var name = sel.value;
+      if(!name) return;
+      var caseName = sel.getAttribute('data-case');
+      _setContact(caseName, {queueOwner: name}).then(function(){
+        renderSettleOffers(raw.demands||[], _settleOfferView, settlementMap);
+        try{ renderQueue(); }catch(ex){}
+      });
+    });
+    trackerTbody.addEventListener('click', function(e){
+      var el = e.target.closest('[data-action="release-owner"]');
+      if(!el) return;
+      e.preventDefault();
+      var caseName = el.getAttribute('data-case');
+      _setContact(caseName, {queueOwner: null}).then(function(){
+        renderSettleOffers(raw.demands||[], _settleOfferView, settlementMap);
+        try{ renderQueue(); }catch(ex){}
+      });
+    });
+  }
 }
 
 function renderPipeline(raw){
@@ -4843,6 +4881,7 @@ function renderSettlements(raw){
       statutedate:  s.statutedate  || null
     };
   });
+  _lastSettlementMap = settlementMap;
   renderCarriers(demands);
   renderSettleOffers(demands, _settleOfferView, settlementMap);
   bindSettlePanelToggles(raw, settlementMap);
@@ -5065,6 +5104,7 @@ function renderCMPerformance(raw){
   renderCM2026();
   _cmpDemands = (demands||[]).filter(function(d){ return d.case_manager !== 'Junior Alvarez'; });
   try{ renderCMPerfTab(); }catch(e){ console.warn('[KAL Ops] renderCMPerfTab failed:', e.message); }
+  try{ renderQueue(); }catch(e){ console.warn('[KAL Ops] renderQueue failed:', e.message); }
 }
 
 /* =========================================================
@@ -5264,6 +5304,7 @@ var CMP_ROSTER = [
   {name:'Kausar Sarwari',   slug:'kausar-sarwari'}
 ];
 var _cmpDemands = [];
+var _lastSettlementMap = {}; // cached for _settleUnclaimedCount() -- book-wide owner count, not just the transferred subset
 var _cmpShowHandled = {};       // per-slug show/hide state for handled files
 var _cmpShowHandledAll = false; // global "show handled" override
 var _cmpSort = {key:null, dir:1}; // column sort state, shared across all CM panels
@@ -5322,7 +5363,33 @@ function _queueRowHtml(entry){
     + '<td class="num">' + offerLimitHtml + '</td>'
     + '<td><span class="q-wait ' + waitCls + '">' + waitLabel + '</span></td>'
     + '<td>' + ownerHtml + '</td>'
+    + '<td><button class="action-btn gray" onclick="_queueSendBack(\'' + _cmpEscJs(caseName) + '\')">Send back to CM</button></td>'
     + '</tr>';
+}
+
+// Book-wide unclaimed count (2026-10): any active demand (expired-no-response
+// OR has an offer / in negotiation) with no queueOwner -- not just the narrow
+// transferred-from-CM subset the queue list itself shows. A demand that's
+// still inside its response window with no offer yet ("monitor only") is
+// deliberately excluded -- nothing to do yet, so it shouldn't read as a gap.
+function _settleUnclaimedCount(){
+  var now = new Date();
+  var activeStatuses = ['Demanded','UIM Demanded','Settlement Negotiations','Pending Demand','Demand Writing'];
+  var count = 0;
+  (_cmpDemands||[]).forEach(function(d){
+    if(!d.dateexpires) return;
+    var caseName = d.case && d.case._casename;
+    if(!caseName) return;
+    var info = _lastSettlementMap[caseName];
+    if(!info || activeStatuses.indexOf(info.casestatus) < 0) return;
+    var exp = _parseDate(d.dateexpires);
+    var expired = exp && exp < now;
+    var hasOffer = !!(parseFloat(d.offer_amount));
+    if(!expired && !hasOffer) return;
+    var c = _getContact(caseName);
+    if(!c.queueOwner) count++;
+  });
+  return count;
 }
 
 function renderQueue(){
@@ -5331,9 +5398,9 @@ function renderQueue(){
   var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var sevenAgo = new Date(today0); sevenAgo.setDate(sevenAgo.getDate() - 6);
 
-  var unclaimed = 0, today = 0, last7 = 0;
+  var unclaimed = _settleUnclaimedCount();
+  var today = 0, last7 = 0;
   entries.forEach(function(e){
-    if(!e.c.queueOwner) unclaimed++;
     var hd = _parseDate(e.c.handoffAt);
     if(hd){
       if(hd >= today0) today++;
@@ -5348,7 +5415,7 @@ function renderQueue(){
   if(!body) return;
   body.innerHTML = entries.length
     ? entries.map(_queueRowHtml).join('')
-    : '<tr><td colspan="4" class="empty-state">Nothing in the queue right now.</td></tr>';
+    : '<tr><td colspan="5" class="empty-state">Nothing in the queue right now.</td></tr>';
 }
 
 function _queueClaim(sel, caseName){
@@ -5359,6 +5426,13 @@ function _queueClaim(sel, caseName){
 function _queueRelease(evt, caseName){
   evt.preventDefault();
   _setContact(caseName, {queueOwner: null}).then(renderQueue);
+}
+function _queueSendBack(caseName){
+  if(!confirm('Send this back to the case manager? It will reappear in their open queue.')) return;
+  _setContact(caseName, {handoffStatus: null, handoffAt: null, queueOwner: null}).then(function(){
+    renderQueue();
+    try{ renderCMPerfTab(); }catch(e){}
+  });
 }
 
 function _cmpFmtMoney(v){
@@ -5403,7 +5477,6 @@ function renderCMPerfTab(){
     totalOpen += stats.open;
     totalNoContact += stats.noContact;
   });
-  renderQueue();
   var items = document.querySelectorAll('[data-page="cm"] .briefing .items .item');
   if(items[0]){ var m=items[0].querySelector('.marker'); if(m) m.textContent=String(totalOpen); }
   var stamp = document.querySelector('[data-page="cm"] .briefing .stamp');
@@ -5696,6 +5769,7 @@ window._cmpToggleAllHandled = _cmpToggleAllHandled;
 window.setCmpSort = setCmpSort;
 window._queueClaim = _queueClaim;
 window._queueRelease = _queueRelease;
+window._queueSendBack = _queueSendBack;
 
 (function(){
   var seg=document.getElementById('cm-metric-seg');
