@@ -1,4 +1,4 @@
-/* KAL Disbursement Builder — bookmarklet payload. v1.0-pilot (2026-09-30)
+/* KAL Disbursement Builder — bookmarklet payload. v1.2-pilot (2026-09-30)
    Source of truth: OneDrive/Documents/Claude Skills/CONTEXT/Tools/KAL Skill Builder/KAL-Disb-Builder.js
    Served from: https://maguilar714.github.io/kal-ops/KAL-Disb-Builder.js
    Design decisions and reasoning: KAL-Disb-Builder-BUILD-LOG.md (same folder).
@@ -67,7 +67,10 @@ var KDOCX = (function(){
       reduced:function(a,o){return a+' (Reducido desde '+o+')';}, hiPaid:function(o){return 'Pagado por seguro médico (Originalmente '+o+')';},
       p1:'Este documento refleja el pago final de su caso. Al firmar abajo, confirma que está de acuerdo y autoriza a KAL LAW, APC a hacer los pagos correspondientes.',
       p2:'Responsabilidad por Saldos Pendientes: Todas las cuentas médicas y costos conocidos se han incluido en este pago final. Si después surgiera alguna factura o reclamación no proporcionada previamente a KAL LAW, APC, seguirá bajo su responsabilidad.',
-      p2lead:null, date:'Fecha' },
+      p2lead:null, date:'Fecha', pend:' (pendiente)',
+      hhaLead:'Acuerdo de Exención de Responsabilidad (Hold Harmless Agreement) – Facturas Médicas Pendientes: ',
+      hha1:'KAL LAW, APC no pagará de su acuerdo a los proveedores de la lista. Usted es responsable de pagarles.',
+      hha2:'Si alguno de estos proveedores le pide el pago a KAL LAW, APC, usted se encargará de pagarlo. Al firmar abajo, usted acepta este Acuerdo de Exención de Responsabilidad. KAL LAW, APC no es responsable por estas facturas.' },
     en: { title:'SETTLEMENT DISBURSEMENT AUTHORIZATION', client:'CLIENT NAME:', dol:'DATE OF LOSS:',
       gross:'TOTAL AMOUNT RECOVERED:', fee:'ATTORNEY FEE:', feeStd:'ATTORNEY FEE (1/3):',
       kal:'KAL LAW, APC', prior:'Prior attorney', costs:'COSTS ADVANCED BY ATTORNEY:', meds:'LIENS (DEDUCTIONS):',
@@ -76,14 +79,22 @@ var KDOCX = (function(){
       reduced:function(a,o){return a+' (Reduced from '+o+')';}, hiPaid:function(o){return 'Paid by health insurance (Originally '+o+')';},
       p1:'This document represents the full and final disbursement of settlement funds related to your case. By signing below, you approve and authorize KAL LAW, APC to distribute the settlement funds as outlined above.',
       p2:'To the best of our knowledge, all known medical bills and costs have been included in this disbursement after a diligent review.  If any additional bills or claims appear later that were not previously provided to KAL LAW, APC, those would remain your responsibility.',
-      p2lead:'Responsibility for Outstanding Balances: ', date:'Date' }
+      p2lead:'Responsibility for Outstanding Balances: ', date:'Date', pend:' (pending)',
+      hhaLead:'Hold Harmless Agreement – Unpaid Medical Bills: ',
+      hha1:'KAL LAW, APC will not pay the providers listed below from your settlement. You are responsible for paying them.',
+      hha2:'If any of these providers asks KAL LAW, APC for payment, you agree to take care of it. By signing below, you agree to this Hold Harmless Agreement. KAL LAW, APC is not responsible for these bills.' }
   };
   var LETTERS='abcdefghijklmnopqrstuvwxyz';
   function money(n){ return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
   // d = disbursement lines computed by the checker (see buildDisbursement in main file)
-  function documentXml(d, lang){
-    var T=TXT[lang], b=[];
+  function documentXml(d, lang, o){
+    o=o||{}; var T=TXT[lang], b=[];
+    var draft=!!o.draft;
+    if(draft){ // D34: draft banner; signature lines removed so a draft can't be signed by mistake
+      d=Object.assign({},d,{meds:d.medsDraft||d.meds, medsTotal:d.medsDraftTotal!=null?d.medsDraftTotal:d.medsTotal, medsOriginal:d.medsDraftOriginal!=null?d.medsDraftOriginal:d.medsOriginal, net:d.netDraft!=null?d.netDraft:d.net});
+      b.push(para(run('BORRADOR / DRAFT – NOT FOR SIGNATURE',{b:1}),{align:'center',after:120}));
+    }
     b.push(para(run(T.title,{b:1,u:1}),{align:'center',after:240}));
     var rows=[];
     rows.push(row([para(T.client)],[para(d.clientName)]));
@@ -107,6 +118,7 @@ var KDOCX = (function(){
     }
     rows.push(listRow(T.costs, d.costs, function(c){return money(c.amount);}, money(d.costsTotal)));
     var medFmt=function(m){
+      if(m.pending) return money(m.amount)+T.pend;
       if(m.hiPaidOnly) return T.hiPaid(money(m.original));
       if(m.original>m.amount+0.004) return T.reduced(money(m.amount), money(m.original));
       return money(m.amount); };
@@ -121,21 +133,32 @@ var KDOCX = (function(){
     b.push(para('',{after:120}));
     b.push(para(run(T.p1),{align:'both',after:240}));
     b.push(para((T.p2lead?run(T.p2lead,{b:1}):'')+run(T.p2),{align:'both',after:240}));
+    // Hold Harmless Agreement (D29): wording approved by Moises 2026-09-30.
+    if(d.hha && d.hha.length){
+      b.push(para(run(T.hhaLead,{b:1})+run(T.hha1),{align:'both',after:120}));
+      d.hha.forEach(function(x,i){ b.push(para(run(LETTERS[i%26]+'.\t'+x.payee+' — '+money(x.amount)),{indent:720,hanging:360,after:0})); });
+      b.push(para(run(T.hha2),{align:'both',before:120,after:240}));
+    }
     (d.extraParas||[]).forEach(function(p){ b.push(para(run(p),{align:'both',after:240})); });
-    b.push(para('',{before:480}));
-    b.push(para(run('__________________________\t__________________________'),{tabs:[4680]}));
-    b.push(para(run(T.date+'\t'+d.clientName),{tabs:[4680]}));
+    if(draft){
+      b.push(para(run('Open items / Pendientes:',{b:1}),{before:240}));
+      (o.openItems||[]).forEach(function(t){ b.push(para(run('• '+t),{indent:360})); });
+    } else {
+      b.push(para('',{before:480}));
+      b.push(para(run('__________________________\t__________________________'),{tabs:[4680]}));
+      b.push(para(run(T.date+'\t'+d.clientName),{tabs:[4680]}));
+    }
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
       '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+b.join('')+
       '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="720" w:right="1800" w:bottom="1440" w:left="1800" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
   }
   var STYLES='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault><w:pPrDefault/></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
-  function build(d, lang){
+  function build(d, lang, o){
     return zip([
       {name:'[Content_Types].xml', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'},
       {name:'_rels/.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
       {name:'word/_rels/document.xml.rels', data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
-      {name:'word/document.xml', data:documentXml(d,lang)},
+      {name:'word/document.xml', data:documentXml(d,lang,o)},
       {name:'word/styles.xml', data:STYLES}
     ]);
   }
@@ -302,13 +325,18 @@ var KCORE = (function(){
     var feeKal=r2(feeTotal-attyTotal);
 
     // Medical bills
-    var meds=[], omitted=[];
+    var meds=[], omitted=[], draftMeds=[], hha=[], hhaIds={}; (opts.hhaIds||[]).forEach(function(id){hhaIds[id]=1;});
     c.medTable.forEach(function(r){
       var t=tm[r.lienId]||{}; var name=t.provider||r.cells[0]; var orig=num(r.cells[1]); var a=amt(r.cells[10]);
       var hiPaid=num(r.cells[4])||t.hiPaid||0;
       if(/place\s*holder/i.test(r.cells[0]) || (!orig && !a)){ omitted.push(name); return; }
-      if(!r.accepted){ block(name+': lien not accepted / still pending.','Finalize the amount and accept it on the Settlement tab.','settlement/negotiations'); return; }
-      if(a==null){ block(name+': no final amount entered.','Enter the final amount on the Settlement tab.','settlement/negotiations'); return; }
+      var owed=num(r.cells[7]); if(owed==null) owed=(t.stillOwed!=null?t.stillOwed:orig);
+      if(!r.accepted){
+        // D33: an unaccepted provider can be moved to the Hold Harmless list (client pays directly).
+        if(hhaIds[r.lienId]){ hha.push({payee:name, amount:r2(owed||orig||0), original:orig||0, lienId:r.lienId}); return; }
+        B.push({msg:name+': lien not accepted / still pending.', fix:'Finalize and accept it on the Settlement tab — or, if the client will pay this provider directly, check the box.', tab:'settlement/negotiations', hhaId:r.lienId, hhaName:name, hhaAmount:r2(owed||orig||0)});
+        draftMeds.push({payee:name, original:orig||0, amount:(a!=null?a:(owed||orig||0)), pending:true}); return; }
+      if(a==null){ block(name+': no final amount entered.','Enter the final amount on the Settlement tab.','settlement/negotiations'); draftMeds.push({payee:name, original:orig||0, amount:owed||orig||0, pending:true}); return; }
       if(!orig && a>0){ block(name+': '+money(a)+' with no original bill amount.','Enter the original bill on the Medical Treatment tab.','medical/treatment'); return; }
       if(orig>0 && a>orig*0.7+0.005 && a>0) warn(name+': reduced only '+Math.round((1-a/orig)*100)+'% ('+money(orig)+' → '+money(a)+').',null,null);
       meds.push({ payee:name, lienHolder:t.lienHolder||'', original:orig||0, amount:a, hiPaidOnly:(a===0 && hiPaid>0) });
@@ -322,7 +350,7 @@ var KCORE = (function(){
     // Health insurance liens
     c.hiTable.forEach(function(r){ var name=r.cells[0]; if(/no insurance checked/i.test(name)) return;
       var o=amt(r.cells[1]), a=amt(r.cells[3]);
-      if(a==null && o==null){ warn(name+' is listed as health insurance with no amount. Confirm there is no lien and save the no-lien letter.','Remove it, or enter the final lien.','settlement/negotiations'); return; }
+      if(!a && !o){ warn(name+' is listed as health insurance with no amount. Confirm there is no lien and save the no-lien letter.','Remove it, or enter the final lien.','settlement/negotiations'); return; }
       if(!r.accepted){ block(name+' health insurance lien is not accepted.','Accept the final lien on the Settlement tab.','settlement/negotiations'); return; }
       meds.push({ payee:name, original:o||a||0, amount:a||0, isHI:true }); });
 
@@ -360,6 +388,8 @@ var KCORE = (function(){
         if(!hit) warn('No agreement in "Lien Agreements" that matches '+m.payee+'.','Upload the reduction agreement.','documents/2/sort/0'); }); }
 
     // Held in trust (D13)
+    // D29/D33: Hold Harmless providers are NOT deducted — the client pays them directly.
+    if(hha.length) warn('Hold Harmless Agreement added — client pays directly: '+hha.map(function(x){return x.payee+' '+money(x.amount);}).join(', ')+'. Reviewer: confirm.',null,null);
     var trust=(opts.trust||[]).filter(function(t){return t.payee && t.amount>0;}).map(function(t){return {payee:t.payee, amount:r2(t.amount)};});
 
     // Totals + completeness check against CasePeer's own box
@@ -367,7 +397,13 @@ var KCORE = (function(){
     var medsOriginal=r2(meds.reduce(function(s,m){return s+(m.original||m.amount);},0));
     var miscTotal=r2(misc.reduce(function(s,x){return s+x.amount;},0)), advTotal=r2(adv.reduce(function(s,x){return s+x.amount;},0)), trustTotal=r2(trust.reduce(function(s,x){return s+x.amount;},0));
     var net=r2(gross-feeTotal-costSum-medsTotal-miscTotal-advTotal-trustTotal);
-    var cpDeductions=r2((c.costsSettlement||0)+medsTotal+miscTotal+advTotal+attyTotal);
+    // Draft mode (D34): includes pending lines at their current amount so the negotiator can see where the case stands.
+    var medsDraft=meds.concat(draftMeds), medsDraftTotal=r2(medsDraft.reduce(function(s,m){return s+m.amount;},0));
+    var medsDraftOriginal=r2(medsDraft.reduce(function(s,m){return s+(m.original||m.amount);},0));
+    var netDraft=r2(gross-feeTotal-costSum-medsDraftTotal-miscTotal-advTotal-trustTotal);
+    // CasePeer's box counts unaccepted lines at their original bill, so Hold Harmless lines are added back here (verified on Ibarra 2026-09-30).
+    var hhaOrig=r2(hha.reduce(function(s,x){return s+(x.original||0);},0));
+    var cpDeductions=r2((c.costsSettlement||0)+medsTotal+miscTotal+advTotal+attyTotal+hhaOrig);
     if(c.summary.liensCosts!=null && !eq(cpDeductions,c.summary.liensCosts) && !B.length)
       block('The builder could not account for every CasePeer deduction (CasePeer "liens & costs" '+money(c.summary.liensCosts)+' vs '+money(cpDeductions)+' found). Build this one manually and tell Moises.',null,'settlement/negotiations');
     if(gross && net<0) block('Client net is negative ('+money(net)+').',null,null);
@@ -375,7 +411,7 @@ var KCORE = (function(){
 
     var d={ clientName:h.clientName, dol:h.dol, gross:gross, feeTotal:feeTotal, feeStd:feeStd, feeReduced:feeReduced, feeKal:feeKal, priorAtty:atty,
       costs:costsGrouped, costsTotal:costSum, meds:meds, medsTotal:medsTotal, medsOriginal:medsOriginal,
-      misc:misc, miscTotal:miscTotal, advances:adv, advTotal:advTotal, trust:trust, trustTotal:trustTotal, net:net, extraParas:[] };
+      misc:misc, miscTotal:miscTotal, advances:adv, advTotal:advTotal, trust:trust, trustTotal:trustTotal, hha:hha, net:net, medsDraft:medsDraft, medsDraftTotal:medsDraftTotal, medsDraftOriginal:medsDraftOriginal, netDraft:netDraft, extraParas:[] };
     return { blocking:B, warnings:W, passed:P, disb:d, lang:h.lang };
   }
   return { read:read, evaluate:evaluate, money:money, APPROVERS_FEE:APPROVERS_FEE, APPROVERS_ATTY:APPROVERS_ATTY };
@@ -386,7 +422,7 @@ var KCORE = (function(){
    A panel that slides in over the CasePeer case page. Uses a Shadow DOM so
    CasePeer's styles can't break it and it can't break CasePeer. */
 (function(){
-  var VERSION='1.0-pilot (2026-09-30)';
+  var VERSION='1.2-pilot (2026-09-30)';
   var m=location.pathname.match(/\/case\/(\d+)\//);
   var old=document.getElementById('kal-disb-builder-host'); if(old) old.remove();
   var host=document.createElement('div'); host.id='kal-disb-builder-host';
@@ -414,7 +450,7 @@ var KCORE = (function(){
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   if(!m){ $('cn').textContent=''; $('bd').innerHTML='<div class="it wa">Open a case in CasePeer first, then click the bookmark again.</div>'; return; }
   var caseId=m[1], C=null, R=null, lang=null, showPassed=false;
-  var opts={ fee:null, feeApprover:'', attyApprover:'', priorAttyNoLien:false, priorAttyApprover:'', trust:[] };
+  var opts={ fee:null, feeApprover:'', attyApprover:'', priorAttyNoLien:false, priorAttyApprover:'', trust:[], hhaIds:[] };
 
   function load(){
     $('bd').innerHTML='<div class="it">Reading CasePeer…<div class="f">Settlement · Treatment · Costs · Documents</div></div>'; $('ft').innerHTML='';
@@ -422,7 +458,8 @@ var KCORE = (function(){
       .catch(function(e){ $('bd').innerHTML='<div class="it bl">'+esc(e.message)+'</div>'; $('ft').innerHTML='<button class="btn" id="rt">Try again</button>'; $('rt').onclick=load; });
   }
   function tabLink(t){ return t?' <a href="/case/'+caseId+'/'+t+'/" target="_blank">→ Open</a>':''; }
-  function items(list,cls){ return list.map(function(x){ return '<div class="it '+cls+'">'+(cls==='bl'?'✗ ':cls==='wa'?'⚠ ':'✓ ')+esc(x.msg)+(x.fix||x.tab?'<div class="f">'+(x.fix?esc(x.fix):'')+tabLink(x.tab)+'</div>':'')+'</div>'; }).join(''); }
+  function items(list,cls){ return list.map(function(x){ return '<div class="it '+cls+'">'+(cls==='bl'?'✗ ':cls==='wa'?'⚠ ':'✓ ')+esc(x.msg)+(x.fix||x.tab?'<div class="f">'+(x.fix?esc(x.fix):'')+tabLink(x.tab)+'</div>':'')+
+      (x.hhaId?'<label class="f"><input type="checkbox" data-hha="'+x.hhaId+'"> Client pays directly (Hold Harmless) — '+M(x.hhaAmount)+'</label>':'')+'</div>'; }).join(''); }
   function sel(id,list,val){ return '<select id="'+id+'"><option value="">— approver —</option>'+list.map(function(a){return '<option'+(a===val?' selected':'')+'>'+esc(a)+'</option>';}).join('')+'</select>'; }
 
   function render(){
@@ -441,6 +478,7 @@ var KCORE = (function(){
     html+='<div class="box"><b>Held in trust</b> <span class="mut">(optional — money kept back for a pending bill)</span><div id="tr">'+
       opts.trust.map(function(t,i){return '<div style="margin-top:4px"><input type="text" placeholder="Payee" data-i="'+i+'" data-k="payee" value="'+esc(t.payee)+'" style="width:200px"> $ <input type="number" step="0.01" data-i="'+i+'" data-k="amount" value="'+(t.amount||'')+'" style="width:90px"> <a href="#" data-del="'+i+'">remove</a></div>';}).join('')+
       '</div><a href="#" id="ta" class="tog">+ add line</a></div>';
+    if(d.hha.length) html+='<div class="box"><b>Hold Harmless Agreement</b> <span class="mut">(client pays directly — not deducted)</span>'+d.hha.map(function(x){return '<div>'+esc(x.payee)+' — '+M(x.amount)+' <a href="#" data-unhha="'+x.lienId+'">undo</a></div>';}).join('')+'</div>';
     // Results
     if(R.blocking.length) html+='<div class="sec"><h4 style="color:#c62828">✗ '+R.blocking.length+' must fix</h4>'+items(R.blocking,'bl')+'</div>';
     if(R.warnings.length) html+='<div class="sec"><h4 style="color:#b07d00">⚠ '+R.warnings.length+' to review</h4>'+items(R.warnings,'wa')+'</div>';
@@ -460,7 +498,8 @@ var KCORE = (function(){
     $('bd').innerHTML=html;
     $('ft').innerHTML='<span class="seg"><button id="les" class="'+(lang==='es'?'on':'')+'">Español</button><button id="len" class="'+(lang==='en'?'on':'')+'">English</button></span>'+
       '<button class="btn sec2" id="rc" title="Re-read CasePeer after you fix something">Re-check</button>'+
-      '<button class="btn" id="bw"'+(R.blocking.length?' disabled title="Fix the red items first"':'')+'>Download Word</button>'+
+      '<button class="btn" id="bw"'+(R.blocking.length?' disabled title="Fix the red items first"':'')+'>Download Final</button>'+
+      '<button class="btn sec2" id="bd2" title="Draft for your own review — marked NOT FOR SIGNATURE, no signature lines">Download Draft</button>'+
       '<button class="btn sec2" id="cr" title="Copy a text summary to paste in Teams">Copy report</button>';
     wire();
   }
@@ -474,14 +513,19 @@ var KCORE = (function(){
     $('ta').onclick=function(e){ e.preventDefault(); opts.trust.push({payee:'',amount:0}); render(); };
     Array.prototype.forEach.call($('tr').querySelectorAll('input'),function(inp){ inp.onchange=function(){ var t=opts.trust[+inp.getAttribute('data-i')]; var k=inp.getAttribute('data-k'); t[k]=k==='amount'?(parseFloat(inp.value)||0):inp.value; render(); }; });
     Array.prototype.forEach.call($('tr').querySelectorAll('[data-del]'),function(a){ a.onclick=function(e){ e.preventDefault(); opts.trust.splice(+a.getAttribute('data-del'),1); render(); }; });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-hha]'),function(cb){ cb.onchange=function(){ var id=cb.getAttribute('data-hha'); if(cb.checked && opts.hhaIds.indexOf(id)<0) opts.hhaIds.push(id); render(); }; });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-unhha]'),function(a){ a.onclick=function(e){ e.preventDefault(); var id=a.getAttribute('data-unhha'); opts.hhaIds=opts.hhaIds.filter(function(x){return x!==id;}); render(); }; });
     $('sp').onclick=function(){ showPassed=!showPassed; render(); };
     $('les').onclick=function(){ lang='es'; render(); }; $('len').onclick=function(){ lang='en'; render(); };
     $('rc').onclick=load;
-    $('bw').onclick=function(){ if(R.blocking.length) return;
-      var bytes=KDOCX.build(R.disb,lang); var blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    function dl(draft){
+      var bytes=KDOCX.build(R.disb,lang,{draft:draft, openItems:R.blocking.map(function(x){return x.msg;})});
+      var blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
       var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-      a.download=C.header.lastFirst+' - Disbursement ('+(lang==='es'?'ES':'EN')+') '+new Date().toISOString().slice(0,10)+'.docx';
-      document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},1000); };
+      a.download=(draft?'DRAFT - ':'')+C.header.lastFirst+' - Disbursement ('+(lang==='es'?'ES':'EN')+') '+new Date().toISOString().slice(0,10)+'.docx';
+      document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},1000); }
+    $('bw').onclick=function(){ if(!R.blocking.length) dl(false); };
+    $('bd2').onclick=function(){ dl(true); };
     $('cr').onclick=function(){ var d=R.disb, L=[];
       L.push('Disbursement check — '+C.header.caseTitle); L.push('Settlement '+M(d.gross)+' | Fee '+M(d.feeTotal)+(d.feeReduced?' (reduced, approved by '+opts.feeApprover+')':' (1/3)')+' | Costs '+M(d.costsTotal)+' | Medical/liens '+M(d.medsTotal)+' | Net to client '+M(d.net));
       if(R.blocking.length){ L.push('MUST FIX:'); R.blocking.forEach(function(x){L.push(' - '+x.msg);}); }
