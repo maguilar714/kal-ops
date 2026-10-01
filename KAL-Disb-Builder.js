@@ -1,4 +1,4 @@
-/* KAL Disbursement Builder — bookmarklet payload. v1.2-pilot (2026-09-30)
+/* KAL Disbursement Builder — bookmarklet payload. v1.3-pilot (2026-09-30)
    Source of truth: OneDrive/Documents/Claude Skills/CONTEXT/Tools/KAL Skill Builder/KAL-Disb-Builder.js
    Served from: https://maguilar714.github.io/kal-ops/KAL-Disb-Builder.js
    Design decisions and reasoning: KAL-Disb-Builder-BUILD-LOG.md (same folder).
@@ -235,7 +235,12 @@ var KCORE = (function(){
     if(!m) return null;
     try{ return JSON.parse(JSON.parse('"'+m[1]+'"')).map(function(x){ var d=(x.contact&&x.contact.details)||{};
       var lh=x.lien_holder; var lhName=lh?(typeof lh==='string'?lh:((lh.details&&(lh.details.company||lh.details.displayname))||lh.company||lh.displayname||'')):'';
-      return { id:String(x.id), provider:T(d.company||d.displayname||''), lienHolder:T(lhName), kind:x.kind, accepted:!!x.accepted, removed:!!x.removed,
+      // Payee + mailing address for Kevin's email (D35): lien holder first, else provider; billing address first, else physical.
+      function addrOf(det){ var a=(det&&det.addresses)||{}; var pick=[a.billing,a.physical].filter(function(z){return z&&z.street1;})[0];
+        return { payee:T((a.billing&&a.billing.payee)||(a.physical&&a.physical.payee)||''), address: pick?T([pick.street1,pick.street2].filter(Boolean).join(', '))+', '+T(pick.city+', '+pick.state+' '+pick.zipcode):'' }; }
+      var lhDet=(lh&&typeof lh==='object')?(lh.details||lh):null; var pa=lhDet?addrOf(lhDet):addrOf(d);
+      var payTo=pa.payee||(lhDet?T(lhDet.company||lhName):T(d.company||d.displayname||''));
+      return { id:String(x.id), provider:T(d.company||d.displayname||''), lienHolder:T(lhName), payTo:payTo, payAddress:pa.address, kind:x.kind, accepted:!!x.accepted, removed:!!x.removed,
         original:num(x.original_cost), final:num(x.final_cost), hiPaid:num(x.health_insurance_paid), stillOwed:num(x.still_owed),
         billing:x.billing_state, records:x.records_state }; }); }catch(e){ return null; } }
   function readCosts(doc){ var out=[];
@@ -339,7 +344,7 @@ var KCORE = (function(){
       if(a==null){ block(name+': no final amount entered.','Enter the final amount on the Settlement tab.','settlement/negotiations'); draftMeds.push({payee:name, original:orig||0, amount:owed||orig||0, pending:true}); return; }
       if(!orig && a>0){ block(name+': '+money(a)+' with no original bill amount.','Enter the original bill on the Medical Treatment tab.','medical/treatment'); return; }
       if(orig>0 && a>orig*0.7+0.005 && a>0) warn(name+': reduced only '+Math.round((1-a/orig)*100)+'% ('+money(orig)+' → '+money(a)+').',null,null);
-      meds.push({ payee:name, lienHolder:t.lienHolder||'', original:orig||0, amount:a, hiPaidOnly:(a===0 && hiPaid>0) });
+      meds.push({ payee:name, lienHolder:t.lienHolder||'', payTo:t.payTo||name, payAddress:t.payAddress||'', original:orig||0, amount:a, hiPaidOnly:(a===0 && hiPaid>0) });
     });
     if(omitted.length) warn('Left off the document (blank or placeholder lines with no bill and $0): '+omitted.join(', ')+'.','Remove them from the case if they don\'t belong.','settlement/negotiations');
     // Providers on the Treatment tab that never made it to the Settlement tab (W2)
@@ -352,8 +357,11 @@ var KCORE = (function(){
       var o=amt(r.cells[1]), a=amt(r.cells[3]);
       if(!a && !o){ warn(name+' is listed as health insurance with no amount. Confirm there is no lien and save the no-lien letter.','Remove it, or enter the final lien.','settlement/negotiations'); return; }
       if(!r.accepted){ block(name+' health insurance lien is not accepted.','Accept the final lien on the Settlement tab.','settlement/negotiations'); return; }
-      meds.push({ payee:name, original:o||a||0, amount:a||0, isHI:true }); });
+      meds.push({ payee:name, payTo:name, payAddress:'', original:o||a||0, amount:a||0, isHI:true }); });
 
+    // Addresses for Kevin's email (D35) — one warning per payee CasePeer has no address for.
+    var noAddr={}; meds.forEach(function(m){ if(m.amount>0 && !m.payAddress) (noAddr[m.payTo]=noAddr[m.payTo]||[]).push(m.payee); });
+    Object.keys(noAddr).forEach(function(p){ warn('No mailing address in CasePeer for '+p+(noAddr[p].join(', ')!==p?' (pays '+noAddr[p].join(', ')+')':'')+'. Kevin\'s email will say [ADDRESS NEEDED].','Add the address to the contact in CasePeer so it fills in next time.',null); });
     // Misc liens + advances (child support, loans)
     var misc=[], adv=[];
     c.miscTable.forEach(function(r){ var a=amt(r.cells[2]);
@@ -414,7 +422,39 @@ var KCORE = (function(){
       misc:misc, miscTotal:miscTotal, advances:adv, advTotal:advTotal, trust:trust, trustTotal:trustTotal, hha:hha, net:net, medsDraft:medsDraft, medsDraftTotal:medsDraftTotal, medsDraftOriginal:medsDraftOriginal, netDraft:netDraft, extraParas:[] };
     return { blocking:B, warnings:W, passed:P, disb:d, lang:h.lang };
   }
-  return { read:read, evaluate:evaluate, money:money, APPROVERS_FEE:APPROVERS_FEE, APPROVERS_ATTY:APPROVERS_ATTY };
+  // ---------- Kevin payment email (D35) ----------
+  function buildEmail(c, R){
+    var d=R.disb, h=c.header, NA='[ADDRESS NEEDED]', who=h.lastFirst, memo='Memo: '+who+' – DOB '+(h.dob||'[DOB]');
+    var checks=d.meds.filter(function(m){return m.amount>0;}), zero=d.meds.filter(function(m){return !m.amount;});
+    var others=[].concat(d.priorAtty.map(function(x){return {label:x.payee+' (prior attorney lien)', payTo:x.payee, amount:x.amount};}),
+      d.misc.map(function(x){return {label:x.payee, payTo:x.payee, amount:x.amount};}), d.advances.map(function(x){return {label:x.payee+' (settlement advance)', payTo:x.payee, amount:x.amount};}));
+    var medsPaid=r2(checks.reduce(function(s,m){return s+m.amount;},0));
+    var rows=[['Settlement',money(d.gross)],['Attorney fee'+(d.feeReduced?' (reduced)':' (1/3)')+' – KAL Law, APC',money(d.feeKal)]];
+    d.priorAtty.forEach(function(x){ rows.push(['Prior attorney – '+x.payee, money(x.amount)]); });
+    rows.push(['Costs reimbursed – KAL Law, APC',money(d.costsTotal)],['Medical providers ('+checks.length+' check'+(checks.length===1?'':'s')+')',money(medsPaid)]);
+    d.misc.forEach(function(x){ rows.push([x.payee, money(x.amount)]); }); d.advances.forEach(function(x){ rows.push([x.payee, money(x.amount)]); });
+    if(d.trustTotal) rows.push(['Held in trust', money(d.trustTotal)]);
+    rows.push(['Client',money(d.net)],['Total',money(r2(d.feeTotal+d.costsTotal+medsPaid+d.miscTotal+d.advTotal+d.trustTotal+d.net))]);
+    var T=[], H=[];
+    function both(t,hh){ T.push(t); H.push(hh==null?'<p>'+esc(t)+'</p>':hh); }
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    var subject='Disbursement Payment – '+who;
+    both('Hello Kevin,'); both('Here are the payments for the '+who+' case. The client\'s signed disbursement and the settlement check are attached.');
+    T.push(''); T.push('SUMMARY'); rows.forEach(function(r){ T.push(r[0]+': '+r[1]); });
+    H.push('<p><b>Summary</b></p><table border="1" cellpadding="4" style="border-collapse:collapse">'+rows.map(function(r,i){return '<tr><td>'+esc(r[0])+'</td><td align="right">'+(i===rows.length-1?'<b>':'')+esc(r[1])+(i===rows.length-1?'</b>':'')+'</td></tr>';}).join('')+'</table>');
+    T.push(''); T.push('PROVIDER PAYMENTS'); H.push('<p><b>Provider payments</b></p>');
+    checks.concat(others).forEach(function(m){
+      var label=m.label||m.payee; var addr=m.payAddress||NA;
+      T.push(label+': '+money(m.amount)); T.push('Make check payable to: '+(m.payTo||label)); T.push(addr); T.push(memo); T.push('——————————————');
+      H.push('<p><b>'+esc(label)+': '+esc(money(m.amount))+'</b><br>Make check payable to: '+esc(m.payTo||label)+'<br>'+(addr===NA?'<span style="background:#ff0">'+NA+'</span>':esc(addr))+'<br>'+esc(memo)+'</p><p>——————————————</p>'); });
+    if(zero.length) both('No payment (reduced to $0.00): '+zero.map(function(m){return m.payee;}).join(', ')+'.');
+    if(d.hha && d.hha.length) both('Client pays directly (Hold Harmless Agreement signed): '+d.hha.map(function(x){return x.payee+' '+money(x.amount);}).join(', ')+'.');
+    if(d.trust.length) both('Held in trust: '+d.trust.map(function(x){return x.payee+' '+money(x.amount);}).join(', ')+'.');
+    T.push(''); both('Thank you,');
+    var head='To: Kevin Kunde | CC: Bianca Salcedo; Kausar Sarwari | BCC: '+c.caseId+'@bcc.casepeer.com\nSubject: '+subject+'\nAttach: signed disbursement + settlement check\n\n';
+    return { subject:subject, text:head+T.join('\n'), html:H.join(''), missing:(T.join('\n').match(/\[ADDRESS NEEDED\]/g)||[]).length };
+  }
+  return { read:read, evaluate:evaluate, buildEmail:buildEmail, money:money, APPROVERS_FEE:APPROVERS_FEE, APPROVERS_ATTY:APPROVERS_ATTY };
 })();
 
 
@@ -422,7 +462,7 @@ var KCORE = (function(){
    A panel that slides in over the CasePeer case page. Uses a Shadow DOM so
    CasePeer's styles can't break it and it can't break CasePeer. */
 (function(){
-  var VERSION='1.2-pilot (2026-09-30)';
+  var VERSION='1.3-pilot (2026-09-30)';
   var m=location.pathname.match(/\/case\/(\d+)\//);
   var old=document.getElementById('kal-disb-builder-host'); if(old) old.remove();
   var host=document.createElement('div'); host.id='kal-disb-builder-host';
@@ -500,7 +540,8 @@ var KCORE = (function(){
       '<button class="btn sec2" id="rc" title="Re-read CasePeer after you fix something">Re-check</button>'+
       '<button class="btn" id="bw"'+(R.blocking.length?' disabled title="Fix the red items first"':'')+'>Download Final</button>'+
       '<button class="btn sec2" id="bd2" title="Draft for your own review — marked NOT FOR SIGNATURE, no signature lines">Download Draft</button>'+
-      '<button class="btn sec2" id="cr" title="Copy a text summary to paste in Teams">Copy report</button>';
+      '<button class="btn sec2" id="cr" title="Copy a text summary to paste in Teams">Copy report</button>'+
+      '<button class="btn sec2" id="ce"'+(R.blocking.length?' disabled title="Fix the red items first"':'')+' title="Copy Kevin\'s payment email — paste into Outlook">Copy Kevin email</button>';
     wire();
   }
   function wire(){
@@ -526,6 +567,12 @@ var KCORE = (function(){
       document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},1000); }
     $('bw').onclick=function(){ if(!R.blocking.length) dl(false); };
     $('bd2').onclick=function(){ dl(true); };
+    $('ce').onclick=function(){ if(R.blocking.length) return; var e=KCORE.buildEmail(C,R);
+      var done=function(){ $('ce').textContent=e.missing?'Copied — '+e.missing+' address'+(e.missing>1?'es':'')+' needed':'Copied ✓'; setTimeout(function(){$('ce').textContent='Copy Kevin email';},2500); };
+      var fail=function(){ $('bd').insertAdjacentHTML('afterbegin','<textarea style="width:100%;height:200px">'+esc(e.text)+'</textarea>'); };
+      try{ if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+          navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([e.html],{type:'text/html'}),'text/plain':new Blob([e.text],{type:'text/plain'})})]).then(done,function(){ navigator.clipboard.writeText(e.text).then(done,fail); });
+        } else navigator.clipboard.writeText(e.text).then(done,fail); }catch(x){ fail(); } };
     $('cr').onclick=function(){ var d=R.disb, L=[];
       L.push('Disbursement check — '+C.header.caseTitle); L.push('Settlement '+M(d.gross)+' | Fee '+M(d.feeTotal)+(d.feeReduced?' (reduced, approved by '+opts.feeApprover+')':' (1/3)')+' | Costs '+M(d.costsTotal)+' | Medical/liens '+M(d.medsTotal)+' | Net to client '+M(d.net));
       if(R.blocking.length){ L.push('MUST FIX:'); R.blocking.forEach(function(x){L.push(' - '+x.msg);}); }
