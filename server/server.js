@@ -111,6 +111,9 @@ async function initDb() {
   // every write above) is the timestamp half. Together: "what happened, and when" --
   // not just a bare date, which by itself would misleadingly imply real progress.
   await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS last_touch_action TEXT`);
+  // Settlement Queue (2026-10) -- queue_owner is who claimed/was assigned a
+  // transferred-or-escalated file in the settlement queue. Null = unclaimed.
+  await pool.query(`ALTER TABLE case_contacts ADD COLUMN IF NOT EXISTS queue_owner TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS case_junior (case_name TEXT PRIMARY KEY, liability TEXT, health_insurance TEXT, policy_3p TEXT, uim TEXT, note TEXT, treatment TEXT, main_tasks TEXT, updated_at TIMESTAMPTZ DEFAULT NOW())`);
   // Backfill columns for deployments created before these fields existed.
   // The dashboards send note/treatment/mainTasks to /junior; without these
@@ -244,7 +247,7 @@ const server = http.createServer(async (req, res) => {
   // CONTACTS
   if (req.method === 'GET' && url === '/contacts') {
     try {
-      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log, contact_log, handoff_status, handoff_at, handoff_note, updated_at, last_touch_action FROM case_contacts');
+      const result = await pool.query('SELECT case_name, adjuster_email, claim_number, adjuster_name, adjuster_phone, fee_amount, fee_rate, email_log, contact_log, handoff_status, handoff_at, handoff_note, queue_owner, updated_at, last_touch_action FROM case_contacts');
       const contacts = {};
       result.rows.forEach(r => {
         contacts[r.case_name] = {
@@ -259,6 +262,7 @@ const server = http.createServer(async (req, res) => {
           handoffStatus: r.handoff_status,
           handoffAt: r.handoff_at,
           handoffNote: r.handoff_note,
+          queueOwner: r.queue_owner,
           // "Last touched" -- updated_at is bumped on every write to this row
           // regardless of which fields changed; last_touch_action (below) says which.
           lastTouchedAt: r.updated_at ? r.updated_at.toISOString() : null,
@@ -292,7 +296,8 @@ const server = http.createServer(async (req, res) => {
         contactLog:    'contact_log',
         handoffStatus: 'handoff_status',
         handoffAt:     'handoff_at',
-        handoffNote:   'handoff_note'
+        handoffNote:   'handoff_note',
+        queueOwner:    'queue_owner'
       };
 
       // Reject unknown fields loudly instead of silently dropping them (same guard as /junior).
@@ -328,6 +333,7 @@ const server = http.createServer(async (req, res) => {
         touchLabel = hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : 'Undo';
       }
       else if (['adjusterEmail','adjusterName','adjusterPhone','claimNumber'].some(k => Object.prototype.hasOwnProperty.call(body, k))) touchLabel = 'Info updated';
+      else if (Object.prototype.hasOwnProperty.call(body, 'queueOwner')) touchLabel = body.queueOwner ? ('Claimed by ' + body.queueOwner) : 'Released';
 
       const cols = [], vals = [];
       Object.keys(COLMAP).forEach(key => {
