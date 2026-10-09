@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KAL Operations · v6.9</title>
+<title>KAL Operations · v7.0</title>
 <template id="__bundler_thumbnail" data-bg-color="#f7f5f0">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect x="60" y="60" width="1080" height="80" rx="10" fill="#1d1d1f"/>
@@ -1376,6 +1376,7 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
         <tbody id="queue-body"></tbody>
       </table>
     </div>
+    <div id="queue-nodemand" class="card" style="display:none;margin-top:12px;padding:12px 14px;border-left:3px solid var(--amber,#b26a00)"></div>
 
     <div class="section-title">
       <div class="left">
@@ -2387,7 +2388,7 @@ table.t th .sort-ind{display:inline-block;margin-left:3px;font-size:9px;color:va
   </section>
 
   <footer class="foot">
-    <div>KAL Operations · v6.9 · live data</div>
+    <div>KAL Operations · v7.0 · live data</div>
     <div>Tabs <kbd>1</kbd>–<kbd>6</kbd> · SOL <kbd>6</kbd> · Period <kbd>Y</kbd> · Tweaks toolbar to customize</div>
   </footer>
 </div>
@@ -3332,7 +3333,7 @@ function _deriveTouchLabel(fields){
   if(Object.prototype.hasOwnProperty.call(fields, 'handoffNote')) return 'Note updated';
   if(Object.prototype.hasOwnProperty.call(fields, 'handoffStatus')){
     var hs = fields.handoffStatus;
-    return hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : 'Undo';
+    return hs === 'transferred' ? 'Transferred' : hs === 'escalated' ? 'Escalated' : hs === 'lit' ? 'Moved to LIT' : hs === 'settled' ? 'Settled' : 'Undo';
   }
   if(['adjusterEmail','adjusterName','adjusterPhone','claimNumber'].some(function(k){ return Object.prototype.hasOwnProperty.call(fields, k); })) return 'Info updated';
   return null;
@@ -3508,6 +3509,7 @@ function renderMoneyFeed(raw){
   var settlementMap = {};
   (raw.settlement||[]).forEach(function(s){
     if(s._casename) settlementMap[s._casename] = {
+      id:           s.id,
       casestatus:   s.casestatus,
       last_touched: s.last_touched || null,
       statutedate:  s.statutedate  || null
@@ -3793,6 +3795,7 @@ function renderSettleOffers(demands, view, settlementMap){
       : '<select class="q-claim-sel" data-action="claim-owner" data-case="'+_esc(caseName)+'">'
         + '<option value="">Claim\u2026</option>'
         + QUEUE_STAFF.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('')
+        + '<option value="LIT">LIT</option>'
         + '</select>';
 
     // Expand row
@@ -4876,12 +4879,14 @@ function renderSettlements(raw){
   var settlementMap = {};
   (raw.settlement||[]).forEach(function(s){
     if(s._casename) settlementMap[s._casename] = {
+      id:           s.id,
       casestatus:   s.casestatus,
       last_touched: s.last_touched || null,
       statutedate:  s.statutedate  || null
     };
   });
   _lastSettlementMap = settlementMap;
+      try{ _queueLoadPostNames(); }catch(e){}
   renderCarriers(demands);
   renderSettleOffers(demands, _settleOfferView, settlementMap);
   bindSettlePanelToggles(raw, settlementMap);
@@ -5319,12 +5324,59 @@ var _cmpSort = {key:null, dir:1}; // column sort state, shared across all CM pan
    not a grouping key -- see KAL-Ops-CHANGELOG.md v6.6. */
 var QUEUE_STAFF = ['Gus', 'Mark'];
 
+var QUEUE_POST_SETTLE = ['Settled','Lien Negotiations','Disbursement','Disbursed','Closed'];
+var _queuePostNames = {};   // case names seen in lien-negotiations-overview / disbursement-overview
+var _queueAutoDone = {};
+function _queueIsPostSettle(caseName){
+  var info = _lastSettlementMap[caseName];
+  if(info && QUEUE_POST_SETTLE.indexOf(info.casestatus) >= 0) return true;
+  return !!_queuePostNames[caseName];
+}
+function _queueAutoSettle(caseName){
+  if(_queueAutoDone[caseName]) return; _queueAutoDone[caseName] = 1;
+  try{ _setContact(caseName, {handoffStatus: 'settled', queueOwner: null}); }catch(e){}
+}
+// Background: names of cases already in liens/disbursement (they can drop off settlement-overview).
+function _queueLoadPostNames(){
+  async function all(u){ var a=[], p=1, more=true; while(more){ var r=await fetch(u+'?page='+p,{credentials:'include'}).then(function(x){ if(!x.ok) throw new Error(x.status); return x.json(); }); a=a.concat(r.results||[]); more=!!r.next; p++; } return a; }
+  ['/api/v1/case/lien-negotiations-overview/','/api/v1/case/disbursement-overview/'].forEach(function(u){
+    all(u).then(function(rows){ rows.forEach(function(x){ if(x._casename) _queuePostNames[x._casename]=1; }); try{ renderQueue(); }catch(e){} })
+      .catch(function(){ /* no permission or offline -- settlement-overview check still applies */ });
+  });
+}
+// v7.0: cases CasePeer shows in negotiations with no demand entered -- they cannot appear anywhere on this tab.
+function _queueNoDemand(){
+  var have = {};
+  (_cmpDemands||[]).forEach(function(d){ if(d.case && d.case._casename) have[d.case._casename]=1; });
+  var active = ['Demanded','UIM Demanded','Settlement Negotiations'];
+  var out = [];
+  Object.keys(_lastSettlementMap||{}).forEach(function(n){
+    var info = _lastSettlementMap[n];
+    if(info && active.indexOf(info.casestatus) >= 0 && !have[n]) out.push({name:n, id:info.id, status:info.casestatus});
+  });
+  return out.sort(function(a,b){ return a.name < b.name ? -1 : 1; });
+}
+function _renderNoDemand(){
+  var box = document.getElementById('queue-nodemand');
+  if(!box) return;
+  var list = _queueNoDemand();
+  if(!list.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='';
+  box.innerHTML = '<div style="font-weight:600;margin-bottom:6px">In negotiations, no demand entered in CasePeer (' + list.length + ')</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">These cases can\'t show on this dashboard until the CM enters the demand in CasePeer.</div>'
+    + list.map(function(x){ return '<div style="font-size:13px;padding:2px 0">' + _caseLink(x.name, x.id) + ' <span style="color:var(--ink-3)">· ' + _esc(x.status) + '</span></div>'; }).join('');
+}
+
 function _queueEntries(){
   var out = [];
   CMP_ROSTER.forEach(function(cm){
     _cmpDemands.filter(function(d){ return d.case_manager === cm.name; }).forEach(function(d){
       var c = _getContact(d.case._casename);
       if(c.handoffStatus === 'transferred' || c.handoffStatus === 'escalated'){
+        // v7.0: drop a handed-off case once CasePeer shows it past Settlement Negotiations (Settled, Liens,
+        // Disbursement, Disbursed, Closed). Remove-only: this never adds a case. Litigation and earlier stages stay.
+        // The drop is saved (handoffStatus 'settled') so the case stays gone after it leaves the CasePeer lists.
+        if(_queueIsPostSettle(d.case._casename)){ _queueAutoSettle(d.case._casename); return; }
         out.push({d:d, c:c, cmName:cm.name});
       }
     });
@@ -5355,6 +5407,7 @@ function _queueRowHtml(entry){
       + '<select class="q-claim-sel" onchange="_queueClaim(this,\'' + _cmpEscJs(caseName) + '\')">'
       + '<option value="">Claim…</option>'
       + QUEUE_STAFF.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('')
+      + '<option value="LIT">LIT</option>'
       + '</select>';
 
   return '<tr>'
@@ -5416,11 +5469,17 @@ function renderQueue(){
   body.innerHTML = entries.length
     ? entries.map(_queueRowHtml).join('')
     : '<tr><td colspan="5" class="empty-state">Nothing in the queue right now.</td></tr>';
+  try{ _renderNoDemand(); }catch(e){}
 }
 
 function _queueClaim(sel, caseName){
   var name = sel.value;
   if(!name) return;
+  if(name === 'LIT'){
+    if(!confirm('Mark this case as LIT? It comes off the settlement queue.')){ sel.value=''; return; }
+    _setContact(caseName, {handoffStatus: 'lit', queueOwner: 'LIT'}).then(renderQueue);
+    return;
+  }
   _setContact(caseName, {queueOwner: name}).then(renderQueue);
 }
 function _queueRelease(evt, caseName){
@@ -5451,6 +5510,8 @@ function _cmpOutcomeFor(d, contact){
   if(_cmpIsResolved(d)) return {label:'\u2192 CM Resolved', cls:'green', action:null};
   if(contact.handoffStatus === 'transferred') return {label:'Transferred \u2013 w/ offer', cls:'blue', action:null};
   if(contact.handoffStatus === 'escalated') return {label:'Escalated \u2013 SOL', cls:'red', action:null};
+  if(contact.handoffStatus === 'lit') return {label:'LIT', cls:'gray', action:null};
+  if(contact.handoffStatus === 'settled') return {label:'Settled', cls:'green', action:null};
   var offer = parseFloat(d.offer_amount);
   if(offer) return {label:'\u2014 pending', cls:'gray', action:'transfer'};
   return {label:'\u2014 pending', cls:'gray', action:null};
