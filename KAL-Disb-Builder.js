@@ -272,7 +272,7 @@ var KCORE = (function(){
       var payee=T((tr.cells[1].querySelector('strong')||tr.cells[1]).textContent);
       out.push({ payee:payee, memo:T(tr.cells[2].textContent), invoice:T(tr.cells[3].textContent), requested:T(tr.cells[4].textContent), paid:T(tr.cells[5].textContent), paidBy:T(tr.cells[6].textContent), amount:amt(tr.cells[7].textContent)||0 }); });
     return out; }
-  // D44: agreements can sit in any Settlement subfolder whose name has "lien", "agreement" or "reduction", or loose in Settlement.
+  // D44: agreements live in a Settlement subfolder whose name has "lien", "agreement" or "reduction" (plus one level of provider subfolders). Loose files in Settlement are NOT read (Moises: agreements belong in their folder).
   // Only file NAMES are read, never contents.
   function readLienAgreements(caseId){
     var base='/api/v1/case/case-documents/'+caseId+'/?page_size=200';
@@ -281,7 +281,6 @@ var KCORE = (function(){
       if(!s) return {folder:false, files:[]};
       return getJSON(base+'&folder_id='+s.id).then(function(r2){
         var items=r2.results||[];
-        var loose=items.filter(function(x){return x.file_type!=='Folder';}).map(function(x){return T(x.docname);});
         var subs=items.filter(function(x){return x.file_type==='Folder' && /lien|agreement|reduction/i.test(x.docname);});
         // One more level: some negotiators keep a subfolder per provider. A file there is named "<subfolder> <file>"; an empty subfolder counts for nothing.
         function filesIn(id,prefix,depth){ return getJSON(base+'&folder_id='+id).then(function(r3){ var it=r3.results||[];
@@ -290,7 +289,7 @@ var KCORE = (function(){
           return Promise.all(it.filter(function(x){return x.file_type==='Folder';}).map(function(x){ return filesIn(x.id,prefix+' '+x.docname,depth-1); }))
             .then(function(ls){ return [].concat.apply(own,ls); }); }).catch(function(){return [];}); }
         return Promise.all(subs.map(function(f){ return filesIn(f.id,'',1); }))
-          .then(function(lists){ var files=[].concat.apply(loose,lists); return {folder:subs.length>0, files:files}; }); }); }).catch(function(){ return {folder:null, files:[]}; }); }
+          .then(function(lists){ var files=[].concat.apply([],lists); return {folder:subs.length>0, files:files}; }); }); }).catch(function(){ return {folder:null, files:[]}; }); }
   // D44: whole-word name match, skipping generic words, so "Dr." or "Imaging" alone never counts as a match.
   var AGR_STOP={dr:1,doctor:1,and:1,of:1,physical:1,therapy:1,pt:1,chiropractic:1,chiro:1,imaging:1,urgent:1,care:1,clinic:1,health:1,healthcare:1,institute:1,spine:1,orthopedics:1,orthopedic:1,radiology:1,services:1,service:1,management:1,associates:1,family:1,pain:1,hospital:1,emergency:1,physicians:1,ambulance:1,mri:1,lien:1,liens:1,agreement:1,reduction:1};
   function agrWords(s){ return norm(s).split(' ').filter(function(w){ return w.length>=3 && !AGR_STOP[w] && !/^\d+$/.test(w); }); }
