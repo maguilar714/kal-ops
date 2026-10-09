@@ -1,4 +1,4 @@
-/* KAL Disbursement Builder — bookmarklet payload. v1.5-pilot (2026-10-08)
+/* KAL Disbursement Builder — bookmarklet payload. v1.6-pilot (2026-10-08)
    Source of truth: OneDrive/Documents/Claude Skills/CONTEXT/Tools/KAL Skill Builder/KAL-Disb-Builder.js
    Served from: https://maguilar714.github.io/kal-ops/KAL-Disb-Builder.js
    Design decisions and reasoning: KAL-Disb-Builder-BUILD-LOG.md (same folder).
@@ -272,15 +272,30 @@ var KCORE = (function(){
       var payee=T((tr.cells[1].querySelector('strong')||tr.cells[1]).textContent);
       out.push({ payee:payee, memo:T(tr.cells[2].textContent), invoice:T(tr.cells[3].textContent), requested:T(tr.cells[4].textContent), paid:T(tr.cells[5].textContent), paidBy:T(tr.cells[6].textContent), amount:amt(tr.cells[7].textContent)||0 }); });
     return out; }
+  // D44: agreements can sit in any Settlement subfolder whose name has "lien", "agreement" or "reduction", or loose in Settlement.
+  // Only file NAMES are read, never contents.
   function readLienAgreements(caseId){
-    return getJSON('/api/v1/case/case-documents/'+caseId+'/?page_size=200').then(function(r){
+    var base='/api/v1/case/case-documents/'+caseId+'/?page_size=200';
+    return getJSON(base).then(function(r){
       var s=(r.results||[]).find(function(x){return x.file_type==='Folder' && /^settlement$/i.test(T(x.docname));});
       if(!s) return {folder:false, files:[]};
-      return getJSON('/api/v1/case/case-documents/'+caseId+'/?page_size=200&folder_id='+s.id).then(function(r2){
-        var la=(r2.results||[]).find(function(x){return x.file_type==='Folder' && /lien\s*agreement/i.test(x.docname);});
-        if(!la) return {folder:false, files:[]};
-        return getJSON('/api/v1/case/case-documents/'+caseId+'/?page_size=200&folder_id='+la.id).then(function(r3){
-          return {folder:true, files:(r3.results||[]).map(function(x){return T(x.docname);})}; }); }); }).catch(function(){ return {folder:null, files:[]}; }); }
+      return getJSON(base+'&folder_id='+s.id).then(function(r2){
+        var items=r2.results||[];
+        var loose=items.filter(function(x){return x.file_type!=='Folder';}).map(function(x){return T(x.docname);});
+        var subs=items.filter(function(x){return x.file_type==='Folder' && /lien|agreement|reduction/i.test(x.docname);});
+        // One more level: some negotiators keep a subfolder per provider. A file there is named "<subfolder> <file>"; an empty subfolder counts for nothing.
+        function filesIn(id,prefix,depth){ return getJSON(base+'&folder_id='+id).then(function(r3){ var it=r3.results||[];
+          var own=it.filter(function(x){return x.file_type!=='Folder';}).map(function(x){return T(prefix+' '+x.docname);});
+          if(depth<=0) return own;
+          return Promise.all(it.filter(function(x){return x.file_type==='Folder';}).map(function(x){ return filesIn(x.id,prefix+' '+x.docname,depth-1); }))
+            .then(function(ls){ return [].concat.apply(own,ls); }); }).catch(function(){return [];}); }
+        return Promise.all(subs.map(function(f){ return filesIn(f.id,'',1); }))
+          .then(function(lists){ var files=[].concat.apply(loose,lists); return {folder:subs.length>0, files:files}; }); }); }).catch(function(){ return {folder:null, files:[]}; }); }
+  // D44: whole-word name match, skipping generic words, so "Dr." or "Imaging" alone never counts as a match.
+  var AGR_STOP={dr:1,doctor:1,and:1,of:1,physical:1,therapy:1,pt:1,chiropractic:1,chiro:1,imaging:1,urgent:1,care:1,clinic:1,health:1,healthcare:1,institute:1,spine:1,orthopedics:1,orthopedic:1,radiology:1,services:1,service:1,management:1,associates:1,family:1,pain:1,hospital:1,emergency:1,physicians:1,ambulance:1,mri:1,lien:1,liens:1,agreement:1,reduction:1};
+  function agrWords(s){ return norm(s).split(' ').filter(function(w){ return w.length>=3 && !AGR_STOP[w] && !/^\d+$/.test(w); }); }
+  function agrHit(names, files){ var ws=[]; names.forEach(function(n){ ws=ws.concat(agrWords(n)); }); if(!ws.length) return false;
+    return files.some(function(f){ var fw=' '+norm(f)+' '; return ws.some(function(w){ return fw.indexOf(' '+w+' ')>=0; }); }); }
   // Companion cases (same DOL, "+N" in case name): used only to spot a cost billed to both.
   function readCompanions(caseId, dol){
     if(!dol) return Promise.resolve([]);
@@ -413,10 +428,10 @@ var KCORE = (function(){
     var costsGrouped=[], gi={}; c.costs.forEach(function(x){ var k=norm(x.payee)||x.payee; if(!gi[k]){ gi[k]={payee:x.payee, amount:0}; costsGrouped.push(gi[k]); } gi[k].amount=r2(gi[k].amount+x.amount); });
 
     // Lien agreements on file
-    if(c.agreements && c.agreements.folder===false) warn('No "Lien Agreements" folder under Settlement documents. Save each reduction agreement there.',null,'documents/2/sort/0');
-    else if(c.agreements && c.agreements.folder){ meds.forEach(function(m){ if(m.isHI||!m.amount) return; var n=norm(m.payee).split(' ')[0]; var lh=norm(m.lienHolder||'').split(' ')[0];
-        var hit=c.agreements.files.some(function(f){ var nf=norm(f); return (n && nf.indexOf(n)>=0) || (lh && nf.indexOf(lh)>=0); });
-        if(!hit) warn('No agreement in "Lien Agreements" that matches '+m.payee+'.','Upload the reduction agreement.','documents/2/sort/0'); }); }
+    if(c.agreements && c.agreements.folder!==null){
+      if(c.agreements.folder===false && !c.agreements.files.length) warn('No lien agreements found in Settlement documents. Save each reduction agreement in Settlement → Lien Agreements.',null,'documents/2/sort/0');
+      else meds.forEach(function(m){ if(m.isHI||!m.amount) return;
+        if(!agrHit([m.payee, m.lienHolder||''], c.agreements.files)) warn('No lien agreement found for '+m.payee+' in Settlement documents.','Upload the reduction agreement to Settlement → Lien Agreements, with the provider\'s name in the file name.','documents/2/sort/0'); }); }
 
     // Held in trust (D13)
     // D29/D33: Hold Harmless providers are NOT deducted — the client pays them directly.
@@ -543,7 +558,7 @@ var KCORE = (function(){
    A panel that slides in over the CasePeer case page. Uses a Shadow DOM so
    CasePeer's styles can't break it and it can't break CasePeer. */
 (function(){
-  var VERSION='1.5-pilot (2026-10-08)';
+  var VERSION='1.6-pilot (2026-10-08)';
   var m=location.pathname.match(/\/case\/(\d+)\//);
   var old=document.getElementById('kal-disb-builder-host'); if(old) old.remove();
   var host=document.createElement('div'); host.id='kal-disb-builder-host';
