@@ -1,4 +1,4 @@
-/* KAL Disbursement Builder — bookmarklet payload. v1.4-pilot (2026-10-02)
+/* KAL Disbursement Builder — bookmarklet payload. v1.5-pilot (2026-10-08)
    Source of truth: OneDrive/Documents/Claude Skills/CONTEXT/Tools/KAL Skill Builder/KAL-Disb-Builder.js
    Served from: https://maguilar714.github.io/kal-ops/KAL-Disb-Builder.js
    Design decisions and reasoning: KAL-Disb-Builder-BUILD-LOG.md (same folder).
@@ -237,11 +237,15 @@ var KCORE = (function(){
       // Payee + mailing address for Kevin's email (D35): lien holder first, else provider; billing address first, else physical.
       // D36: the payment address comes ONLY from the contact's Billing tab. CasePeer copies the office address into "billing" when the
       // office address is tagged for billing too — that is a treatment address, not a payment address, so it is ignored.
-      function addrOf(det){ var a=(det&&det.addresses)||{}, b=a.billing||{}, o=a.physical||{};
+      // D43: a lien holder does not treat patients, so its office address IS a payment address. For lien holders: Billing tab if
+      // filled, else the office address. The D36 "billing equals office" rule applies to providers only.
+      function fmt(x){ return { payee:T(x.payee), attn:T(x.location_name), address:T([x.street1,x.street2].filter(Boolean).join(', '))+', '+T(x.city+', '+x.state+' '+x.zipcode) }; }
+      function addrOf(det,isLH){ var a=(det&&det.addresses)||{}, b=a.billing||{}, o=a.physical||{};
+        if(isLH){ if(T(b.street1)) return fmt(b); if(T(o.street1)) return fmt(o); return { payee:'', address:'', attn:'' }; }
         var own=b.street1 && (!o.street1 || T(b.street1).toLowerCase()!==T(o.street1).toLowerCase() || T(b.payee)!==T(o.payee) || T(b.zipcode)!==T(o.zipcode));
         if(!own) return { payee:'', address:'', attn:'' };
-        return { payee:T(b.payee), attn:T(b.location_name), address:T([b.street1,b.street2].filter(Boolean).join(', '))+', '+T(b.city+', '+b.state+' '+b.zipcode) }; }
-      var lhDet=(lh&&typeof lh==='object')?(lh.details||lh):null; var pa=lhDet?addrOf(lhDet):addrOf(d);
+        return fmt(b); }
+      var lhDet=(lh&&typeof lh==='object')?(lh.details||lh):null; var pa=lhDet?addrOf(lhDet,true):addrOf(d,false);
       var payTo=pa.payee||(lhDet?T(lhDet.company||lhName):T(d.company||d.displayname||''));
       return { id:String(x.id), provider:T(d.company||d.displayname||''), lienHolder:T(lhName), payTo:payTo, payAddress:pa.address, attn:pa.attn, acct:T(x.accountnumber), kind:x.kind, accepted:!!x.accepted, removed:!!x.removed,
         original:num(x.original_cost), final:num(x.final_cost), hiPaid:num(x.health_insurance_paid), stillOwed:num(x.still_owed),
@@ -539,7 +543,7 @@ var KCORE = (function(){
    A panel that slides in over the CasePeer case page. Uses a Shadow DOM so
    CasePeer's styles can't break it and it can't break CasePeer. */
 (function(){
-  var VERSION='1.4-pilot (2026-10-02)';
+  var VERSION='1.5-pilot (2026-10-08)';
   var m=location.pathname.match(/\/case\/(\d+)\//);
   var old=document.getElementById('kal-disb-builder-host'); if(old) old.remove();
   var host=document.createElement('div'); host.id='kal-disb-builder-host';
