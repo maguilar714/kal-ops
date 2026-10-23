@@ -4,7 +4,7 @@
    All cases: problems across open litigation files. */
 (function () {
   'use strict';
-  var VERSION = 'v1.1';
+  var VERSION = 'v1.2';
   if (location.hostname !== 'my.casepeer.com') { window.alert('Open CasePeer first, then click KAL Lit.'); return; }
   var old = document.getElementById('kl-root'); if (old) old.remove();
   var KLP = (function () {
@@ -67,6 +67,8 @@
     if (/DEMAND FOR (MUTUAL |SIMULTANEOUS )?(EXCHANGE|DESIGNATION) OF EXPERT|EXPERT WITNESS (INFORMATION|DEMAND)|CODE OF CIVIL PROCEDURE,? (SECTION )?§? ?2034\.2/.test(h0)) return 'expert';
     if (/DISC-0\d\d|FORM INTERROGATORIES/.test(up.slice(0, 3000)) && !/PROPOUNDING PARTY/.test(up)) return /ATTORNEYS? FOR PLAINTIFF|PROPOUNDED TO PLAINTIFF|TO PLAINTIFF/.test(up) ? 'disc_on_us' : 'disc_by_us';
     if (/PROOF OF SERVICE OF SUMMONS|POS-010/.test(up)) return 'summons_pos';
+    if (/\bCROSS-?\s?COMPLAINT\b/.test(h0.slice(0, 3500)) && /ATTORNEYS? FOR (DEFENDANT|CROSS)/.test(h0) && !/ANSWER TO (THE )?CROSS/.test(h0.slice(0, 3500))) return 'cross';
+    if (/\b(FIRST|SECOND|THIRD|FOURTH|FIFTH|\d+(ST|ND|RD|TH))\s+AMENDED\s+COMPLAINT\b|\bAMENDED COMPLAINT FOR\b/.test(h0) && /ATTORNEYS? FOR PLAINTIFF/.test(h0)) return 'amended';
     if (/\bCOMPLAINT FOR\b|PLD-PI-001|^\s*COMPLAINT\b/.test(h0) && /ATTORNEYS? FOR PLAINTIFF/.test(h0) && !/ANSWER/.test(h0.slice(0, 2500))) return 'complaint';
     if (/PROPOUNDING PARTY/.test(up) && /RESPONDING PARTY/.test(up)) {
       var pp = (t.match(/PROPOUNDING PARTY:?\s*(.{0,120})/i) || [])[1] || '';
@@ -160,6 +162,12 @@
     if (/^plaintiff/i.test(who)) return { us: true, label: 'us (plaintiff)' };
     return { us: false, label: clip(who.replace(/[,;]+$/, ''), 80) };
   }
+  // defendants named in the caption: text between "v." and "Defendants", split into names, Does dropped
+  function captionDefs(t) {
+    var h = sq(t.slice(0, 5000)), m = h.match(/\b(?:v|vs)\.?\s+(.{3,600}?)\s+Defendants?\s*\.?/i); if (!m) return [];
+    return m[1].split(/;|\band\b/i).map(function (x) { return sq(x.replace(/,\s*(an?|the)\s+(individual|public entity|corporation|california|limited|business|entity|government|municipal|county|city|state)[^,;]*/ig, '').replace(/[,;]+$/, '').replace(/(?<!\b(?:INC|CO|CORP|LTD|LLC|L\.P))\.$/i, '')); })
+      .filter(function (x) { return x.length > 2 && !/\bDOES?\b|inclusive|^\d/i.test(x); }).slice(0, 12);
+  }
   function read(pages) {
     var t = pages.join('\n');
     var chars = t.replace(/\s/g, '').length;
@@ -180,6 +188,15 @@
     if (k === 'notice') return readNotice(t);
     if (k === 'responses') { var rr = readDiscovery(t); rr.kind = 'responses'; rr.what = discType(t); rr.from = clip(sq((t.match(/RESPONDING PARTY:?\s*(.{0,160}?)\s*SET\s*(NO\.?|NUMBER)/i) || [])[1] || '').replace(/^Defendants?,?\s*/i, ''), 120); return rr; }
     if (k === 'complaint') return { kind: 'complaint' };
+    if (k === 'amended') {
+      var am = (t.toUpperCase().match(/\b(FIRST|SECOND|THIRD|FOURTH|FIFTH|\d+(?:ST|ND|RD|TH))\s+AMENDED\s+COMPLAINT/) || [])[1];
+      var ab = posBlock(t), asv = serviceDate(ab);
+      return { kind: 'amended', title: (am ? am.charAt(0) + am.slice(1).toLowerCase() + ' ' : '') + 'Amended Complaint', captionDefs: captionDefs(t), served2: asv, method: asv ? serviceMethod(ab) : '' };
+    }
+    if (k === 'cross') {
+      var cb = posBlock(t), csv = serviceDate(cb), who = sq((t.slice(0, 3500).match(/Attorneys? for\s+(?:Defendants?(?: and Cross-?\s?Complainants?)?|Cross-?\s?Complainants?),?\s*(.{0,120}?)(SUPERIOR COURT|\s{3,}|$)/i) || [])[1] || '');
+      return { kind: 'cross', from: clip(who, 100), served: csv, noPos: !csv, method: csv ? serviceMethod(cb) : '' };
+    }
     if (k === 'depo') {
       var dn = readNotice(t), who = sq((t.match(/DEPOSITION OF\s+(?:PLAINTIFF,?\s+|DEFENDANT,?\s+|THE PERSON MOST QUALIFIED OF\s+|PMQ OF\s+)?([A-Z][A-Za-z.'\- ]{2,50}?)(?=\s*(,|ON\b|WILL\b|AT\b|PLEASE\b|TO\b|\(|\n|DATE))/i) || [])[1] || '');
       return { kind: 'depo', what: who ? 'Deposition of ' + who.replace(/\b([A-Z])([A-Z]+)\b/g, function (m0, a, b) { return a + b.toLowerCase(); }) : 'Deposition', date: dn.date, time: dn.time, dept: '', served: serviceDate(posBlock(t)) };
@@ -401,7 +418,8 @@
     var done = {};
     return ruleList.map(function (r) {
       var base, notes = [];
-      if (r.from) base = addDays(done[r.from], r.off);
+      if (r.fixed) base = r.fixed;
+      else if (r.from) base = addDays(done[r.from], r.off);
       else if (typeof r.days !== 'number') throw new Error('Rule has no day count: ' + r.desc);
       else { base = addDays(trigger, (r.before ? -1 : 1) * r.days); if (r.ext) { var e = extend(base, method); base = e.d; if (e.note) notes.push(e.note); } }
       var fwd = !r.before && !r.from && (r.side === 'theirs');
@@ -759,17 +777,17 @@
     f = f || { kind: 'unknown' }; var k = f.statement ? 'cmc_statement' : f.kind, depo = /deposition/i.test(f.what || '');
     var setTxt = f.set ? ' Set ' + f.set.charAt(0).toUpperCase() + f.set.slice(1).toLowerCase() : '';
     var label = k === 'disc_on_us' || k === 'disc_by_us' ? (depo ? 'Deposition Notice' : (f.what || 'Discovery') + setTxt) : k === 'responses' ? 'Responses to ' + (f.what || 'Discovery') + setTxt :
-      k === 'summons_pos' ? 'Proof of Service of Summons' : k === 'answer' ? 'Answer' : k === 'complaint' ? 'Complaint' : k === 'cmc_statement' ? 'CMC Statement' : k === 'notice' ? (f.title || 'Notice of Hearing') : k === 'depo' ? 'Deposition Notice' + (f.what && f.what !== 'Deposition' ? ' - ' + f.what.replace(/^Deposition of /, '') : '') : k === 'expert' ? 'Demand for Expert Exchange' : '';
-    var def = label && k !== 'complaint' && k !== 'depo' ? bestMatch([f.from, f.party, f.defendant, f.region, f.region2].join(' '), S.defs || [], function (d) { return d.defendant_name; }) : null;
+      k === 'summons_pos' ? 'Proof of Service of Summons' : k === 'answer' ? 'Answer' : k === 'complaint' ? 'Complaint' : k === 'cmc_statement' ? 'CMC Statement' : k === 'notice' ? (f.title || 'Notice of Hearing') : k === 'depo' ? 'Deposition Notice' + (f.what && f.what !== 'Deposition' ? ' - ' + f.what.replace(/^Deposition of /, '') : '') : k === 'expert' ? 'Demand for Expert Exchange' : k === 'amended' ? (f.title || 'Amended Complaint') : k === 'cross' ? 'Cross-Complaint' : '';
+    var def = label && !/^(complaint|depo|amended)$/.test(k) ? bestMatch([f.from, f.party, f.defendant, f.region, f.region2].join(' '), S.defs || [], function (d) { return d.defendant_name; }) : null;
     var base = String(doc.name).replace(/\.[a-z0-9]{2,5}$/i, '');
     var dt = f.docDate || pd(doc.created) || today();
     var ours = f.filedBy && f.filedBy.us && /cmc_statement|notice/.test(k);
     var name = label ? iso(dt) + ' ' + label + (ours ? ' - Plaintiff' : def ? ' - DF ' + def.defendant_name : '') : (/^\d{4}-\d{2}-\d{2}\b/.test(base) ? base : iso(pd(doc.created) || today()) + ' ' + base);
     var fold = { disc_on_us: depo ? ['Discovery › Depositions'] : ['Discovery › Defendant Propounding'], disc_by_us: depo ? ['Discovery › Depositions'] : ['Discovery › Plaintiff Propounding'],
       responses: ['Plaintiff Propounding › Defendant Response', 'Plaintiff Propounding › Defendants Response', 'Discovery › Plaintiff Propounding'], summons_pos: ['Pleadings › Proof of Service'], answer: ['Pleadings › Answer'], complaint: ['Pleadings › Complaint'],
-      cmc_statement: ['Pleadings › Case Management Statements'], depo: ['Discovery › Depositions'], expert: ['Discovery › Experts'], notice: f.what === 'msj' || /Motion|MSJ|MSA/.test(f.title || '') ? ['Pleadings › Motions'] : ['Pleadings › Notices'] }[k];
+      cmc_statement: ['Pleadings › Case Management Statements'], depo: ['Discovery › Depositions'], expert: ['Discovery › Experts'], amended: ['Pleadings › Complaint'], cross: ['Pleadings › Cross-Complaint', 'Pleadings › Cross Complaint'], notice: f.what === 'msj' || /Motion|MSJ|MSA/.test(f.title || '') ? ['Pleadings › Motions'] : ['Pleadings › Notices'] }[k];
     var folder = fold ? findFolder(fold.concat(/disc|responses|depo|expert/.test(k) ? ['Litigation › Discovery'] : ['Litigation › Pleadings'], ['Litigation'])) : null;
-    var cat = { disc_on_us: depo ? ['Depositions'] : ['Discovery'], disc_by_us: depo ? ['Depositions'] : ['Discovery'], responses: ['Discovery'], depo: ['Depositions'], expert: ['Expert Witnesses', 'Discovery'], summons_pos: ['Service Paperwork'], answer: ['Pleadings'], complaint: ['Pleadings'], cmc_statement: ['Pleadings'],
+    var cat = { disc_on_us: depo ? ['Depositions'] : ['Discovery'], disc_by_us: depo ? ['Depositions'] : ['Discovery'], responses: ['Discovery'], depo: ['Depositions'], expert: ['Expert Witnesses', 'Discovery'], amended: ['Pleadings'], cross: ['Pleadings'], summons_pos: ['Service Paperwork'], answer: ['Pleadings'], complaint: ['Pleadings'], cmc_statement: ['Pleadings'],
       notice: f.what === 'msj' || /Motion|MSJ|MSA/.test(f.title || '') ? ['Pleadings'] : ['Court Filings', 'Pleadings'] }[k];
     if (!fold) {
       var txt = (doc.name + ' ' + (f.region2 || '')).toLowerCase();
@@ -855,8 +873,8 @@
   }
 
   // ---- facts form ----
-  var KINDS = [['disc_on_us', 'Discovery served on us'], ['summons_pos', 'Defendant served (proof of service of summons)'], ['answer', 'Answer served'], ['notice', 'Court notice (CMC, trial, hearing…)'], ['disc_by_us', 'We served discovery'], ['responses', 'We got verified responses'], ['complaint', 'We filed the complaint'], ['depo', 'Deposition notice'], ['expert', 'Demand for expert exchange']];
-  var CAL_KINDS = { depo: 1, expert: 1, disc_on_us: 1, summons_pos: 1, answer: 1, notice: 1, disc_by_us: 1, responses: 1, complaint: 1 };
+  var KINDS = [['disc_on_us', 'Discovery served on us'], ['summons_pos', 'Defendant served (proof of service of summons)'], ['answer', 'Answer served'], ['notice', 'Court notice (CMC, trial, hearing…)'], ['disc_by_us', 'We served discovery'], ['responses', 'We got verified responses'], ['complaint', 'We filed the complaint'], ['depo', 'Deposition notice'], ['expert', 'Demand for expert exchange'], ['amended', 'We filed an amended complaint'], ['cross', 'Cross-complaint served on us']];
+  var CAL_KINDS = { amended: 1, cross: 1, depo: 1, expert: 1, disc_on_us: 1, summons_pos: 1, answer: 1, notice: 1, disc_by_us: 1, responses: 1, complaint: 1 };
   var NOTICES = [['cmc', 'Case Management Conference'], ['tsc', 'Trial Setting Conference'], ['trial1', 'Trial — FIRST trial date'], ['trialmoved', 'Trial — NEW date (continued)'], ['mediation', 'Mediation'], ['msj', 'Defense MSJ hearing'], ['msc', 'Mandatory Settlement Conf. (Riverside)'], ['fsc', 'Final Status Conference (LA)'], ['hearing', 'Other hearing']];
   function defOptions(sel) { return '<option value="">— pick —</option>' + S.defs.map(function (d) { return '<option value="' + d.defendant_id + '"' + (String(sel) === String(d.defendant_id) ? ' selected' : '') + '>' + esc(d.defendant_name) + '</option>'; }).join(''); }
   function factsForm(f, doc, opts) {
@@ -864,9 +882,10 @@
     if (f.kind === 'scan' || f.kind === 'unknown' || !CAL_KINDS[f.kind]) { w.innerHTML = '<div class="kl-note">' + (f.kind === 'scan' ? 'This PDF is a scanned image — no text to read.' : 'I could not tell what this document is.') + ' Pick the type and fill in the facts below.</div>'; f = S.f = { kind: 'disc_on_us' }; }
     else w.innerHTML = '';
     // resolve names against CasePeer lists
+ var newDefs = (f.captionDefs || []).filter(function (n) { return !bestMatch(n, S.defs || [], function (d) { return d.defendant_name; }); });
     var defGuess = f.region || f.region2 || f.from || f.party || f.defendant ? bestMatch((f.from || '') + ' ' + (f.party || '') + ' ' + (f.defendant || '') + ' ' + (f.region || '') + ' ' + (f.region2 || ''), S.defs, function (d) { return d.defendant_name; }) : null;
     var firmGuess = f.kind === 'answer' && FIRMS ? bestMatch((f.firm || '') + ' ' + (f.head || ''), FIRMS, function (x) { return x.name; }) : null;
-    var served = f.kind === 'summons_pos' ? (f.method === 'substituted' ? (f.mailDate || f.subDate) : f.personalDate) : /notice|depo|expert/.test(f.kind) ? f.date : f.served;
+    var served = f.kind === 'summons_pos' ? (f.method === 'substituted' ? (f.mailDate || f.subDate) : f.personalDate) : /notice|depo|expert/.test(f.kind) ? f.date : f.kind === 'amended' ? f.filed : f.served;
     var ins = '<div class="kl-ins">' + (opts.inCard ? 'This document sets a deadline. Check the facts. Fix anything that\'s wrong. Then click <b>Review deadlines</b>. Nothing is saved yet.' : doc ? 'Check the facts. Fix anything that\'s wrong. Then click <b>Review deadlines</b>. Nothing is saved yet.' : 'Enter the facts. Then click <b>Review deadlines</b>. Nothing is saved yet.') + '</div>';
     if (f.filedBy) ins += '<div style="margin:-2px 0 8px"><b>Filed by:</b> ' + esc(f.filedBy.us ? 'us (KAL, for plaintiff)' : f.filedBy.label) + '</div>';
     var h = (opts.inCard ? ins : '<div class="kl-box"><div class="kl-top"><div style="font-weight:700">' + (doc ? 'I read <i>' + esc(doc.name) + '</i> as:' : 'Enter the facts:') + '</div>' + (doc ? '<button class="kl-btn ghost" id="kf-pv" style="padding:4px 10px;font-size:12px">Preview document</button>' : '') + '</div>' + ins) + '<div class="kl-grid">' +
@@ -881,6 +900,8 @@
       '<span class="kf-ans">Defense firm</span><select class="kf-ans" id="kf-firm"><option value="">— not in contacts / leave as is —</option>' + (FIRMS || []).map(function (x) { return '<option value="' + x.id + '"' + (firmGuess && firmGuess.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' +
       '<span class="kf-sum">How served</span><select class="kf-sum" id="kf-sm"><option value="personal"' + (f.method === 'personal' ? ' selected' : '') + '>Personal</option><option value="substituted"' + (f.method === 'substituted' ? ' selected' : '') + '>Substituted (date = mailing date)</option></select>' +
       '<span id="kf-dl">Date</span><input type="date" id="kf-date" value="' + (served ? iso(served) : '') + '">' +
+      '<span class="kf-amr">Served on defense</span><div class="kf-amr"><input type="date" id="kf-date2" value="' + (f.served2 ? iso(f.served2) : '') + '" style="max-width:180px"> <span class="kl-mute">leave blank if not served yet</span></div>' +
+      '<span class="kf-amr">New defendants</span><div class="kf-amr"><input id="kf-newdefs" value="' + esc(newDefs.join('; ')) + '" placeholder="none"><div class="kl-mute">Defendants in the caption who are not in CasePeer yet. Separate with ; — leave blank if none.</div></div>' +
       '<span class="kf-meth">Served by</span><select class="kf-meth" id="kf-meth"><option value="">— pick —</option>' + Object.keys(METHODS).map(function (k) { return '<option value="' + k + '"' + (f.method === k ? ' selected' : '') + '>' + METHODS[k][0] + '</option>'; }).join('') + '</select>' +
       '</div>' + (f.noPos ? '<div class="kl-mute kl-bad" style="font-weight:400">No proof of service in this PDF. The date shown is the document date — check it and pick how it was served.</div>' : '') +
       (/^multi/.test(f.method || '') ? '<div class="kl-mute kl-bad" style="font-weight:400">The proof of service lists more than one method. Pick the one that is checked.</div>' : '') +
@@ -896,9 +917,10 @@
       w.querySelectorAll('.kf-tdr').forEach(function (e) { e.style.display = k === 'notice' || k === 'depo' ? '' : 'none'; });
       w.querySelectorAll('.kf-ans').forEach(function (e) { e.style.display = k === 'answer' ? '' : 'none'; });
       w.querySelectorAll('.kf-sum').forEach(function (e) { e.style.display = k === 'summons_pos' ? '' : 'none'; });
-      w.querySelectorAll('.kf-defr').forEach(function (e) { e.style.display = /summons_pos|answer|disc|responses|depo|expert/.test(k) ? '' : 'none'; });
-      w.querySelectorAll('.kf-meth').forEach(function (e) { e.style.display = /disc|responses/.test(k) ? '' : 'none'; });
-      w.querySelector('#kf-dl').textContent = k === 'depo' ? 'Deposition date' : k === 'expert' ? 'Exchange date (in the demand)' : k === 'notice' ? 'Event date (hearing date)' : k === 'summons_pos' ? (w.querySelector('#kf-sm').value === 'substituted' ? 'Mailing date' : 'Date served') : k === 'answer' ? 'Date answer served' : k === 'complaint' ? 'Date the complaint was filed' : k === 'responses' ? 'Date responses were served on us' : 'Date served';
+      w.querySelectorAll('.kf-defr').forEach(function (e) { e.style.display = /summons_pos|answer|disc|responses|depo|expert|cross/.test(k) ? '' : 'none'; });
+      w.querySelectorAll('.kf-meth').forEach(function (e) { e.style.display = /disc|responses|amended|cross/.test(k) ? '' : 'none'; });
+      w.querySelectorAll('.kf-amr').forEach(function (e) { e.style.display = k === 'amended' ? '' : 'none'; });
+      w.querySelector('#kf-dl').textContent = k === 'amended' ? 'Date the amended complaint was filed' : k === 'cross' ? 'Date served on us' : k === 'depo' ? 'Deposition date' : k === 'expert' ? 'Exchange date (in the demand)' : k === 'notice' ? 'Event date (hearing date)' : k === 'summons_pos' ? (w.querySelector('#kf-sm').value === 'substituted' ? 'Mailing date' : 'Date served') : k === 'answer' ? 'Date answer served' : k === 'complaint' ? 'Date the complaint was filed' : k === 'responses' ? 'Date responses were served on us' : 'Date served';
       w.querySelector('#kl-prev').innerHTML = ''; var tn = w.querySelector('#kf-none'); if (tn) tn.style.display = '';
     }
     w.querySelectorAll('select,input').forEach(function (e) { e.onchange = sync; }); sync();
@@ -909,7 +931,7 @@
   function readForm() {
     var w = S.w, g = function (id) { var e = w.querySelector(id); return e ? e.value : ''; };
     var tm = to12(g('#kf-time')), dp = g('#kf-dept').trim().replace(/^dept\.?\s*/i, '');
-    return { fed: g('#kf-court') === 'fed', kind: g('#kf-kind'), def: g('#kf-def'), what: g('#kf-what'), set: g('#kf-set'), what2: g('#kf-what2'), time: [tm, dp ? 'Dept ' + dp : ''].filter(Boolean).join(' · '), firm: g('#kf-firm'), sm: g('#kf-sm'), date: fromIso(g('#kf-date')), meth: g('#kf-meth') };
+    return { fed: g('#kf-court') === 'fed', kind: g('#kf-kind'), def: g('#kf-def'), what: g('#kf-what'), set: g('#kf-set'), what2: g('#kf-what2'), time: [tm, dp ? 'Dept ' + dp : ''].filter(Boolean).join(' · '), firm: g('#kf-firm'), sm: g('#kf-sm'), date: fromIso(g('#kf-date')), meth: g('#kf-meth'), date2: fromIso(g('#kf-date2')), newdefs: g('#kf-newdefs').split(';').map(function (x) { return x.trim(); }).filter(Boolean) };
   }
   function preview() {
     var F = readForm(), out = S.w.querySelector('#kl-prev'), err = [];
@@ -931,7 +953,25 @@
     else if (F.kind === 'disc_by_us') plan = planRules(CID, PLAN.discOut, true);
     else if (F.kind === 'responses') plan = planRules(CID, S.cc === 'LA' ? PLAN.respInLA : PLAN.respIn, true);
     else if (F.kind === 'complaint') plan = planRules(CID, PLAN.complaint, false);
-    else if (F.kind === 'depo') {
+    else if (F.kind === 'amended') {
+      var amRules = [];
+      F.newdefs.forEach(function (n) { amRules.push({ key: 'nd' + n, desc: 'LAST DAY: serve ' + n + ' with the amended complaint and file proof of service (CRC 3.110(d))', days: 30, before: false, side: 'ours' }); warn.push('Add ' + n + ' as a defendant in CasePeer. When the proof of service comes in, run it through KAL Lit for the answer deadline.'); });
+      var appeared = S.defs.filter(function (d) { return d.answered_date || d.appeared_date; });
+      if (F.date2) {
+        var m2 = F.meth || 'mail'; if (!F.meth) warn.push('Service method on defense unknown — used the latest date (mail). Check the proof of service.');
+        appeared.forEach(function (d) {
+          var due = roll(extend(addDays(F.date2, 30), m2).d, true).d;
+          amRules.push({ fixed: due, side: 'theirs', desc: 'Defendant\'s response to amended complaint due — ' + d.defendant_name + ' (CCP 471.5)' });
+        });
+      } else if (appeared.length) warn.push('No service date on defense yet. When it is served, open this document again (section 4, “show older”) and enter the date to add their response deadline.');
+      warn.push('The 3-year and 5-year alerts stay tied to the original complaint. Nothing changes there.');
+      if (appeared.length) warn.push('Their earlier answer is replaced by the amended complaint. Watch for a new answer or a demurrer.');
+      plan = Promise.resolve(amRules);
+    } else if (F.kind === 'cross') {
+      if (!F.meth) unknownNote = 'Service method unknown — used the earliest date (no extra days). Check the proof of service.';
+      if (unknownNote) warn.push(unknownNote);
+      plan = Promise.resolve([{ key: 'xc', desc: 'LAST DAY: respond to cross-complaint (CCP 432.10)' + (defName ? ' — from ' + defName : ''), days: 30, before: false, ext: true, side: 'ours' }]);
+    } else if (F.kind === 'depo') {
       var who = F.what && !/^deposition$/i.test(F.what) ? F.what.replace(/^deposition of /i, '') : 'witness';
       mainEv = { desc: 'Deposition of ' + who + (F.time ? ' — ' + F.time.replace(/ · Dept.*$/, '') : ''), date: F.date, type: TYPE.deadline, typeName: /deposition/i, notes: [] };
       plan = Promise.resolve([{ key: 'obj', desc: 'LAST DAY: serve objections to deposition notice (CCP 2025.410) — ' + who, days: 3, before: true, side: 'ours' }]);
